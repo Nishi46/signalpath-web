@@ -6,12 +6,10 @@ import { OpportunityDetail } from '@/components/OpportunityDetail'
 interface ClusterDetail {
   id: string
   label: string
-  score: number
+  opportunity_score: number
   signal_count: number
-  churn_count: number
-  frequency_score: number
-  recency_score: number
-  churn_score: number
+  churn_signal_count: number
+  recent_signal_count: number
 }
 
 interface Signal {

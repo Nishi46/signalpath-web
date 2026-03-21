@@ -6,9 +6,9 @@ import { EmptyState } from '@/components/EmptyState'
 interface Cluster {
   id: string
   label: string
-  score: number
+  opportunity_score: number
   signal_count: number
-  churn_count: number
+  churn_signal_count: number
 }
 
 export default function OpportunitiesPage() {

@@ -14,9 +14,9 @@ export async function GET(req: NextRequest) {
 
   const { data: clusters } = await supabaseAdmin
     .from('clusters')
-    .select('id, label, score, signal_count, churn_count')
+    .select('id, label, opportunity_score, signal_count, churn_signal_count')
     .eq('workspace_id', workspaceId)
-    .order('score', { ascending: false })
+    .order('opportunity_score', { ascending: false })
 
   const { data: feedback } = await supabaseAdmin
     .from('feedback')

@@ -5,12 +5,10 @@ import { ArrowLeft, AlertTriangle } from 'lucide-react'
 interface ClusterDetail {
   id: string
   label: string
-  score: number
+  opportunity_score: number
   signal_count: number
-  churn_count: number
-  frequency_score: number
-  recency_score: number
-  churn_score: number
+  churn_signal_count: number
+  recent_signal_count: number
 }
 
 interface Signal {
@@ -25,13 +23,13 @@ interface OpportunityDetailProps {
   signals: Signal[]
 }
 
-function ScoreBar({ label, score, color }: { label: string; score: number; color: string }) {
-  const pct = Math.min((score / 10) * 100, 100)
+function ScoreBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
   return (
     <div className='mb-3'>
       <div className='flex justify-between text-xs mb-1'>
         <span className='text-gray-600 font-medium'>{label}</span>
-        <span className='text-gray-500'>{score.toFixed(1)} / 10</span>
+        <span className='text-gray-500'>{value}</span>
       </div>
       <div className='w-full bg-gray-100 rounded-full h-2'>
         <div className={`h-2 rounded-full ${color}`} style={{ width: `${pct}%` }} />
@@ -52,22 +50,25 @@ export function OpportunityDetail({ cluster, signals }: OpportunityDetailProps) 
         <div className='bg-white rounded-xl border border-gray-200 p-6 mb-6'>
           <div className='flex items-start justify-between gap-4 mb-6'>
             <h1 className='text-xl font-bold text-gray-900'>{cluster.label}</h1>
-            <ScoreBadge score={cluster.score} />
+            <ScoreBadge score={cluster.opportunity_score} />
           </div>
 
           <div className='flex gap-4 text-sm text-gray-500 mb-6'>
             <span>{cluster.signal_count} tickets</span>
-            {cluster.churn_count > 0 && (
-              <span className='text-red-500'>{cluster.churn_count} churn signals</span>
+            {cluster.churn_signal_count > 0 && (
+              <span className='text-red-500'>{cluster.churn_signal_count} churn signals</span>
+            )}
+            {cluster.recent_signal_count > 0 && (
+              <span className='text-amber-500'>{cluster.recent_signal_count} recent (30d)</span>
             )}
           </div>
 
           {/* Score breakdown */}
           <div className='border-t border-gray-100 pt-5'>
-            <h2 className='text-sm font-semibold text-gray-900 mb-4'>Score Breakdown</h2>
-            <ScoreBar label='Frequency' score={cluster.frequency_score} color='bg-blue-500' />
-            <ScoreBar label='Recency' score={cluster.recency_score} color='bg-amber-500' />
-            <ScoreBar label='Churn Correlation' score={cluster.churn_score} color='bg-red-500' />
+            <h2 className='text-sm font-semibold text-gray-900 mb-4'>Breakdown</h2>
+            <ScoreBar label='Total tickets' value={cluster.signal_count} max={cluster.signal_count} color='bg-blue-500' />
+            <ScoreBar label='Recent tickets (30d)' value={cluster.recent_signal_count} max={cluster.signal_count} color='bg-amber-500' />
+            <ScoreBar label='Churn signals' value={cluster.churn_signal_count} max={cluster.signal_count} color='bg-red-500' />
           </div>
         </div>
 

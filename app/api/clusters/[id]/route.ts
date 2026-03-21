@@ -14,7 +14,7 @@ export async function GET(
 
   const { data: cluster } = await supabaseAdmin
     .from('clusters')
-    .select('id, label, score, signal_count, churn_count, frequency_score, recency_score, churn_score')
+    .select('id, label, opportunity_score, signal_count, churn_signal_count, recent_signal_count, centroid, scored_at')
     .eq('id', id)
     .single()
 

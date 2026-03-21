@@ -5,9 +5,9 @@ import { MessageSquare, AlertTriangle, ThumbsUp, SkipForward, X } from 'lucide-r
 interface Cluster {
   id: string
   label: string
-  score: number
+  opportunity_score: number
   signal_count: number
-  churn_count: number
+  churn_signal_count: number
 }
 
 interface OpportunityCardProps {
@@ -35,17 +35,17 @@ export function OpportunityCard({ cluster, workspaceId, onFeedback }: Opportunit
       <a href={`/opportunities/${cluster.id}`} className='block mb-4'>
         <div className='flex items-start justify-between gap-3 mb-3'>
           <h3 className='text-sm font-semibold text-gray-900 leading-snug'>{cluster.label}</h3>
-          <ScoreBadge score={cluster.score} />
+          <ScoreBadge score={cluster.opportunity_score} />
         </div>
         <div className='flex items-center gap-4 text-xs text-gray-500'>
           <span className='flex items-center gap-1'>
             <MessageSquare className='w-3.5 h-3.5' />
             {cluster.signal_count} tickets
           </span>
-          {cluster.churn_count > 0 && (
+          {cluster.churn_signal_count > 0 && (
             <span className='flex items-center gap-1 text-red-500'>
               <AlertTriangle className='w-3.5 h-3.5' />
-              {cluster.churn_count} churn signals
+              {cluster.churn_signal_count} churn signals
             </span>
           )}
         </div>
