@@ -17,7 +17,7 @@ function ConnectContent() {
     setConnecting(true)
 
     const { data: { user } } = await supabase.auth.getUser()
-    const workspaceId = user?.user_metadata?.workspace_id ?? 'test-workspace'
+    const workspaceId = user?.user_metadata?.workspace_id ?? '11111111-1111-1111-1111-111111111111'
 
     try {
       const res = await fetch(
