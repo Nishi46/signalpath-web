@@ -8,9 +8,10 @@ function getScoreColor(score: number) {
 }
 
 export function ScoreBadge({ score }: { score: number }) {
+  const s = score ?? 0
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold border ${getScoreColor(score)}`}>
-      {score.toFixed(1)}
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold border ${getScoreColor(s)}`}>
+      {s.toFixed(1)}
     </span>
   )
 }
