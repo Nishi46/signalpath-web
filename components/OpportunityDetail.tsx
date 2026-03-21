@@ -1,6 +1,8 @@
 'use client'
+import { useState } from 'react'
 import { ScoreBadge } from './ScoreBadge'
-import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 
 interface ClusterDetail {
   id: string
@@ -21,6 +23,7 @@ interface Signal {
 interface OpportunityDetailProps {
   cluster: ClusterDetail
   signals: Signal[]
+  workspaceId: string
 }
 
 function ScoreBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
@@ -38,13 +41,65 @@ function ScoreBar({ label, value, max, color }: { label: string; value: number; 
   )
 }
 
-export function OpportunityDetail({ cluster, signals }: OpportunityDetailProps) {
+export function OpportunityDetail({ cluster, signals, workspaceId }: OpportunityDetailProps) {
+  const [pushingLinear, setPushingLinear] = useState(false)
+  const [pushingJira, setPushingJira] = useState(false)
+  const [pushedLinear, setPushedLinear] = useState<string | null>(null)
+  const [pushedJira, setPushedJira] = useState<string | null>(null)
+  const [pushError, setPushError] = useState<string | null>(null)
+
+  async function handlePushToLinear() {
+    setPushingLinear(true)
+    setPushError(null)
+    try {
+      const res = await fetch('/api/push-linear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cluster_id: cluster.id, workspace_id: workspaceId }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail ?? 'Push to Linear failed')
+      }
+      const { url } = await res.json()
+      setPushedLinear(url)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Push to Linear failed'
+      setPushError(message)
+    } finally {
+      setPushingLinear(false)
+    }
+  }
+
+  async function handlePushToJira() {
+    setPushingJira(true)
+    setPushError(null)
+    try {
+      const res = await fetch('/api/push-jira', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cluster_id: cluster.id, workspace_id: workspaceId }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail ?? 'Push to Jira failed')
+      }
+      const { url } = await res.json()
+      setPushedJira(url)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Push to Jira failed'
+      setPushError(message)
+    } finally {
+      setPushingJira(false)
+    }
+  }
+
   return (
     <div className='min-h-screen bg-gray-50'>
       <div className='max-w-3xl mx-auto px-6 py-10'>
-        <a href='/opportunities' className='inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6'>
+        <Link href='/opportunities' className='inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6'>
           <ArrowLeft className='w-4 h-4' /> Back to Opportunities
-        </a>
+        </Link>
 
         {/* Header */}
         <div className='bg-white rounded-xl border border-gray-200 p-6 mb-6'>
@@ -74,19 +129,50 @@ export function OpportunityDetail({ cluster, signals }: OpportunityDetailProps) 
 
         {/* Push buttons */}
         <div className='flex gap-3 mb-6'>
-          <button
-            disabled
-            className='flex-1 bg-indigo-600 text-white font-medium py-3 rounded-xl text-sm opacity-50 cursor-not-allowed'
-          >
-            Push to Linear
-          </button>
-          <button
-            disabled
-            className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm opacity-50 cursor-not-allowed'
-          >
-            Push to Jira
-          </button>
+          {pushedLinear ? (
+            <a
+              href={pushedLinear}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-green-700 transition-colors'
+            >
+              Pushed to Linear <ExternalLink className='w-4 h-4' />
+            </a>
+          ) : (
+            <button
+              onClick={handlePushToLinear}
+              disabled={pushingLinear}
+              className='flex-1 bg-indigo-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              {pushingLinear ? 'Pushing...' : 'Push to Linear'}
+            </button>
+          )}
+
+          {pushedJira ? (
+            <a
+              href={pushedJira}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-green-700 transition-colors'
+            >
+              Pushed to Jira <ExternalLink className='w-4 h-4' />
+            </a>
+          ) : (
+            <button
+              onClick={handlePushToJira}
+              disabled={pushingJira}
+              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              {pushingJira ? 'Pushing...' : 'Push to Jira'}
+            </button>
+          )}
         </div>
+
+        {pushError && (
+          <div className='mb-6 p-3 bg-red-50 border border-red-200 rounded-xl'>
+            <p className='text-sm text-red-600'>{pushError}</p>
+          </div>
+        )}
 
         {/* Evidence */}
         <div className='bg-white rounded-xl border border-gray-200 p-6'>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { OpportunityDetail } from '@/components/OpportunityDetail'
 
 interface ClusterDetail {
@@ -58,13 +59,15 @@ export default function OpportunityDetailPage() {
         <div className='text-center'>
           <h1 className='text-xl font-bold text-gray-900 mb-2'>Opportunity not found</h1>
           <p className='text-gray-500 text-sm mb-4'>This opportunity may have been removed or doesn&apos;t exist.</p>
-          <a href='/opportunities' className='text-indigo-600 hover:text-indigo-700 text-sm font-medium'>
+          <Link href='/opportunities' className='text-indigo-600 hover:text-indigo-700 text-sm font-medium'>
             Back to Opportunities
-          </a>
+          </Link>
         </div>
       </div>
     )
   }
 
-  return <OpportunityDetail cluster={cluster} signals={signals} />
+  const workspaceId = '11111111-1111-1111-1111-111111111111' // TODO: from auth
+
+  return <OpportunityDetail cluster={cluster} signals={signals} workspaceId={workspaceId} />
 }
