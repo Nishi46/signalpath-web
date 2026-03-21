@@ -1,7 +1,6 @@
 'use client'
 import { ScoreBadge } from './ScoreBadge'
 import { MessageSquare, AlertTriangle, ThumbsUp, SkipForward, X } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 
 interface Cluster {
   id: string
@@ -19,10 +18,14 @@ interface OpportunityCardProps {
 
 export function OpportunityCard({ cluster, workspaceId, onFeedback }: OpportunityCardProps) {
   async function handleFeedback(action: 'approve' | 'skip' | 'dismiss') {
-    await supabase.from('feedback').insert({
-      workspace_id: workspaceId,
-      cluster_id: cluster.id,
-      action,
+    await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workspace_id: workspaceId,
+        cluster_id: cluster.id,
+        action,
+      }),
     })
     onFeedback?.(cluster.id, action)
   }

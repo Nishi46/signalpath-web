@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { OpportunityDetail } from '@/components/OpportunityDetail'
 
 interface ClusterDetail {
@@ -33,27 +32,15 @@ export default function OpportunityDetailPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: clusterData } = await supabase
-        .from('clusters')
-        .select('id, label, score, signal_count, churn_count, frequency_score, recency_score, churn_score')
-        .eq('id', clusterId)
-        .single()
-
-      if (!clusterData) {
+      const res = await fetch(`/api/clusters/${clusterId}`)
+      if (!res.ok) {
         setNotFound(true)
         setLoading(false)
         return
       }
-
-      const { data: signalData } = await supabase
-        .from('signals')
-        .select('id, text, churn_flag, created_at')
-        .eq('cluster_id', clusterId)
-        .order('created_at', { ascending: false })
-        .limit(10)
-
-      setCluster(clusterData)
-      setSignals(signalData ?? [])
+      const data = await res.json()
+      setCluster(data.cluster)
+      setSignals(data.signals)
       setLoading(false)
     }
     load()

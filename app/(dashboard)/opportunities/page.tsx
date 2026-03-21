@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
 import { OpportunityCard } from '@/components/OpportunityCard'
 import { EmptyState } from '@/components/EmptyState'
 
@@ -21,23 +20,12 @@ export default function OpportunitiesPage() {
 
   useEffect(() => {
     async function load() {
-      // Fetch clusters ordered by score descending
-      const { data: clusterData } = await supabase
-        .from('clusters')
-        .select('id, label, score, signal_count, churn_count')
-        .eq('workspace_id', workspaceId)
-        .order('score', { ascending: false })
-
-      // Fetch dismissed cluster IDs
-      const { data: feedbackData } = await supabase
-        .from('feedback')
-        .select('cluster_id')
-        .eq('workspace_id', workspaceId)
-        .eq('action', 'dismiss')
-
-      const dismissedIds = new Set((feedbackData ?? []).map(f => f.cluster_id))
-      setDismissed(dismissedIds)
-      setClusters(clusterData ?? [])
+      const res = await fetch(`/api/clusters?workspace_id=${workspaceId}`)
+      if (res.ok) {
+        const { clusters: clusterData, dismissed: dismissedIds } = await res.json()
+        setClusters(clusterData)
+        setDismissed(new Set(dismissedIds))
+      }
       setLoading(false)
     }
     load()
