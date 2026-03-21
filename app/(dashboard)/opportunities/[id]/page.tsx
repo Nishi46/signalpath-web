@@ -17,7 +17,7 @@ interface ClusterDetail {
 
 interface Signal {
   id: string
-  body: string
+  text: string
   churn_flag: boolean
   created_at: string
 }
@@ -47,7 +47,7 @@ export default function OpportunityDetailPage() {
 
       const { data: signalData } = await supabase
         .from('signals')
-        .select('id, body, churn_flag, created_at')
+        .select('id, text, churn_flag, created_at')
         .eq('cluster_id', clusterId)
         .order('created_at', { ascending: false })
         .limit(10)

@@ -15,7 +15,7 @@ interface ClusterDetail {
 
 interface Signal {
   id: string
-  body: string
+  text: string
   churn_flag: boolean
   created_at: string
 }
@@ -109,7 +109,7 @@ export function OpportunityDetail({ cluster, signals }: OpportunityDetailProps) 
                     )}
                   </div>
                   <p className='text-sm text-gray-700 leading-relaxed'>
-                    {signal.body.length > 200 ? signal.body.slice(0, 200) + '...' : signal.body}
+                    {signal.text.length > 200 ? signal.text.slice(0, 200) + '...' : signal.text}
                   </p>
                 </div>
               ))}
