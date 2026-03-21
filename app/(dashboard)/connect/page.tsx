@@ -37,16 +37,25 @@ function ConnectContent() {
     }
   }
 
-  // Subscribe to new signals being inserted so counter updates live
+  // Poll signal count every 5 seconds via server-side route (bypasses RLS)
   useEffect(() => {
     if (!connected) return
-    const channel = supabase.channel('ticket-progress')
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'signals' },
-        () => setTicketCount(n => n + 1)
-      )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+
+    const workspaceId = '11111111-1111-1111-1111-111111111111' // TODO: from auth
+
+    async function poll() {
+      try {
+        const res = await fetch(`/api/signal-count?workspace_id=${workspaceId}`)
+        if (res.ok) {
+          const { count } = await res.json()
+          setTicketCount(count)
+        }
+      } catch { /* ignore network blips */ }
+    }
+
+    poll()
+    const interval = setInterval(poll, 5000)
+    return () => clearInterval(interval)
   }, [connected])
 
   if (connected) return <ProcessingView count={ticketCount} />
