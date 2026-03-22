@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { CheckCircle } from 'lucide-react'
 
 export function ProcessingView({ count }: { count: number }) {
@@ -17,10 +18,10 @@ export function ProcessingView({ count }: { count: number }) {
           <p className='text-4xl font-bold text-indigo-700'>{count.toLocaleString()}</p>
           <p className='text-indigo-500 text-sm mt-2'>tickets processed so far</p>
         </div>
-        <a href='/opportunities'
+        <Link href='/opportunities'
           className='block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl text-sm text-center transition-colors'>
           View Opportunities
-        </a>
+        </Link>
       </div>
     </div>
   )

@@ -11,6 +11,8 @@ function ConnectContent() {
   const [ticketCount, setTicketCount] = useState(0)
   const searchParams = useSearchParams()
   const connected = searchParams.get('connected') === 'true'
+  const linearConnected = searchParams.get('linear_connected') === 'true'
+  const jiraConnected = searchParams.get('jira_connected') === 'true'
 
   async function handleConnect() {
     if (!subdomain.trim()) return
@@ -59,6 +61,17 @@ function ConnectContent() {
   }, [connected])
 
   if (connected) return <ProcessingView count={ticketCount} />
+  if (linearConnected || jiraConnected) {
+    const service = linearConnected ? 'Linear' : 'Jira'
+    return (
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+        <div className='text-center max-w-sm'>
+          <h1 className='text-xl font-bold text-gray-900 mb-2'>{service} connected</h1>
+          <p className='text-gray-500 text-sm'>You can now push opportunities to {service}.</p>
+        </div>
+      </div>
+    )
+  }
   return (
     <ConnectView
       subdomain={subdomain}
