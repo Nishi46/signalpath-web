@@ -61,9 +61,11 @@ function ConnectContent() {
     }
   }
 
-  // Poll pipeline status every 10 seconds
+  // Poll pipeline status every 10 seconds, stop when done
   useEffect(() => {
     if (!connected) return
+
+    let stopped = false
 
     async function poll() {
       try {
@@ -71,12 +73,18 @@ function ConnectContent() {
         if (res.ok) {
           const data = await res.json()
           setPipelineStatus(data)
+          // Stop polling when pipeline is done (has clusters, or all embedded with no clusters)
+          if (data.clusters > 0 || (data.signals_total > 0 && data.signals_embedded >= data.signals_total)) {
+            stopped = true
+          }
         }
       } catch { /* ignore network blips */ }
     }
 
     poll()
-    const interval = setInterval(poll, 10000)
+    const interval = setInterval(() => {
+      if (!stopped) poll()
+    }, 10000)
     return () => clearInterval(interval)
   }, [connected])
 

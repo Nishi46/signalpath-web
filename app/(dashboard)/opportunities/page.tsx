@@ -21,6 +21,7 @@ export default function OpportunitiesPage() {
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
+  const [insufficient, setInsufficient] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -34,18 +35,23 @@ export default function OpportunitiesPage() {
           setClusters(clusterData)
           setDismissed(new Set(dismissedIds))
 
-          // If no clusters, check if pipeline is still running
+          // If no clusters, check pipeline state
           if (clusterData.length === 0) {
             try {
               const statusRes = await fetch('/api/pipeline-status')
               if (statusRes.ok) {
                 const status = await statusRes.json()
-                if (status.signals_total > 0 && status.clusters === 0) {
-                  setProcessing(true)
-                } else if (status.signals_total === 0) {
+                if (status.signals_total === 0) {
                   // No data at all — redirect to connect Zendesk
                   router.push('/connect')
                   return
+                }
+                if (status.signals_total > 0 && status.signals_embedded >= status.signals_total && status.clusters === 0) {
+                  // Pipeline done but not enough data for clustering
+                  setInsufficient(true)
+                } else if (status.signals_total > 0 && status.clusters === 0) {
+                  // Pipeline still running
+                  setProcessing(true)
                 }
               }
             } catch { /* ignore */ }
@@ -112,7 +118,7 @@ export default function OpportunitiesPage() {
           </div>
 
           {visibleClusters.length === 0 ? (
-            <EmptyState processing={processing} />
+            <EmptyState processing={processing} insufficient={insufficient} />
           ) : (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
               {visibleClusters.map(cluster => (
