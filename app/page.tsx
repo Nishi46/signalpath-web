@@ -38,7 +38,7 @@ export default function LandingPage() {
         <p className='text-gray-400 text-sm mt-4'>
           Or{' '}
           <a
-            href='https://calendly.com/YOUR_USERNAME/demo'
+            href='https://calendly.com/nishigoldy/demo'
             className='text-indigo-600 hover:underline'
             target='_blank'
             rel='noopener noreferrer'
