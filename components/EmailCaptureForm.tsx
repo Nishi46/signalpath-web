@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { CheckCircle } from 'lucide-react'
 
 export function EmailCaptureForm() {
   const [email, setEmail] = useState('')
@@ -8,7 +9,7 @@ export function EmailCaptureForm() {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setError('')
@@ -17,7 +18,6 @@ export function EmailCaptureForm() {
       const { error: insertError } = await supabase.from('early_access').insert({ email })
       if (insertError) {
         if (insertError.code === '23505') {
-          // Duplicate email — treat as success
           setSubmitted(true)
         } else {
           setError('Something went wrong. Please try again.')
@@ -34,30 +34,33 @@ export function EmailCaptureForm() {
 
   if (submitted) {
     return (
-      <div className='bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 text-sm max-w-md mx-auto'>
-        You are on the list. We will be in touch within 24 hours.
+      <div className='bg-green-50 border border-green-200 rounded-2xl p-5 text-green-700 text-sm max-w-md mx-auto flex items-center gap-3'>
+        <CheckCircle className='w-5 h-5 text-green-500 shrink-0' />
+        <span>You&apos;re on the list. We&apos;ll be in touch within 24 hours.</span>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className='flex gap-3 max-w-md mx-auto'>
-      <input
-        type='email'
-        required
-        placeholder='your@email.com'
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        className='flex-1 border border-gray-300 rounded-xl px-4 py-3 text-sm'
-      />
-      <button
-        type='submit'
-        disabled={loading}
-        className='bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:bg-indigo-700 disabled:opacity-50'
-      >
-        {loading ? 'Saving...' : 'Request early access'}
-      </button>
-      {error && <p className='text-red-600 text-xs mt-1'>{error}</p>}
-    </form>
+    <div className='max-w-md mx-auto'>
+      <form onSubmit={handleSubmit} className='flex gap-3'>
+        <input
+          type='email'
+          required
+          placeholder='your@email.com'
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          className='flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all'
+        />
+        <button
+          type='submit'
+          disabled={loading}
+          className='bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer disabled:cursor-not-allowed'
+        >
+          {loading ? 'Saving...' : 'Request early access'}
+        </button>
+      </form>
+      {error && <p className='text-red-500 text-xs mt-2 text-center'>{error}</p>}
+    </div>
   )
 }

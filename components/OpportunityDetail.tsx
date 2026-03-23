@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { ScoreBadge } from './ScoreBadge'
-import { ArrowLeft, AlertTriangle, ExternalLink } from 'lucide-react'
+import { DashboardNav } from './DashboardNav'
+import { ArrowLeft, AlertTriangle, ExternalLink, MessageSquare, Clock, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
 interface ClusterDetail {
@@ -26,16 +27,22 @@ interface OpportunityDetailProps {
   workspaceId: string
 }
 
-function ScoreBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+function ScoreBar({ label, value, max, color, icon: Icon }: {
+  label: string; value: number; max: number; color: string
+  icon: React.ComponentType<{ className?: string }>
+}) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
   return (
-    <div className='mb-3'>
-      <div className='flex justify-between text-xs mb-1'>
-        <span className='text-gray-600 font-medium'>{label}</span>
-        <span className='text-gray-500'>{value}</span>
+    <div className='mb-4 last:mb-0'>
+      <div className='flex justify-between text-sm mb-2'>
+        <span className='text-gray-600 font-medium flex items-center gap-1.5'>
+          <Icon className='w-3.5 h-3.5 text-gray-400' />
+          {label}
+        </span>
+        <span className='text-gray-900 font-semibold tabular-nums'>{value}</span>
       </div>
       <div className='w-full bg-gray-100 rounded-full h-2'>
-        <div className={`h-2 rounded-full ${color}`} style={{ width: `${pct}%` }} />
+        <div className={`h-2 rounded-full transition-all duration-500 ${color}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   )
@@ -96,34 +103,44 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
 
   return (
     <div className='min-h-screen bg-gray-50'>
+      <DashboardNav />
       <div className='max-w-3xl mx-auto px-6 py-10'>
-        <Link href='/opportunities' className='inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6'>
+        <Link href='/opportunities' className='inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors'>
           <ArrowLeft className='w-4 h-4' /> Back to Opportunities
         </Link>
 
         {/* Header */}
-        <div className='bg-white rounded-xl border border-gray-200 p-6 mb-6'>
+        <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6'>
           <div className='flex items-start justify-between gap-4 mb-6'>
             <h1 className='text-xl font-bold text-gray-900'>{cluster.label}</h1>
             <ScoreBadge score={cluster.opportunity_score} />
           </div>
 
-          <div className='flex gap-4 text-sm text-gray-500 mb-6'>
-            <span>{cluster.signal_count} tickets</span>
+          <div className='flex gap-5 text-sm text-gray-500 mb-8'>
+            <span className='flex items-center gap-1.5'>
+              <MessageSquare className='w-4 h-4 text-gray-400' />
+              {cluster.signal_count} tickets
+            </span>
             {cluster.churn_signal_count > 0 && (
-              <span className='text-red-500'>{cluster.churn_signal_count} churn signals</span>
+              <span className='flex items-center gap-1.5 text-red-500'>
+                <AlertTriangle className='w-4 h-4' />
+                {cluster.churn_signal_count} churn signals
+              </span>
             )}
             {cluster.recent_signal_count > 0 && (
-              <span className='text-amber-500'>{cluster.recent_signal_count} recent (30d)</span>
+              <span className='flex items-center gap-1.5 text-amber-600'>
+                <Clock className='w-4 h-4' />
+                {cluster.recent_signal_count} recent (30d)
+              </span>
             )}
           </div>
 
           {/* Score breakdown */}
-          <div className='border-t border-gray-100 pt-5'>
-            <h2 className='text-sm font-semibold text-gray-900 mb-4'>Breakdown</h2>
-            <ScoreBar label='Total tickets' value={cluster.signal_count} max={cluster.signal_count} color='bg-blue-500' />
-            <ScoreBar label='Recent tickets (30d)' value={cluster.recent_signal_count} max={cluster.signal_count} color='bg-amber-500' />
-            <ScoreBar label='Churn signals' value={cluster.churn_signal_count} max={cluster.signal_count} color='bg-red-500' />
+          <div className='border-t border-gray-100 pt-6'>
+            <h2 className='text-sm font-semibold text-gray-900 mb-5'>Score Breakdown</h2>
+            <ScoreBar icon={MessageSquare} label='Total tickets' value={cluster.signal_count} max={cluster.signal_count} color='bg-indigo-500' />
+            <ScoreBar icon={Clock} label='Recent tickets (30d)' value={cluster.recent_signal_count} max={cluster.signal_count} color='bg-amber-500' />
+            <ScoreBar icon={TrendingUp} label='Churn signals' value={cluster.churn_signal_count} max={cluster.signal_count} color='bg-red-500' />
           </div>
         </div>
 
@@ -142,7 +159,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
             <button
               onClick={handlePushToLinear}
               disabled={pushingLinear}
-              className='flex-1 bg-indigo-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+              className='flex-1 bg-indigo-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
               {pushingLinear ? 'Creating ticket...' : 'Push to Linear'}
             </button>
@@ -161,7 +178,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
             <button
               onClick={handlePushToJira}
               disabled={pushingJira}
-              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
               {pushingJira ? 'Creating ticket...' : 'Push to Jira'}
             </button>
@@ -169,29 +186,31 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
         </div>
 
         {pushError && (
-          <div className='mb-6 p-3 bg-red-50 border border-red-200 rounded-xl'>
+          <div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-xl'>
             <p className='text-sm text-red-600'>{pushError}</p>
           </div>
         )}
 
         {/* Evidence */}
-        <div className='bg-white rounded-xl border border-gray-200 p-6'>
-          <h2 className='text-sm font-semibold text-gray-900 mb-4'>
+        <div className='bg-white rounded-2xl border border-gray-200 p-8'>
+          <h2 className='text-sm font-semibold text-gray-900 mb-5'>
             Evidence ({signals.length} tickets)
           </h2>
           {signals.length === 0 ? (
             <p className='text-gray-400 text-sm'>No ticket evidence available yet.</p>
           ) : (
-            <div className='space-y-4'>
+            <div className='space-y-1'>
               {signals.map(signal => (
-                <div key={signal.id} className='border-b border-gray-50 pb-4 last:border-0 last:pb-0'>
-                  <div className='flex items-center gap-2 mb-1.5'>
-                    <span className='text-xs text-gray-400'>
-                      {new Date(signal.created_at).toLocaleDateString()}
+                <div key={signal.id} className='rounded-xl p-4 hover:bg-gray-50 transition-colors -mx-2'>
+                  <div className='flex items-center gap-2 mb-2'>
+                    <span className='text-xs text-gray-400 font-medium'>
+                      {new Date(signal.created_at).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric',
+                      })}
                     </span>
                     {signal.churn_flag && (
-                      <span className='inline-flex items-center gap-1 text-xs text-red-500'>
-                        <AlertTriangle className='w-3 h-3' /> Churn signal
+                      <span className='inline-flex items-center gap-1 text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full font-medium'>
+                        <AlertTriangle className='w-3 h-3' /> Churn risk
                       </span>
                     )}
                   </div>
