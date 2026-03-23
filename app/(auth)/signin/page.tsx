@@ -1,11 +1,9 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 export default function SignInPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -27,19 +25,8 @@ export default function SignInPage() {
       return
     }
 
-    // Check if workspace has Zendesk connected — if not, send to /connect
-    try {
-      const statusRes = await fetch('/api/pipeline-status')
-      if (statusRes.ok) {
-        const status = await statusRes.json()
-        if (status.signals_total === 0) {
-          router.push('/connect')
-          return
-        }
-      }
-    } catch { /* fall through to opportunities */ }
-
-    router.push('/opportunities')
+    // Hard redirect ensures cookies are set for server-side routes
+    window.location.href = '/opportunities'
   }
 
   return (

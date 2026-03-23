@@ -1,11 +1,9 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 export default function SignUpPage() {
-  const router = useRouter()
   const [companyName, setCompanyName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -44,8 +42,8 @@ export default function SignUpPage() {
         return
       }
 
-      // 3. Redirect to connect page
-      router.push('/connect')
+      // 3. Hard redirect ensures cookies are set for server-side routes
+      window.location.href = '/connect'
     } catch {
       setError('Network error. Please try again.')
       setLoading(false)
