@@ -1,12 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const workspace_id = searchParams.get('workspace_id') ?? ''
+export async function GET() {
+  const workspaceId = await getWorkspaceId()
+  if (!workspaceId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
   const res = await fetch(
-    `${apiUrl}/auth/linear/init?workspace_id=${encodeURIComponent(workspace_id)}`
+    `${apiUrl}/auth/linear/init?workspace_id=${encodeURIComponent(workspaceId)}`
   )
   const data = await res.json()
   return NextResponse.json(data, { status: res.status })

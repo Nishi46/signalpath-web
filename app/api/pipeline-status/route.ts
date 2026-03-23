@@ -8,9 +8,7 @@ export async function GET() {
   }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-  const res = await fetch(
-    `${apiUrl}/auth/jira/init?workspace_id=${encodeURIComponent(workspaceId)}`
-  )
+  const res = await fetch(`${apiUrl}/pipeline/status/${workspaceId}`)
   const data = await res.json()
   return NextResponse.json(data, { status: res.status })
 }

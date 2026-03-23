@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-// Server-side Supabase client with service role (bypasses RLS)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-export async function GET(req: NextRequest) {
-  const workspaceId = req.nextUrl.searchParams.get('workspace_id')
+export async function GET() {
+  const workspaceId = await getWorkspaceId()
   if (!workspaceId) {
-    return NextResponse.json({ error: 'workspace_id required' }, { status: 400 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { count } = await supabaseAdmin

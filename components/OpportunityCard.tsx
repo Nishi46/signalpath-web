@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { ScoreBadge } from './ScoreBadge'
 import { MessageSquare, AlertTriangle, ThumbsUp, SkipForward, X } from 'lucide-react'
 
@@ -32,7 +33,7 @@ export function OpportunityCard({ cluster, workspaceId, onFeedback }: Opportunit
 
   return (
     <div className='bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition-shadow'>
-      <a href={`/opportunities/${cluster.id}`} className='block mb-4'>
+      <Link href={`/opportunities/${cluster.id}`} className='block mb-4'>
         <div className='flex items-start justify-between gap-3 mb-3'>
           <h3 className='text-sm font-semibold text-gray-900 leading-snug'>{cluster.label}</h3>
           <ScoreBadge score={cluster.opportunity_score} />
@@ -49,7 +50,7 @@ export function OpportunityCard({ cluster, workspaceId, onFeedback }: Opportunit
             </span>
           )}
         </div>
-      </a>
+      </Link>
       <div className='flex items-center gap-2 pt-3 border-t border-gray-100'>
         <button
           onClick={() => handleFeedback('approve')}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getWorkspaceId } from '@/lib/get-workspace-id'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,12 +11,19 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const workspaceId = await getWorkspaceId()
+  if (!workspaceId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { id } = await params
 
+  // Ensure cluster belongs to the authenticated user's workspace
   const { data: cluster } = await supabaseAdmin
     .from('clusters')
     .select('id, label, opportunity_score, signal_count, churn_signal_count, recent_signal_count, centroid, scored_at')
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
     .single()
 
   if (!cluster) {

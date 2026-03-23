@@ -1,37 +1,59 @@
 'use client'
 import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ConnectView } from '@/components/ConnectView'
 import { ProcessingView } from '@/components/ProcessingView'
+import { useWorkspace } from '@/lib/hooks/use-workspace'
+
+interface PipelineStatus {
+  signals_total: number
+  signals_embedded: number
+  signals_clustered: number
+  clusters: number
+}
 
 function ConnectContent() {
+  const { workspaceId } = useWorkspace()
   const [subdomain, setSubdomain] = useState('')
   const [connecting, setConnecting] = useState(false)
-  const [ticketCount, setTicketCount] = useState(0)
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>({
+    signals_total: 0, signals_embedded: 0, signals_clustered: 0, clusters: 0,
+  })
   const searchParams = useSearchParams()
   const connected = searchParams.get('connected') === 'true'
   const linearConnected = searchParams.get('linear_connected') === 'true'
   const jiraConnected = searchParams.get('jira_connected') === 'true'
 
   async function handleConnect() {
-    if (!subdomain.trim()) return
+    if (!subdomain.trim() || !workspaceId) return
     setConnecting(true)
-
-    const { data: { user } } = await supabase.auth.getUser()
-    const workspaceId = user?.user_metadata?.workspace_id ?? '11111111-1111-1111-1111-111111111111'
 
     try {
       const res = await fetch(
-        `/api/auth-init?workspace_id=${encodeURIComponent(workspaceId)}&subdomain=${encodeURIComponent(subdomain.trim())}`
+        `/api/auth-init?subdomain=${encodeURIComponent(subdomain.trim())}`
       )
       if (!res.ok) {
-        const err = await res.json()
-        alert(err.detail ?? 'Connection failed')
+        let message = 'Connection failed'
+        try { message = (await res.json()).detail ?? message } catch { /* non-JSON response */ }
+        alert(message)
         setConnecting(false)
         return
       }
       const { redirect_url } = await res.json()
+      // Validate redirect URL points to expected OAuth providers
+      try {
+        const url = new URL(redirect_url)
+        if (!url.hostname.endsWith('.zendesk.com')) {
+          alert('Unexpected redirect URL')
+          setConnecting(false)
+          return
+        }
+      } catch {
+        alert('Invalid redirect URL')
+        setConnecting(false)
+        return
+      }
       window.location.href = redirect_url
     } catch {
       alert('Network error — please try again')
@@ -39,28 +61,26 @@ function ConnectContent() {
     }
   }
 
-  // Poll signal count every 5 seconds via server-side route (bypasses RLS)
+  // Poll pipeline status every 10 seconds
   useEffect(() => {
     if (!connected) return
 
-    const workspaceId = '11111111-1111-1111-1111-111111111111' // TODO: from auth
-
     async function poll() {
       try {
-        const res = await fetch(`/api/signal-count?workspace_id=${workspaceId}`)
+        const res = await fetch('/api/pipeline-status')
         if (res.ok) {
-          const { count } = await res.json()
-          setTicketCount(count)
+          const data = await res.json()
+          setPipelineStatus(data)
         }
       } catch { /* ignore network blips */ }
     }
 
     poll()
-    const interval = setInterval(poll, 5000)
+    const interval = setInterval(poll, 10000)
     return () => clearInterval(interval)
   }, [connected])
 
-  if (connected) return <ProcessingView count={ticketCount} />
+  if (connected) return <ProcessingView status={pipelineStatus} />
   if (linearConnected || jiraConnected) {
     const service = linearConnected ? 'Linear' : 'Jira'
     return (
@@ -84,8 +104,10 @@ function ConnectContent() {
 
 export default function ConnectPage() {
   return (
-    <Suspense>
-      <ConnectContent />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense>
+        <ConnectContent />
+      </Suspense>
+    </ErrorBoundary>
   )
 }

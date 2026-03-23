@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getWorkspaceId } from '@/lib/get-workspace-id'
 
 export async function POST(req: NextRequest) {
-  const workspaceId = await getWorkspaceId()
-  if (!workspaceId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const body = await req.json()
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-  const res = await fetch(`${apiUrl}/push/linear`, {
+  const res = await fetch(`${apiUrl}/accounts/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...body, workspace_id: workspaceId }),
+    body: JSON.stringify(body),
   })
 
   const data = await res.json()

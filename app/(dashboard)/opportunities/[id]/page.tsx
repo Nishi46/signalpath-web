@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { OpportunityDetail } from '@/components/OpportunityDetail'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { useWorkspace } from '@/lib/hooks/use-workspace'
 
 interface ClusterDetail {
   id: string
@@ -23,6 +25,7 @@ interface Signal {
 export default function OpportunityDetailPage() {
   const params = useParams()
   const clusterId = params.id as string
+  const { workspaceId, loading: wsLoading } = useWorkspace()
 
   const [cluster, setCluster] = useState<ClusterDetail | null>(null)
   const [signals, setSignals] = useState<Signal[]>([])
@@ -31,24 +34,64 @@ export default function OpportunityDetailPage() {
 
   useEffect(() => {
     async function load() {
-      const res = await fetch(`/api/clusters/${clusterId}`)
-      if (!res.ok) {
+      try {
+        const res = await fetch(`/api/clusters/${encodeURIComponent(clusterId)}`)
+        if (!res.ok) {
+          setNotFound(true)
+          setLoading(false)
+          return
+        }
+        const data = await res.json()
+        setCluster(data.cluster)
+        setSignals(data.signals)
+      } catch {
         setNotFound(true)
-        setLoading(false)
-        return
       }
-      const data = await res.json()
-      setCluster(data.cluster)
-      setSignals(data.signals)
       setLoading(false)
     }
     load()
   }, [clusterId])
 
-  if (loading) {
+  if (loading || wsLoading || !workspaceId) {
     return (
-      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
-        <p className='text-gray-400 text-sm'>Loading...</p>
+      <div className='min-h-screen bg-gray-50'>
+        <div className='max-w-4xl mx-auto px-6 py-10'>
+          {/* Back link skeleton */}
+          <div className='h-4 bg-gray-200 rounded w-32 mb-6 animate-pulse' />
+          {/* Header card skeleton */}
+          <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6 animate-pulse'>
+            <div className='flex items-start justify-between mb-4'>
+              <div className='h-6 bg-gray-200 rounded w-2/3' />
+              <div className='h-8 w-16 bg-gray-200 rounded-full' />
+            </div>
+            <div className='flex gap-6 mt-4'>
+              <div className='h-4 bg-gray-100 rounded w-24' />
+              <div className='h-4 bg-gray-100 rounded w-32' />
+              <div className='h-4 bg-gray-100 rounded w-28' />
+            </div>
+          </div>
+          {/* Breakdown bars skeleton */}
+          <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6 animate-pulse'>
+            <div className='h-5 bg-gray-200 rounded w-40 mb-4' />
+            <div className='space-y-3'>
+              <div className='h-8 bg-gray-100 rounded w-full' />
+              <div className='h-8 bg-gray-100 rounded w-4/5' />
+              <div className='h-8 bg-gray-100 rounded w-3/5' />
+            </div>
+          </div>
+          {/* Evidence section skeleton */}
+          <div className='bg-white rounded-2xl border border-gray-200 p-8 animate-pulse'>
+            <div className='h-5 bg-gray-200 rounded w-48 mb-4' />
+            <div className='space-y-4'>
+              {[1, 2, 3].map(i => (
+                <div key={i} className='border-l-2 border-gray-200 pl-4'>
+                  <div className='h-4 bg-gray-100 rounded w-full mb-2' />
+                  <div className='h-4 bg-gray-100 rounded w-3/4' />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -67,7 +110,9 @@ export default function OpportunityDetailPage() {
     )
   }
 
-  const workspaceId = '11111111-1111-1111-1111-111111111111' // TODO: from auth
-
-  return <OpportunityDetail cluster={cluster} signals={signals} workspaceId={workspaceId} />
+  return (
+    <ErrorBoundary>
+      <OpportunityDetail cluster={cluster} signals={signals} workspaceId={workspaceId} />
+    </ErrorBoundary>
+  )
 }

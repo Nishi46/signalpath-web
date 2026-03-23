@@ -144,7 +144,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
               disabled={pushingLinear}
               className='flex-1 bg-indigo-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             >
-              {pushingLinear ? 'Pushing...' : 'Push to Linear'}
+              {pushingLinear ? 'Creating ticket...' : 'Push to Linear'}
             </button>
           )}
 
@@ -163,7 +163,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
               disabled={pushingJira}
               className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             >
-              {pushingJira ? 'Pushing...' : 'Push to Jira'}
+              {pushingJira ? 'Creating ticket...' : 'Push to Jira'}
             </button>
           )}
         </div>
