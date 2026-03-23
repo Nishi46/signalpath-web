@@ -11,23 +11,27 @@ interface PipelineStatus {
 
 type StageStatus = 'processing' | 'complete' | 'insufficient'
 
-function getStage(status: PipelineStatus): { label: string; progress: number; status: StageStatus } {
+function getStage(status: PipelineStatus, stalledPolls: number): { label: string; progress: number; status: StageStatus } {
   const { signals_total, signals_embedded, signals_clustered, clusters } = status
 
   if (clusters > 0) {
     return { label: 'Your opportunities are ready!', progress: 100, status: 'complete' }
   }
-  // All signals embedded but no clusters → pipeline finished, not enough data
-  if (signals_total > 0 && signals_embedded >= signals_total) {
-    return {
-      label: signals_total < 3
-        ? 'We need at least 3 support tickets to identify patterns.'
-        : 'Analysis complete — no distinct patterns found in your tickets.',
-      progress: 100,
-      status: 'insufficient',
-    }
-  }
   if (signals_clustered > 0) {
+    return { label: 'Naming and scoring opportunities...', progress: 90, status: 'processing' }
+  }
+  // All signals embedded, waiting for clustering
+  if (signals_total > 0 && signals_embedded >= signals_total) {
+    // Give clustering time to run — only show "insufficient" after 2 minutes of no change
+    if (stalledPolls >= 12) {
+      return {
+        label: signals_total < 3
+          ? 'We need at least 3 support tickets to identify patterns.'
+          : 'Analysis complete — no distinct patterns found in your tickets.',
+        progress: 100,
+        status: 'insufficient',
+      }
+    }
     return { label: 'Identifying problem patterns...', progress: 85, status: 'processing' }
   }
   if (signals_embedded > 0) {
@@ -40,8 +44,8 @@ function getStage(status: PipelineStatus): { label: string; progress: number; st
   return { label: 'Starting import...', progress: 5, status: 'processing' }
 }
 
-export function ProcessingView({ status }: { status: PipelineStatus }) {
-  const stage = getStage(status)
+export function ProcessingView({ status, stalledPolls = 0 }: { status: PipelineStatus; stalledPolls?: number }) {
+  const stage = getStage(status, stalledPolls)
 
   return (
     <div className='min-h-screen bg-gray-50 flex items-center justify-center p-8'>

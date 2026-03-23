@@ -20,6 +20,7 @@ function ConnectContent() {
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>({
     signals_total: 0, signals_embedded: 0, signals_clustered: 0, clusters: 0,
   })
+  const [stalledPolls, setStalledPolls] = useState(0)
   const searchParams = useSearchParams()
   const connected = searchParams.get('connected') === 'true'
   const linearConnected = searchParams.get('linear_connected') === 'true'
@@ -66,6 +67,7 @@ function ConnectContent() {
     if (!connected) return
 
     let stopped = false
+    let stalled = 0
 
     async function poll() {
       try {
@@ -73,9 +75,17 @@ function ConnectContent() {
         if (res.ok) {
           const data = await res.json()
           setPipelineStatus(data)
-          // Stop polling when pipeline is done (has clusters, or all embedded with no clusters)
-          if (data.clusters > 0 || (data.signals_total > 0 && data.signals_embedded >= data.signals_total)) {
+
+          if (data.clusters > 0) {
+            // Pipeline complete with results — stop polling
             stopped = true
+            stalled = 0
+          } else if (data.signals_total > 0 && data.signals_embedded >= data.signals_total) {
+            // All embedded but no clusters yet — clustering may still be running
+            stalled++
+            setStalledPolls(stalled)
+            // Stop polling after ~2 minutes (12 polls × 10s) — clustering is definitely done
+            if (stalled >= 12) stopped = true
           }
         }
       } catch { /* ignore network blips */ }
@@ -88,7 +98,7 @@ function ConnectContent() {
     return () => clearInterval(interval)
   }, [connected])
 
-  if (connected) return <ProcessingView status={pipelineStatus} />
+  if (connected) return <ProcessingView status={pipelineStatus} stalledPolls={stalledPolls} />
   if (linearConnected || jiraConnected) {
     const service = linearConnected ? 'Linear' : 'Jira'
     return (

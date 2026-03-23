@@ -21,7 +21,6 @@ export default function OpportunitiesPage() {
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
-  const [insufficient, setInsufficient] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -46,11 +45,8 @@ export default function OpportunitiesPage() {
                   router.push('/connect')
                   return
                 }
-                if (status.signals_total > 0 && status.signals_embedded >= status.signals_total && status.clusters === 0) {
-                  // Pipeline done but not enough data for clustering
-                  setInsufficient(true)
-                } else if (status.signals_total > 0 && status.clusters === 0) {
-                  // Pipeline still running
+                if (status.signals_total > 0 && status.clusters === 0) {
+                  // Pipeline still running or clustering produced no results
                   setProcessing(true)
                 }
               }
@@ -118,7 +114,7 @@ export default function OpportunitiesPage() {
           </div>
 
           {visibleClusters.length === 0 ? (
-            <EmptyState processing={processing} insufficient={insufficient} />
+            <EmptyState processing={processing} />
           ) : (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
               {visibleClusters.map(cluster => (
