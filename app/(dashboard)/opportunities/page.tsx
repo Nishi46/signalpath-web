@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { OpportunityCard } from '@/components/OpportunityCard'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -15,6 +16,7 @@ interface Cluster {
 }
 
 export default function OpportunitiesPage() {
+  const router = useRouter()
   const { workspaceId, loading: wsLoading } = useWorkspace()
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,6 +42,10 @@ export default function OpportunitiesPage() {
                 const status = await statusRes.json()
                 if (status.signals_total > 0 && status.clusters === 0) {
                   setProcessing(true)
+                } else if (status.signals_total === 0) {
+                  // No data at all — redirect to connect Zendesk
+                  router.push('/connect')
+                  return
                 }
               }
             } catch { /* ignore */ }
@@ -49,7 +55,7 @@ export default function OpportunitiesPage() {
       setLoading(false)
     }
     load()
-  }, [workspaceId, wsLoading])
+  }, [workspaceId, wsLoading, router])
 
   const handleFeedback = useCallback((clusterId: string, action: string) => {
     if (action === 'dismiss') {
