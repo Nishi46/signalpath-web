@@ -27,6 +27,18 @@ export default function SignInPage() {
       return
     }
 
+    // Check if workspace has Zendesk connected — if not, send to /connect
+    try {
+      const statusRes = await fetch('/api/pipeline-status')
+      if (statusRes.ok) {
+        const status = await statusRes.json()
+        if (status.signals_total === 0) {
+          router.push('/connect')
+          return
+        }
+      }
+    } catch { /* fall through to opportunities */ }
+
     router.push('/opportunities')
   }
 
