@@ -9,24 +9,20 @@ interface Cluster {
   opportunity_score: number
   signal_count: number
   churn_signal_count: number
+  confidence?: string | null
 }
 
 interface OpportunityCardProps {
   cluster: Cluster
-  workspaceId: string
   onFeedback?: (clusterId: string, action: string) => void
 }
 
-export function OpportunityCard({ cluster, workspaceId, onFeedback }: OpportunityCardProps) {
+export function OpportunityCard({ cluster, onFeedback }: OpportunityCardProps) {
   async function handleFeedback(action: 'approve' | 'skip' | 'dismiss') {
     await fetch('/api/feedback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        workspace_id: workspaceId,
-        cluster_id: cluster.id,
-        action,
-      }),
+      body: JSON.stringify({ cluster_id: cluster.id, action }),
     })
     onFeedback?.(cluster.id, action)
   }
@@ -38,7 +34,7 @@ export function OpportunityCard({ cluster, workspaceId, onFeedback }: Opportunit
           <h3 className='text-sm font-semibold text-gray-900 leading-snug group-hover:text-indigo-700 transition-colors'>
             {cluster.label}
           </h3>
-          <ScoreBadge score={cluster.opportunity_score} />
+          <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
         </div>
         <div className='flex items-center gap-4 text-xs text-gray-500'>
           <span className='flex items-center gap-1.5'>

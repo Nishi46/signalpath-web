@@ -1,20 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { OpportunityDetail } from '@/components/OpportunityDetail'
+import { OpportunityDetail, type ClusterDetail } from '@/components/OpportunityDetail'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DashboardNav } from '@/components/DashboardNav'
 import { useWorkspace } from '@/lib/hooks/use-workspace'
-
-interface ClusterDetail {
-  id: string
-  label: string
-  opportunity_score: number
-  signal_count: number
-  churn_signal_count: number
-  recent_signal_count: number
-}
 
 interface Signal {
   id: string
@@ -33,25 +24,28 @@ export default function OpportunityDetailPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(`/api/clusters/${encodeURIComponent(clusterId)}`)
-        if (!res.ok) {
-          setNotFound(true)
-          setLoading(false)
-          return
-        }
-        const data = await res.json()
-        setCluster(data.cluster)
-        setSignals(data.signals)
-      } catch {
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/clusters/${encodeURIComponent(clusterId)}`)
+      if (!res.ok) {
         setNotFound(true)
+        setLoading(false)
+        return
       }
-      setLoading(false)
+      const data = await res.json()
+      setCluster(data.cluster)
+      setSignals(data.signals)
+      setNotFound(false)
+    } catch {
+      setNotFound(true)
     }
-    load()
+    setLoading(false)
   }, [clusterId])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch updates cluster state
+    void load()
+  }, [load])
 
   if (loading || wsLoading || !workspaceId) {
     return (
@@ -111,7 +105,12 @@ export default function OpportunityDetailPage() {
 
   return (
     <ErrorBoundary>
-      <OpportunityDetail cluster={cluster} signals={signals} workspaceId={workspaceId} />
+      <OpportunityDetail
+        cluster={cluster}
+        signals={signals}
+        workspaceId={workspaceId}
+        onRefresh={load}
+      />
     </ErrorBoundary>
   )
 }

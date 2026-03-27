@@ -1,17 +1,37 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ScoreBadge } from './ScoreBadge'
 import { DashboardNav } from './DashboardNav'
-import { ArrowLeft, AlertTriangle, ExternalLink, MessageSquare, Clock, TrendingUp } from 'lucide-react'
+import {
+  ArrowLeft,
+  AlertTriangle,
+  ExternalLink,
+  MessageSquare,
+  Clock,
+  TrendingUp,
+  Download,
+  Sparkles,
+  ThumbsUp,
+  SkipForward,
+  X,
+} from 'lucide-react'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
-interface ClusterDetail {
+export interface ClusterDetail {
   id: string
   label: string
   opportunity_score: number
   signal_count: number
   churn_signal_count: number
   recent_signal_count: number
+  human_brief?: string | null
+  agent_spec?: Record<string, unknown> | null
+  spec_generated_at?: string | null
+  confidence?: string | null
+  dimension_f?: number | null
+  dimension_r?: number | null
+  dimension_c?: number | null
 }
 
 interface Signal {
@@ -25,13 +45,17 @@ interface OpportunityDetailProps {
   cluster: ClusterDetail
   signals: Signal[]
   workspaceId: string
+  onRefresh?: () => Promise<void>
 }
 
-function ScoreBar({ label, value, max, color, icon: Icon }: {
-  label: string; value: number; max: number; color: string
+function DimensionBar({ label, value, color, icon: Icon }: {
+  label: string
+  value: number
+  color: string
   icon: React.ComponentType<{ className?: string }>
 }) {
-  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
+  const v = Number.isFinite(value) ? value : 0
+  const pct = Math.min((v / 10) * 100, 100)
   return (
     <div className='mb-4 last:mb-0'>
       <div className='flex justify-between text-sm mb-2'>
@@ -39,7 +63,7 @@ function ScoreBar({ label, value, max, color, icon: Icon }: {
           <Icon className='w-3.5 h-3.5 text-gray-400' />
           {label}
         </span>
-        <span className='text-gray-900 font-semibold tabular-nums'>{value}</span>
+        <span className='text-gray-900 font-semibold tabular-nums'>{v.toFixed(1)} / 10</span>
       </div>
       <div className='w-full bg-gray-100 rounded-full h-2'>
         <div className={`h-2 rounded-full transition-all duration-500 ${color}`} style={{ width: `${pct}%` }} />
@@ -48,12 +72,41 @@ function ScoreBar({ label, value, max, color, icon: Icon }: {
   )
 }
 
-export function OpportunityDetail({ cluster, signals, workspaceId }: OpportunityDetailProps) {
+export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: OpportunityDetailProps) {
   const [pushingLinear, setPushingLinear] = useState(false)
   const [pushingJira, setPushingJira] = useState(false)
   const [pushedLinear, setPushedLinear] = useState<string | null>(null)
   const [pushedJira, setPushedJira] = useState<string | null>(null)
   const [pushError, setPushError] = useState<string | null>(null)
+  const [specBusy, setSpecBusy] = useState(false)
+  const [specError, setSpecError] = useState<string | null>(null)
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    if (onRefresh) await onRefresh()
+  }, [onRefresh])
+
+  useEffect(() => {
+    if (!cluster.id) return
+    const channel = supabase
+      .channel(`cluster-row:${cluster.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'clusters',
+          filter: `id=eq.${cluster.id}`,
+        },
+        () => {
+          void refresh()
+        },
+      )
+      .subscribe()
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [cluster.id, refresh])
 
   async function handlePushToLinear() {
     setPushingLinear(true)
@@ -101,6 +154,71 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
     }
   }
 
+  async function handleFeedback(action: 'approve' | 'skip' | 'dismiss') {
+    setFeedbackMsg(null)
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cluster_id: cluster.id, action }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error ?? 'Could not save feedback')
+      }
+      setFeedbackMsg(action === 'approve' ? 'Marked as approve.' : action === 'skip' ? 'Skipped.' : 'Dismissed.')
+      void refresh()
+    } catch (e: unknown) {
+      setFeedbackMsg(e instanceof Error ? e.message : 'Feedback failed')
+    }
+  }
+
+  function downloadAgentSpec() {
+    if (!cluster.agent_spec) return
+    const blob = new Blob([JSON.stringify(cluster.agent_spec, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `agent_spec_${cluster.id}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function triggerSpecGeneration() {
+    setSpecBusy(true)
+    setSpecError(null)
+    try {
+      const res = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/generate-spec`, {
+        method: 'POST',
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail ?? err.error ?? 'Could not start spec generation')
+      }
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 2500))
+        const poll = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}`)
+        if (poll.ok) {
+          const data = await poll.json()
+          if (data.cluster?.human_brief) {
+            await refresh()
+            return
+          }
+        }
+      }
+      await refresh()
+    } catch (e: unknown) {
+      setSpecError(e instanceof Error ? e.message : 'Spec generation failed')
+    } finally {
+      setSpecBusy(false)
+    }
+  }
+
+  const F = cluster.dimension_f ?? 0
+  const R = cluster.dimension_r ?? 0
+  const C = cluster.dimension_c ?? 0
+  const hasSpec = Boolean(cluster.agent_spec && cluster.human_brief)
+
   return (
     <div className='min-h-screen bg-gray-50'>
       <DashboardNav />
@@ -109,14 +227,13 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
           <ArrowLeft className='w-4 h-4' /> Back to Opportunities
         </Link>
 
-        {/* Header */}
         <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6'>
           <div className='flex items-start justify-between gap-4 mb-6'>
             <h1 className='text-xl font-bold text-gray-900'>{cluster.label}</h1>
-            <ScoreBadge score={cluster.opportunity_score} />
+            <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
           </div>
 
-          <div className='flex gap-5 text-sm text-gray-500 mb-8'>
+          <div className='flex flex-wrap gap-5 text-sm text-gray-500 mb-6'>
             <span className='flex items-center gap-1.5'>
               <MessageSquare className='w-4 h-4 text-gray-400' />
               {cluster.signal_count} tickets
@@ -135,16 +252,88 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
             )}
           </div>
 
-          {/* Score breakdown */}
-          <div className='border-t border-gray-100 pt-6'>
-            <h2 className='text-sm font-semibold text-gray-900 mb-5'>Score Breakdown</h2>
-            <ScoreBar icon={MessageSquare} label='Total tickets' value={cluster.signal_count} max={cluster.signal_count} color='bg-indigo-500' />
-            <ScoreBar icon={Clock} label='Recent tickets (30d)' value={cluster.recent_signal_count} max={cluster.signal_count} color='bg-amber-500' />
-            <ScoreBar icon={TrendingUp} label='Churn signals' value={cluster.churn_signal_count} max={cluster.signal_count} color='bg-red-500' />
+          <div className='flex flex-wrap gap-2 pb-6 border-b border-gray-100'>
+            <button
+              type='button'
+              onClick={() => void handleFeedback('approve')}
+              className='flex items-center gap-1 text-xs text-green-600 hover:bg-green-50 px-3 py-2 rounded-lg font-medium border border-green-100'
+            >
+              <ThumbsUp className='w-3.5 h-3.5' /> Approve
+            </button>
+            <button
+              type='button'
+              onClick={() => void handleFeedback('skip')}
+              className='flex items-center gap-1 text-xs text-gray-600 hover:bg-gray-50 px-3 py-2 rounded-lg font-medium border border-gray-200'
+            >
+              <SkipForward className='w-3.5 h-3.5' /> Skip
+            </button>
+            <button
+              type='button'
+              onClick={() => void handleFeedback('dismiss')}
+              className='flex items-center gap-1 text-xs text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg font-medium border border-red-100'
+            >
+              <X className='w-3.5 h-3.5' /> Dismiss
+            </button>
+          </div>
+          {feedbackMsg && (
+            <p className='text-xs text-gray-600 mt-3'>{feedbackMsg}</p>
+          )}
+
+          <div className='border-t border-gray-100 pt-6 mt-6'>
+            <h2 className='text-sm font-semibold text-gray-900 mb-5'>Score dimensions (0–10)</h2>
+            <DimensionBar icon={MessageSquare} label='Frequency (F)' value={F} color='bg-indigo-500' />
+            <DimensionBar icon={Clock} label='Recency (R)' value={R} color='bg-amber-500' />
+            <DimensionBar icon={TrendingUp} label='Churn signal (C)' value={C} color='bg-red-500' />
           </div>
         </div>
 
-        {/* Push buttons */}
+        <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6'>
+          <div className='flex items-center justify-between gap-3 mb-4'>
+            <h2 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
+              <Sparkles className='w-4 h-4 text-violet-500' />
+              Opportunity brief & agent spec
+            </h2>
+            <div className='flex flex-wrap gap-2'>
+              {cluster.agent_spec && (
+                <button
+                  type='button'
+                  onClick={downloadAgentSpec}
+                  className='inline-flex items-center gap-1.5 text-xs font-medium text-violet-700 bg-violet-50 px-3 py-2 rounded-lg border border-violet-100 hover:bg-violet-100'
+                >
+                  <Download className='w-3.5 h-3.5' />
+                  agent_spec.json
+                </button>
+              )}
+              <button
+                type='button'
+                disabled={specBusy}
+                onClick={() => void triggerSpecGeneration()}
+                className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-200 disabled:opacity-50'
+              >
+                <Sparkles className='w-3.5 h-3.5' />
+                {specBusy ? 'Generating…' : hasSpec ? 'Regenerate' : 'Generate'}
+              </button>
+            </div>
+          </div>
+          {specError && (
+            <p className='text-sm text-red-600 mb-3'>{specError}</p>
+          )}
+          {specBusy && !cluster.human_brief && (
+            <p className='text-sm text-gray-500 mb-3 animate-pulse'>
+              Analysing evidence and drafting specification… this can take 15–45 seconds.
+            </p>
+          )}
+          {cluster.human_brief ? (
+            <div className='prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap'>
+              {cluster.human_brief}
+            </div>
+          ) : (
+            <p className='text-gray-400 text-sm'>
+              No brief yet. Scoring runs spec generation automatically; use Generate if you need to retry.
+            </p>
+          )}
+        </div>
+
         <div className='flex gap-3 mb-6'>
           {pushedLinear ? (
             <a
@@ -157,7 +346,8 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
             </a>
           ) : (
             <button
-              onClick={handlePushToLinear}
+              type='button'
+              onClick={() => void handlePushToLinear()}
               disabled={pushingLinear}
               className='flex-1 bg-indigo-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
@@ -176,7 +366,8 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
             </a>
           ) : (
             <button
-              onClick={handlePushToJira}
+              type='button'
+              onClick={() => void handlePushToJira()}
               disabled={pushingJira}
               className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
@@ -191,7 +382,6 @@ export function OpportunityDetail({ cluster, signals, workspaceId }: Opportunity
           </div>
         )}
 
-        {/* Evidence */}
         <div className='bg-white rounded-2xl border border-gray-200 p-8'>
           <h2 className='text-sm font-semibold text-gray-900 mb-5'>
             Evidence ({signals.length} tickets)

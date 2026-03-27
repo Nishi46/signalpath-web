@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 
 export default function SignUpPage() {
   const [companyName, setCompanyName] = useState('')
+  const [techStack, setTechStack] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -19,7 +20,12 @@ export default function SignUpPage() {
       const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, company_name: companyName }),
+        body: JSON.stringify({
+          email,
+          password,
+          company_name: companyName,
+          tech_stack: techStack.trim() || undefined,
+        }),
       })
 
       const data = await res.json()
@@ -74,6 +80,20 @@ export default function SignUpPage() {
                 className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
                 placeholder='Acme Inc.'
               />
+            </div>
+            <div>
+              <label htmlFor='tech_stack' className='block text-sm font-medium text-gray-700 mb-1.5'>
+                Tech stack <span className='text-gray-400 font-normal'>(optional)</span>
+              </label>
+              <input
+                id='tech_stack'
+                type='text'
+                value={techStack}
+                onChange={e => setTechStack(e.target.value)}
+                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
+                placeholder='e.g. React, Next.js, Python, PostgreSQL'
+              />
+              <p className='text-xs text-gray-400 mt-1'>Used to constrain AI-generated specs to your stack.</p>
             </div>
             <div>
               <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-1.5'>Email</label>

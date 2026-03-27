@@ -1,11 +1,15 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/auth-helpers-nextjs'
 
+export type AuthContext = {
+  workspaceId: string | null
+  userId: string | null
+}
+
 /**
- * Get workspace_id from the authenticated user's session (server-side).
- * Returns null if no session or no workspace_id in app_metadata.
+ * Workspace + user id from the authenticated session (server-side).
  */
-export async function getWorkspaceId(): Promise<string | null> {
+export async function getAuthContext(): Promise<AuthContext> {
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
@@ -21,6 +25,20 @@ export async function getWorkspaceId(): Promise<string | null> {
   )
 
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return null
-  return session.user?.app_metadata?.workspace_id ?? null
+  if (!session) {
+    return { workspaceId: null, userId: null }
+  }
+  return {
+    workspaceId: session.user?.app_metadata?.workspace_id ?? null,
+    userId: session.user.id ?? null,
+  }
+}
+
+/**
+ * Get workspace_id from the authenticated user's session (server-side).
+ * Returns null if no session or no workspace_id in app_metadata.
+ */
+export async function getWorkspaceId(): Promise<string | null> {
+  const { workspaceId } = await getAuthContext()
+  return workspaceId
 }

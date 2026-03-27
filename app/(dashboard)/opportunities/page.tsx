@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DashboardNav } from '@/components/DashboardNav'
 import { useWorkspace } from '@/lib/hooks/use-workspace'
+import { supabase } from '@/lib/supabase'
 
 interface Cluster {
   id: string
@@ -13,6 +14,7 @@ interface Cluster {
   opportunity_score: number
   signal_count: number
   churn_signal_count: number
+  confidence?: string | null
 }
 
 export default function OpportunitiesPage() {
@@ -23,38 +25,62 @@ export default function OpportunitiesPage() {
   const [processing, setProcessing] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
 
+  const loadClusters = useCallback(async () => {
+    if (!workspaceId) return
+    try {
+      const res = await fetch('/api/clusters')
+      if (res.ok) {
+        const { clusters: clusterData, dismissed: dismissedIds } = await res.json()
+        setClusters(clusterData)
+        setDismissed(new Set(dismissedIds))
+
+        if (clusterData.length === 0) {
+          try {
+            const statusRes = await fetch('/api/pipeline-status')
+            if (statusRes.ok) {
+              const status = await statusRes.json()
+              if (status.signals_total === 0) {
+                router.push('/connect')
+                return
+              }
+              if (status.signals_total > 0 && status.clusters === 0) {
+                setProcessing(true)
+              }
+            }
+          } catch { /* ignore */ }
+        }
+      }
+    } catch { /* network error */ }
+    setLoading(false)
+  }, [workspaceId, router])
+
   useEffect(() => {
     if (wsLoading || !workspaceId) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async list fetch
+    void loadClusters()
+  }, [workspaceId, wsLoading, loadClusters])
 
-    async function load() {
-      try {
-        const res = await fetch('/api/clusters')
-        if (res.ok) {
-          const { clusters: clusterData, dismissed: dismissedIds } = await res.json()
-          setClusters(clusterData)
-          setDismissed(new Set(dismissedIds))
-
-          if (clusterData.length === 0) {
-            try {
-              const statusRes = await fetch('/api/pipeline-status')
-              if (statusRes.ok) {
-                const status = await statusRes.json()
-                if (status.signals_total === 0) {
-                  router.push('/connect')
-                  return
-                }
-                if (status.signals_total > 0 && status.clusters === 0) {
-                  setProcessing(true)
-                }
-              }
-            } catch { /* ignore */ }
-          }
-        }
-      } catch { /* network error — skeleton will clear */ }
-      setLoading(false)
+  useEffect(() => {
+    if (!workspaceId) return
+    const channel = supabase
+      .channel(`clusters:${workspaceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'clusters',
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        () => {
+          void loadClusters()
+        },
+      )
+      .subscribe()
+    return () => {
+      void supabase.removeChannel(channel)
     }
-    load()
-  }, [workspaceId, wsLoading, router])
+  }, [workspaceId, loadClusters])
 
   const handleFeedback = useCallback((clusterId: string, action: string) => {
     if (action === 'dismiss') {
@@ -117,7 +143,6 @@ export default function OpportunitiesPage() {
                 <OpportunityCard
                   key={cluster.id}
                   cluster={cluster}
-                  workspaceId={workspaceId}
                   onFeedback={handleFeedback}
                 />
               ))}
