@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
+import { API_URL, internalHeaders } from '@/lib/internal-api'
 
 export async function POST(req: NextRequest) {
   const workspaceId = await getWorkspaceId()
@@ -8,11 +9,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-  const res = await fetch(`${apiUrl}/push/linear`, {
+  const res = await fetch(`${API_URL}/push/linear`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: internalHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ ...body, workspace_id: workspaceId }),
   })
 

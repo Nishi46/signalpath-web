@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { API_URL, internalHeaders } from '@/lib/internal-api'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-  const res = await fetch(`${apiUrl}/accounts/signup`, {
+  const res = await fetch(`${API_URL}/accounts/signup`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: internalHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(body),
   })
 

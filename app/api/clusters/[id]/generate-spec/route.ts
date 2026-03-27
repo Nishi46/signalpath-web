@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
+import { API_URL, internalHeaders } from '@/lib/internal-api'
 
 export async function POST(
   _req: NextRequest,
@@ -11,13 +12,12 @@ export async function POST(
   }
 
   const { id: clusterId } = await params
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
   const res = await fetch(
-    `${apiUrl}/clusters/${encodeURIComponent(clusterId)}/generate-spec-sync`,
+    `${API_URL}/clusters/${encodeURIComponent(clusterId)}/generate-spec-sync`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ workspace_id: workspaceId }),
     },
   )
