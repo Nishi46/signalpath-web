@@ -14,6 +14,8 @@ import {
   ThumbsUp,
   SkipForward,
   X,
+  Users,
+  ShieldAlert,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -32,6 +34,10 @@ export interface ClusterDetail {
   dimension_f?: number | null
   dimension_r?: number | null
   dimension_c?: number | null
+  dimension_b?: number | null
+  dimension_s?: number | null
+  unique_orgs?: number | null
+  unique_requesters?: number | null
 }
 
 interface Signal {
@@ -266,9 +272,11 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
     }
   }
 
-  const F = cluster.dimension_f ?? 0
-  const R = cluster.dimension_r ?? 0
+  const B = cluster.dimension_b ?? 0
+  const S = cluster.dimension_s ?? 0
   const C = cluster.dimension_c ?? 0
+  const R = cluster.dimension_r ?? 0
+  const F = cluster.dimension_f ?? 0
   const hasSpec = Boolean(cluster.agent_spec && cluster.human_brief)
 
   return (
@@ -302,6 +310,12 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
                 {cluster.recent_signal_count} recent (30d)
               </span>
             )}
+            {(cluster.unique_orgs ?? 0) > 0 && (
+              <span className='flex items-center gap-1.5 text-purple-600'>
+                <Users className='w-4 h-4' />
+                {cluster.unique_orgs} accounts affected
+              </span>
+            )}
           </div>
 
           <div className='flex flex-wrap gap-2 pb-6 border-b border-gray-100'>
@@ -333,9 +347,11 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
 
           <div className='border-t border-gray-100 pt-6 mt-6'>
             <h2 className='text-sm font-semibold text-gray-900 mb-5'>Score dimensions (0–10)</h2>
-            <DimensionBar icon={MessageSquare} label='Frequency (F)' value={F} color='bg-indigo-500' />
+            <DimensionBar icon={Users} label='Account breadth (B)' value={B} color='bg-purple-500' />
+            <DimensionBar icon={ShieldAlert} label='Severity (S)' value={S} color='bg-orange-500' />
+            <DimensionBar icon={TrendingUp} label='Churn & competitive (C)' value={C} color='bg-red-500' />
             <DimensionBar icon={Clock} label='Recency (R)' value={R} color='bg-amber-500' />
-            <DimensionBar icon={TrendingUp} label='Churn signal (C)' value={C} color='bg-red-500' />
+            <DimensionBar icon={MessageSquare} label='Frequency (F)' value={F} color='bg-indigo-500' />
           </div>
         </div>
 

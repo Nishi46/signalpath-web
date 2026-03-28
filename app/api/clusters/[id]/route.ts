@@ -23,7 +23,8 @@ export async function GET(
     .from('clusters')
     .select(
       `id, label, opportunity_score, signal_count, churn_signal_count, recent_signal_count, centroid, scored_at,
-       human_brief, agent_spec, spec_generated_at, confidence, dimension_f, dimension_r, dimension_c`,
+       human_brief, agent_spec, spec_generated_at, confidence, dimension_f, dimension_r, dimension_c,
+       dimension_b, dimension_s, unique_orgs, unique_requesters`,
     )
     .eq('id', id)
     .eq('workspace_id', workspaceId)
