@@ -10,8 +10,14 @@ const supabaseAdmin = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json()
+  let body: { email?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
 
+  const { email } = body
   if (!email || typeof email !== 'string') {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 })
   }
@@ -21,14 +27,25 @@ export async function POST(req: NextRequest) {
     .from('early_access')
     .insert({ email })
 
-  if (insertError && insertError.code !== '23505') {
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (insertError) {
+    // 23505 = unique constraint violation — email already exists, treat as success
+    if (insertError.code !== '23505') {
+      console.error('Supabase insert error:', insertError)
+      return NextResponse.json(
+        { error: 'Failed to save email', details: insertError.message },
+        { status: 500 },
+      )
+    }
   }
 
-  // Send confirmation email (don't block on failure)
+  // Send confirmation email
+  // Use RESEND_FROM_EMAIL env var if set, otherwise fall back to onboarding@resend.dev
+  // (onboarding@resend.dev works without domain verification for testing)
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'SignalPath <onboarding@resend.dev>'
+
   try {
-    await resend.emails.send({
-      from: 'SignalPath <hello@signalpath.ai>',
+    const { data, error: emailError } = await resend.emails.send({
+      from: fromEmail,
       to: email,
       subject: "You're on the early access list!",
       html: `
@@ -48,9 +65,14 @@ export async function POST(req: NextRequest) {
         </div>
       `,
     })
-  } catch (emailError) {
-    // Log but don't fail the request — the signup still succeeded
-    console.error('Failed to send confirmation email:', emailError)
+
+    if (emailError) {
+      console.error('Resend email error:', emailError)
+    } else {
+      console.log('Confirmation email sent:', data?.id)
+    }
+  } catch (err) {
+    console.error('Failed to send confirmation email:', err)
   }
 
   return NextResponse.json({ ok: true })
