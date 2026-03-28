@@ -24,9 +24,152 @@ button {
   font-family: inherit;
 }
 
+/* ----------------------------------------------------------------
+   PRD document styles — clear hierarchy, generous spacing, readable
+   ---------------------------------------------------------------- */
+
+.prd-document {
+  color: #1f2937;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+/* H1 — document title (if present) */
+.prd-document h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.01em;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* H2 — section headings */
+.prd-document h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.005em;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* First heading has no top margin */
+.prd-document h2:first-child {
+  margin-top: 0;
+}
+
+/* H3 — sub-section headings */
+.prd-document h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Paragraphs */
+.prd-document p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Bold text */
+.prd-document strong {
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Blockquotes — customer verbatims */
+.prd-document blockquote {
+  margin: 1rem 0;
+  padding: 0.75rem 1.25rem;
+  border-left: 3px solid #8b5cf6;
+  background: #f5f3ff;
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+  color: #4b5563;
+}
+
+.prd-document blockquote p {
+  margin: 0.25rem 0;
+}
+
+/* Unordered lists */
+.prd-document ul {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.prd-document ul ul {
+  list-style-type: circle;
+  margin: 0.25rem 0;
+}
+
+.prd-document li {
+  margin: 0.375rem 0;
+  padding-left: 0.25rem;
+  color: #374151;
+}
+
+.prd-document li::marker {
+  color: #9ca3af;
+}
+
+/* Ordered lists */
+.prd-document ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  list-style-type: decimal;
+}
+
+/* Inline code */
+.prd-document code {
+  font-size: 0.8125rem;
+  background: #f3f4f6;
+  color: #6d28d9;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+/* Horizontal rules — section dividers */
+.prd-document hr {
+  margin: 2rem 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Tables (if generated) */
+.prd-document table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.prd-document th {
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.prd-document td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #4b5563;
+}
+
 /* Print stylesheet — used by "Download PDF" (window.print → Save as PDF) */
 @media print {
-  /* Hide everything except the PRD content */
   body * {
     visibility: hidden;
   }
@@ -39,18 +182,29 @@ button {
     left: 0;
     top: 0;
     width: 100%;
-    padding: 2rem;
-    font-size: 12pt;
+    padding: 2rem 2.5rem;
+    font-size: 11pt;
     line-height: 1.6;
     color: #000;
   }
+  #prd-content h1 {
+    font-size: 18pt;
+    border-bottom-color: #000;
+  }
   #prd-content h2 {
+    font-size: 14pt;
     page-break-after: avoid;
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
+    border-bottom-color: #ccc;
+  }
+  #prd-content h3 {
+    font-size: 12pt;
+    page-break-after: avoid;
   }
   #prd-content blockquote {
-    border-left: 3px solid #999;
+    border-left: 2px solid #666;
     padding-left: 1rem;
+    background: none;
     color: #333;
     font-style: italic;
   }

@@ -22,6 +22,7 @@ import {
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import ReactMarkdown from 'react-markdown'
+import rehypeSanitize from 'rehype-sanitize'
 import { exportPrdToDocx } from '@/lib/export-prd'
 
 export interface ClusterDetail {
@@ -429,8 +430,8 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
             </p>
           )}
           {cluster.human_brief ? (
-            <div className='prose prose-sm max-w-none text-gray-700 print:text-black' id='prd-content'>
-              <ReactMarkdown>{cluster.human_brief}</ReactMarkdown>
+            <div className='prd-document max-w-none' id='prd-content'>
+              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{cluster.human_brief}</ReactMarkdown>
             </div>
           ) : (
             <p className='text-gray-400 text-sm'>
