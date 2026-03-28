@@ -36,15 +36,28 @@ export default function OpportunitiesPage() {
 
         if (clusterData.length === 0) {
           try {
+            // Check if workspace has Zendesk connected before redirecting
             const statusRes = await fetch('/api/pipeline-status')
             if (statusRes.ok) {
               const status = await statusRes.json()
-              if (status.signals_total === 0) {
-                router.push('/connect')
-                return
-              }
               if (status.signals_total > 0 && status.clusters === 0) {
+                // Signals exist but no clusters yet — pipeline is still running
                 setProcessing(true)
+              } else if (status.signals_total === 0) {
+                // Check if Zendesk is connected (workspace has a token)
+                const wsRes = await fetch('/api/workspace-status')
+                if (wsRes.ok) {
+                  const ws = await wsRes.json()
+                  if (!ws.zendesk_connected) {
+                    router.push('/connect')
+                    return
+                  }
+                  // Zendesk is connected but no signals yet — pipeline still fetching
+                  setProcessing(true)
+                } else {
+                  router.push('/connect')
+                  return
+                }
               }
             }
           } catch { /* ignore */ }

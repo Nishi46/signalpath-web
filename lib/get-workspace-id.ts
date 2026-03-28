@@ -24,13 +24,13 @@ export async function getAuthContext(): Promise<AuthContext> {
     },
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) {
     return { workspaceId: null, userId: null }
   }
   return {
-    workspaceId: session.user?.app_metadata?.workspace_id ?? null,
-    userId: session.user.id ?? null,
+    workspaceId: user.app_metadata?.workspace_id ?? null,
+    userId: user.id ?? null,
   }
 }
 

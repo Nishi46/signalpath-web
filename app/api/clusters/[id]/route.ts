@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 )
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const workspaceId = await getWorkspaceId()
@@ -23,7 +23,7 @@ export async function GET(
     .from('clusters')
     .select(
       `id, label, opportunity_score, signal_count, churn_signal_count, recent_signal_count, centroid, scored_at,
-       human_brief, agent_spec, spec_generated_at, confidence, dimension_f, dimension_r, dimension_c, pm_rating`,
+       human_brief, agent_spec, spec_generated_at, confidence, dimension_f, dimension_r, dimension_c`,
     )
     .eq('id', id)
     .eq('workspace_id', workspaceId)
