@@ -119,7 +119,21 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
       })
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.detail ?? 'Push to Linear failed')
+        const detail = err.detail ?? 'Push to Linear failed'
+        if (detail.toLowerCase().includes('not connected')) {
+          try {
+            const initRes = await fetch('/api/auth-linear')
+            if (initRes.ok) {
+              const { redirect_url } = await initRes.json()
+              if (redirect_url) {
+                window.location.href = redirect_url
+                return
+              }
+            }
+          } catch { /* fall through to error */ }
+          throw new Error('Linear not connected. Please connect Linear from the Connect page.')
+        }
+        throw new Error(detail)
       }
       const { url } = await res.json()
       setPushedLinear(url)
@@ -142,7 +156,21 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
       })
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.detail ?? 'Push to Jira failed')
+        const detail = err.detail ?? 'Push to Jira failed'
+        if (detail.toLowerCase().includes('not connected')) {
+          try {
+            const initRes = await fetch('/api/auth-jira')
+            if (initRes.ok) {
+              const { redirect_url } = await initRes.json()
+              if (redirect_url) {
+                window.location.href = redirect_url
+                return
+              }
+            }
+          } catch { /* fall through to error */ }
+          throw new Error('Jira not connected. Please connect Jira from the Connect page.')
+        }
+        throw new Error(detail)
       }
       const { url } = await res.json()
       setPushedJira(url)
