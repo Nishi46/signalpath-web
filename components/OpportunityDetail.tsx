@@ -81,6 +81,20 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
   const [specBusy, setSpecBusy] = useState(false)
   const [specError, setSpecError] = useState<string | null>(null)
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null)
+  const [linearConnected, setLinearConnected] = useState<boolean | null>(null)
+  const [jiraConnected, setJiraConnected] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    fetch('/api/workspace-status')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setLinearConnected(data.linear_connected)
+          setJiraConnected(data.jira_connected)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const refresh = useCallback(async () => {
     if (onRefresh) await onRefresh()
@@ -108,9 +122,29 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
     }
   }, [cluster.id, refresh])
 
+  async function redirectToOAuth(service: 'linear' | 'jira') {
+    try {
+      const initRes = await fetch(`/api/auth-${service}`)
+      if (initRes.ok) {
+        const { redirect_url } = await initRes.json()
+        if (redirect_url) {
+          window.location.href = redirect_url
+          return true
+        }
+      }
+    } catch { /* fall through */ }
+    return false
+  }
+
   async function handlePushToLinear() {
     setPushingLinear(true)
     setPushError(null)
+    if (linearConnected === false) {
+      const redirected = await redirectToOAuth('linear')
+      if (!redirected) setPushError('Could not start Linear connection. Please try from the Connect page.')
+      setPushingLinear(false)
+      return
+    }
     try {
       const res = await fetch('/api/push-linear', {
         method: 'POST',
@@ -121,17 +155,9 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
         const err = await res.json()
         const detail = err.detail ?? 'Push to Linear failed'
         if (detail.toLowerCase().includes('not connected')) {
-          try {
-            const initRes = await fetch('/api/auth-linear')
-            if (initRes.ok) {
-              const { redirect_url } = await initRes.json()
-              if (redirect_url) {
-                window.location.href = redirect_url
-                return
-              }
-            }
-          } catch { /* fall through to error */ }
-          throw new Error('Linear not connected. Please connect Linear from the Connect page.')
+          const redirected = await redirectToOAuth('linear')
+          if (!redirected) throw new Error('Linear not connected. Please connect from the Connect page.')
+          return
         }
         throw new Error(detail)
       }
@@ -148,6 +174,12 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
   async function handlePushToJira() {
     setPushingJira(true)
     setPushError(null)
+    if (jiraConnected === false) {
+      const redirected = await redirectToOAuth('jira')
+      if (!redirected) setPushError('Could not start Jira connection. Please try from the Connect page.')
+      setPushingJira(false)
+      return
+    }
     try {
       const res = await fetch('/api/push-jira', {
         method: 'POST',
@@ -158,17 +190,9 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
         const err = await res.json()
         const detail = err.detail ?? 'Push to Jira failed'
         if (detail.toLowerCase().includes('not connected')) {
-          try {
-            const initRes = await fetch('/api/auth-jira')
-            if (initRes.ok) {
-              const { redirect_url } = await initRes.json()
-              if (redirect_url) {
-                window.location.href = redirect_url
-                return
-              }
-            }
-          } catch { /* fall through to error */ }
-          throw new Error('Jira not connected. Please connect Jira from the Connect page.')
+          const redirected = await redirectToOAuth('jira')
+          if (!redirected) throw new Error('Jira not connected. Please connect from the Connect page.')
+          return
         }
         throw new Error(detail)
       }
@@ -379,7 +403,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
               disabled={pushingLinear}
               className='flex-1 bg-indigo-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
-              {pushingLinear ? 'Creating ticket...' : 'Push to Linear'}
+              {pushingLinear ? 'Creating ticket...' : linearConnected === false ? 'Connect Linear' : 'Push to Linear'}
             </button>
           )}
 
@@ -399,7 +423,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
               disabled={pushingJira}
               className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
-              {pushingJira ? 'Creating ticket...' : 'Push to Jira'}
+              {pushingJira ? 'Creating ticket...' : jiraConnected === false ? 'Connect Jira' : 'Push to Jira'}
             </button>
           )}
         </div>

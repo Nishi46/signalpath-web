@@ -15,11 +15,13 @@ export async function GET() {
 
   const { data } = await supabaseAdmin
     .from('workspaces')
-    .select('zendesk_domain, zendesk_token')
+    .select('zendesk_domain, zendesk_token, linear_token, jira_token')
     .eq('id', workspaceId)
     .single()
 
   return NextResponse.json({
     zendesk_connected: !!(data?.zendesk_domain && data?.zendesk_token),
+    linear_connected: !!data?.linear_token,
+    jira_connected: !!data?.jira_token,
   })
 }
