@@ -48,8 +48,9 @@ export default function OpportunitiesPage() {
   const { workspaceId, loading: wsLoading } = useWorkspace()
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [loading, setLoading] = useState(true)
-  const [processing, setProcessing] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  // 'idle' = haven't checked yet, 'connected' = zendesk connected but no clusters, 'not-connected' = no zendesk
+  const [workspaceState, setWorkspaceState] = useState<'idle' | 'connected' | 'not-connected'>('idle')
 
   // View & filter state
   const [view, setView] = useState<ViewMode>('grid')
@@ -69,35 +70,24 @@ export default function OpportunitiesPage() {
         setClusters(clusterData)
         setDismissed(new Set(dismissedIds))
 
-        if (clusterData.length === 0) {
+        // Only check workspace/pipeline state when there are no clusters
+        if (clusterData.length === 0 && workspaceState === 'idle') {
           try {
-            // Check if workspace has Zendesk connected before redirecting
-            const statusRes = await fetch('/api/pipeline-status')
-            if (statusRes.ok) {
-              const status = await statusRes.json()
-              if (status.signals_total > 0 && status.clusters === 0) {
-                setProcessing(true)
-              } else if (status.signals_total === 0) {
-                const wsRes = await fetch('/api/workspace-status')
-                if (wsRes.ok) {
-                  const ws = await wsRes.json()
-                  if (!ws.zendesk_connected) {
-                    router.push('/connect')
-                    return
-                  }
-                  setProcessing(true)
-                } else {
-                  router.push('/connect')
-                  return
-                }
-              }
+            const wsRes = await fetch('/api/workspace-status')
+            if (wsRes.ok) {
+              const ws = await wsRes.json()
+              setWorkspaceState(ws.zendesk_connected ? 'connected' : 'not-connected')
+            } else {
+              setWorkspaceState('not-connected')
             }
-          } catch { /* ignore */ }
+          } catch {
+            setWorkspaceState('not-connected')
+          }
         }
       }
     } catch { /* network error */ }
     setLoading(false)
-  }, [workspaceId, router])
+  }, [workspaceId, workspaceState])
 
   useEffect(() => {
     if (wsLoading || !workspaceId) return
@@ -347,7 +337,9 @@ export default function OpportunitiesPage() {
           {/* Results */}
           {filteredClusters.length === 0 ? (
             clusters.filter(c => !dismissed.has(c.id)).length === 0 ? (
-              <EmptyState processing={processing} />
+              <EmptyState
+                processing={workspaceState === 'connected'}
+              />
             ) : (
               <div className='text-center py-16'>
                 <p className='text-gray-500 text-sm'>No opportunities match your filters.</p>
