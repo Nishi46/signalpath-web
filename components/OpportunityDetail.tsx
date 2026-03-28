@@ -160,7 +160,9 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
       if (!res.ok) {
         const err = await res.json()
         const detail = err.detail ?? 'Push to Linear failed'
-        if (detail.toLowerCase().includes('not connected')) {
+        const lc = detail.toLowerCase()
+        if (res.status === 401 || lc.includes('not connected') || lc.includes('expired') || lc.includes('reconnect')) {
+          setLinearConnected(false)
           const redirected = await redirectToOAuth('linear')
           if (!redirected) throw new Error('Linear not connected. Please connect from the Connect page.')
           return
@@ -195,7 +197,9 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
       if (!res.ok) {
         const err = await res.json()
         const detail = err.detail ?? 'Push to Jira failed'
-        if (detail.toLowerCase().includes('not connected')) {
+        const lc = detail.toLowerCase()
+        if (res.status === 401 || lc.includes('not connected') || lc.includes('expired') || lc.includes('reconnect')) {
+          setJiraConnected(false)
           const redirected = await redirectToOAuth('jira')
           if (!redirected) throw new Error('Jira not connected. Please connect from the Connect page.')
           return
