@@ -1,12 +1,19 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { OpportunityCard } from '@/components/OpportunityCard'
+import { OpportunityListRow } from '@/components/OpportunityListRow'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DashboardNav } from '@/components/DashboardNav'
 import { useWorkspace } from '@/lib/hooks/use-workspace'
 import { supabase } from '@/lib/supabase'
+import {
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react'
 
 interface Cluster {
   id: string
@@ -15,7 +22,26 @@ interface Cluster {
   signal_count: number
   churn_signal_count: number
   confidence?: string | null
+  unique_orgs?: number | null
+  dimension_b?: number | null
+  dimension_s?: number | null
+  dimension_c?: number | null
+  dimension_r?: number | null
+  dimension_f?: number | null
+  spec_generated_at?: string | null
+  human_brief?: string | null
 }
+
+type ViewMode = 'grid' | 'list'
+type SortField = 'opportunity_score' | 'signal_count' | 'churn_signal_count' | 'unique_orgs'
+type ConfidenceFilter = 'all' | 'High' | 'Medium' | 'Low'
+
+const SORT_OPTIONS: { value: SortField; label: string }[] = [
+  { value: 'opportunity_score', label: 'Score' },
+  { value: 'signal_count', label: 'Signals' },
+  { value: 'churn_signal_count', label: 'Churn signals' },
+  { value: 'unique_orgs', label: 'Accounts' },
+]
 
 export default function OpportunitiesPage() {
   const router = useRouter()
@@ -24,6 +50,15 @@ export default function OpportunitiesPage() {
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+
+  // View & filter state
+  const [view, setView] = useState<ViewMode>('grid')
+  const [sortBy, setSortBy] = useState<SortField>('opportunity_score')
+  const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>('all')
+  const [minScore, setMinScore] = useState(0)
+  const [churnOnly, setChurnOnly] = useState(false)
+  const [hasSpecOnly, setHasSpecOnly] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
 
   const loadClusters = useCallback(async () => {
     if (!workspaceId) return
@@ -41,10 +76,8 @@ export default function OpportunitiesPage() {
             if (statusRes.ok) {
               const status = await statusRes.json()
               if (status.signals_total > 0 && status.clusters === 0) {
-                // Signals exist but no clusters yet — pipeline is still running
                 setProcessing(true)
               } else if (status.signals_total === 0) {
-                // Check if Zendesk is connected (workspace has a token)
                 const wsRes = await fetch('/api/workspace-status')
                 if (wsRes.ok) {
                   const ws = await wsRes.json()
@@ -52,7 +85,6 @@ export default function OpportunitiesPage() {
                     router.push('/connect')
                     return
                   }
-                  // Zendesk is connected but no signals yet — pipeline still fetching
                   setProcessing(true)
                 } else {
                   router.push('/connect')
@@ -69,7 +101,6 @@ export default function OpportunitiesPage() {
 
   useEffect(() => {
     if (wsLoading || !workspaceId) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- async list fetch
     void loadClusters()
   }, [workspaceId, wsLoading, loadClusters])
 
@@ -101,7 +132,43 @@ export default function OpportunitiesPage() {
     }
   }, [])
 
-  const visibleClusters = clusters.filter(c => !dismissed.has(c.id))
+  const filteredClusters = useMemo(() => {
+    let result = clusters.filter(c => !dismissed.has(c.id))
+
+    if (confidenceFilter !== 'all') {
+      result = result.filter(c => c.confidence === confidenceFilter)
+    }
+    if (minScore > 0) {
+      result = result.filter(c => c.opportunity_score >= minScore)
+    }
+    if (churnOnly) {
+      result = result.filter(c => c.churn_signal_count > 0)
+    }
+    if (hasSpecOnly) {
+      result = result.filter(c => c.spec_generated_at)
+    }
+
+    result.sort((a, b) => {
+      const av = (a[sortBy] as number) ?? 0
+      const bv = (b[sortBy] as number) ?? 0
+      return bv - av
+    })
+
+    return result
+  }, [clusters, dismissed, confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
+
+  const activeFilterCount =
+    (confidenceFilter !== 'all' ? 1 : 0) +
+    (minScore > 0 ? 1 : 0) +
+    (churnOnly ? 1 : 0) +
+    (hasSpecOnly ? 1 : 0)
+
+  function clearFilters() {
+    setConfidenceFilter('all')
+    setMinScore(0)
+    setChurnOnly(false)
+    setHasSpecOnly(false)
+  }
 
   if (loading || wsLoading || !workspaceId) {
     return (
@@ -141,19 +208,172 @@ export default function OpportunitiesPage() {
       <div className='min-h-screen bg-gray-50'>
         <DashboardNav />
         <div className='max-w-6xl mx-auto px-6 py-10'>
-          <div className='mb-8'>
-            <h1 className='text-2xl font-bold text-gray-900'>Opportunities</h1>
-            <p className='text-gray-500 text-sm mt-1'>
-              Product opportunities ranked by churn risk and frequency
-            </p>
+          {/* Header */}
+          <div className='flex items-end justify-between mb-6'>
+            <div>
+              <h1 className='text-2xl font-bold text-gray-900'>Opportunities</h1>
+              <p className='text-gray-500 text-sm mt-1'>
+                {filteredClusters.length} opportunit{filteredClusters.length === 1 ? 'y' : 'ies'}
+                {activeFilterCount > 0 && ` (filtered from ${clusters.filter(c => !dismissed.has(c.id)).length})`}
+              </p>
+            </div>
+
+            <div className='flex items-center gap-2'>
+              {/* Sort */}
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as SortField)}
+                className='text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300'
+              >
+                {SORT_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>Sort: {o.label}</option>
+                ))}
+              </select>
+
+              {/* Filter toggle */}
+              <button
+                type='button'
+                onClick={() => setShowFilters(prev => !prev)}
+                className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border transition-colors ${
+                  showFilters || activeFilterCount > 0
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <SlidersHorizontal className='w-3.5 h-3.5' />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className='bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full inline-flex items-center justify-center'>
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+
+              {/* View toggle */}
+              <div className='flex items-center border border-gray-200 rounded-lg overflow-hidden'>
+                <button
+                  type='button'
+                  onClick={() => setView('grid')}
+                  className={`p-2 transition-colors ${view === 'grid' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+                  title='Grid view'
+                >
+                  <LayoutGrid className='w-4 h-4' />
+                </button>
+                <button
+                  type='button'
+                  onClick={() => setView('list')}
+                  className={`p-2 transition-colors ${view === 'list' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+                  title='List view'
+                >
+                  <List className='w-4 h-4' />
+                </button>
+              </div>
+            </div>
           </div>
 
-          {visibleClusters.length === 0 ? (
-            <EmptyState processing={processing} />
-          ) : (
+          {/* Filter bar */}
+          {showFilters && (
+            <div className='bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap items-center gap-4'>
+              {/* Confidence */}
+              <div className='flex items-center gap-2'>
+                <span className='text-xs text-gray-500 font-medium'>Confidence</span>
+                <div className='flex items-center gap-1'>
+                  {(['all', 'High', 'Medium', 'Low'] as const).map(c => (
+                    <button
+                      key={c}
+                      type='button'
+                      onClick={() => setConfidenceFilter(c)}
+                      className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                        confidenceFilter === c
+                          ? 'bg-indigo-100 text-indigo-700'
+                          : 'text-gray-500 hover:bg-gray-100'
+                      }`}
+                    >
+                      {c === 'all' ? 'All' : c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Min score */}
+              <div className='flex items-center gap-2'>
+                <span className='text-xs text-gray-500 font-medium'>Min score</span>
+                <input
+                  type='range'
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={minScore}
+                  onChange={e => setMinScore(Number(e.target.value))}
+                  className='w-24 accent-indigo-600'
+                />
+                <span className='text-xs text-gray-700 font-semibold tabular-nums w-4'>{minScore}</span>
+              </div>
+
+              {/* Churn only */}
+              <label className='flex items-center gap-1.5 cursor-pointer'>
+                <input
+                  type='checkbox'
+                  checked={churnOnly}
+                  onChange={e => setChurnOnly(e.target.checked)}
+                  className='rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/20'
+                />
+                <span className='text-xs text-gray-700 font-medium'>Has churn signals</span>
+              </label>
+
+              {/* Has spec */}
+              <label className='flex items-center gap-1.5 cursor-pointer'>
+                <input
+                  type='checkbox'
+                  checked={hasSpecOnly}
+                  onChange={e => setHasSpecOnly(e.target.checked)}
+                  className='rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/20'
+                />
+                <span className='text-xs text-gray-700 font-medium'>Has PRD</span>
+              </label>
+
+              {activeFilterCount > 0 && (
+                <button
+                  type='button'
+                  onClick={clearFilters}
+                  className='ml-auto text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1'
+                >
+                  <X className='w-3 h-3' /> Clear all
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Results */}
+          {filteredClusters.length === 0 ? (
+            clusters.filter(c => !dismissed.has(c.id)).length === 0 ? (
+              <EmptyState processing={processing} />
+            ) : (
+              <div className='text-center py-16'>
+                <p className='text-gray-500 text-sm'>No opportunities match your filters.</p>
+                <button
+                  type='button'
+                  onClick={clearFilters}
+                  className='mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium'
+                >
+                  Clear filters
+                </button>
+              </div>
+            )
+          ) : view === 'grid' ? (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
-              {visibleClusters.map(cluster => (
+              {filteredClusters.map(cluster => (
                 <OpportunityCard
+                  key={cluster.id}
+                  cluster={cluster}
+                  onFeedback={handleFeedback}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className='bg-white rounded-xl border border-gray-200 divide-y divide-gray-100'>
+              {filteredClusters.map(cluster => (
+                <OpportunityListRow
                   key={cluster.id}
                   cluster={cluster}
                   onFeedback={handleFeedback}
