@@ -16,9 +16,13 @@ import {
   X,
   Users,
   ShieldAlert,
+  FileText,
+  FileDown,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import ReactMarkdown from 'react-markdown'
+import { exportPrdToDocx } from '@/lib/export-prd'
 
 export interface ClusterDetail {
   id: string
@@ -246,6 +250,15 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
     URL.revokeObjectURL(url)
   }
 
+  function handleDownloadDocx() {
+    if (!cluster.human_brief) return
+    void exportPrdToDocx(cluster.human_brief, cluster.label)
+  }
+
+  function handleDownloadPdf() {
+    window.print()
+  }
+
   async function triggerSpecGeneration() {
     setSpecBusy(true)
     setSpecError(null)
@@ -366,6 +379,26 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
               Opportunity brief & agent spec
             </h2>
             <div className='flex flex-wrap gap-2'>
+              {cluster.human_brief && (
+                <>
+                  <button
+                    type='button'
+                    onClick={handleDownloadPdf}
+                    className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100'
+                  >
+                    <FileText className='w-3.5 h-3.5' />
+                    PDF
+                  </button>
+                  <button
+                    type='button'
+                    onClick={handleDownloadDocx}
+                    className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100'
+                  >
+                    <FileDown className='w-3.5 h-3.5' />
+                    DOCX
+                  </button>
+                </>
+              )}
               {cluster.agent_spec && (
                 <button
                   type='button'
@@ -396,8 +429,8 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
             </p>
           )}
           {cluster.human_brief ? (
-            <div className='prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap'>
-              {cluster.human_brief}
+            <div className='prose prose-sm max-w-none text-gray-700 print:text-black' id='prd-content'>
+              <ReactMarkdown>{cluster.human_brief}</ReactMarkdown>
             </div>
           ) : (
             <p className='text-gray-400 text-sm'>
