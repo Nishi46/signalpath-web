@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import { CheckCircle } from 'lucide-react'
 
 export function EmailCaptureForm() {
@@ -15,15 +14,15 @@ export function EmailCaptureForm() {
     setError('')
 
     try {
-      const { error: insertError } = await supabase.from('early_access').insert({ email })
-      if (insertError) {
-        if (insertError.code === '23505') {
-          setSubmitted(true)
-        } else {
-          setError('Something went wrong. Please try again.')
-        }
-      } else {
+      const res = await fetch('/api/early-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (res.ok) {
         setSubmitted(true)
+      } else {
+        setError('Something went wrong. Please try again.')
       }
     } catch {
       setError('Something went wrong. Please try again.')
