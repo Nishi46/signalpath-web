@@ -1,6 +1,6 @@
 'use client'
 import { Suspense, useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ConnectView } from '@/components/ConnectView'
 import { ProcessingView } from '@/components/ProcessingView'
@@ -22,9 +22,21 @@ function ConnectContent() {
   })
   const [stalledPolls, setStalledPolls] = useState(0)
   const searchParams = useSearchParams()
+  const router = useRouter()
   const connected = searchParams.get('connected') === 'true'
   const linearConnected = searchParams.get('linear_connected') === 'true'
   const jiraConnected = searchParams.get('jira_connected') === 'true'
+
+  // After Linear/Jira OAuth, redirect back to the page the user was on
+  useEffect(() => {
+    if (linearConnected || jiraConnected) {
+      const returnTo = sessionStorage.getItem('oauth_return_to')
+      if (returnTo) {
+        sessionStorage.removeItem('oauth_return_to')
+        router.replace(returnTo)
+      }
+    }
+  }, [linearConnected, jiraConnected, router])
 
   async function handleConnect() {
     if (!subdomain.trim() || !workspaceId) return

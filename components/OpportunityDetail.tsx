@@ -139,6 +139,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
       if (initRes.ok) {
         const { redirect_url } = await initRes.json()
         if (redirect_url) {
+          sessionStorage.setItem('oauth_return_to', window.location.pathname)
           window.location.href = redirect_url
           return true
         }
