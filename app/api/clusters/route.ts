@@ -23,12 +23,20 @@ export async function GET() {
 
   const { data: feedback } = await supabaseAdmin
     .from('feedback')
-    .select('cluster_id')
+    .select('cluster_id, action')
     .eq('workspace_id', workspaceId)
-    .eq('action', 'dismiss')
+    .order('created_at', { ascending: false })
+
+  // Keep only the latest action per cluster
+  const feedbackMap: Record<string, string> = {}
+  for (const f of (feedback ?? [])) {
+    if (!feedbackMap[f.cluster_id]) {
+      feedbackMap[f.cluster_id] = f.action
+    }
+  }
 
   return NextResponse.json({
     clusters: clusters ?? [],
-    dismissed: (feedback ?? []).map(f => f.cluster_id),
+    feedback: feedbackMap,
   })
 }

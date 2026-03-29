@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { OpportunityCard } from '@/components/OpportunityCard'
 import { OpportunityListRow } from '@/components/OpportunityListRow'
 import { EmptyState } from '@/components/EmptyState'
@@ -23,6 +22,7 @@ interface Cluster {
   churn_signal_count: number
   confidence?: string | null
   unique_orgs?: number | null
+  revenue_at_risk_usd?: number | null
   dimension_b?: number | null
   dimension_s?: number | null
   dimension_c?: number | null
@@ -35,6 +35,7 @@ interface Cluster {
 type ViewMode = 'grid' | 'list'
 type SortField = 'opportunity_score' | 'signal_count' | 'churn_signal_count' | 'unique_orgs'
 type ConfidenceFilter = 'all' | 'High' | 'Medium' | 'Low'
+type FeedbackAction = 'approve' | 'skip' | 'dismiss'
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'opportunity_score', label: 'Score' },
@@ -43,13 +44,18 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'unique_orgs', label: 'Accounts' },
 ]
 
+const SECTIONS: { key: FeedbackAction | 'new'; label: string; color: string }[] = [
+  { key: 'new', label: 'New', color: 'text-gray-900' },
+  { key: 'approve', label: 'Approved', color: 'text-green-700' },
+  { key: 'skip', label: 'Skipped', color: 'text-gray-500' },
+  { key: 'dismiss', label: 'Dismissed', color: 'text-gray-400' },
+]
+
 export default function OpportunitiesPage() {
-  const router = useRouter()
   const { workspaceId, loading: wsLoading } = useWorkspace()
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [loading, setLoading] = useState(true)
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
-  // 'idle' = haven't checked yet, 'connected' = zendesk connected but no clusters, 'not-connected' = no zendesk
+  const [feedback, setFeedback] = useState<Record<string, string>>({})
   const [workspaceState, setWorkspaceState] = useState<'idle' | 'connected' | 'not-connected'>('idle')
 
   // View & filter state
@@ -66,12 +72,11 @@ export default function OpportunitiesPage() {
     try {
       const res = await fetch('/api/clusters')
       if (res.ok) {
-        const { clusters: clusterData, dismissed: dismissedIds } = await res.json()
-        setClusters(clusterData)
-        setDismissed(new Set(dismissedIds))
+        const data = await res.json()
+        setClusters(data.clusters)
+        setFeedback(data.feedback ?? {})
 
-        // Only check workspace/pipeline state when there are no clusters
-        if (clusterData.length === 0 && workspaceState === 'idle') {
+        if (data.clusters.length === 0 && workspaceState === 'idle') {
           try {
             const wsRes = await fetch('/api/workspace-status')
             if (wsRes.ok) {
@@ -117,13 +122,12 @@ export default function OpportunitiesPage() {
   }, [workspaceId, loadClusters])
 
   const handleFeedback = useCallback((clusterId: string, action: string) => {
-    if (action === 'dismiss') {
-      setDismissed(prev => new Set(prev).add(clusterId))
-    }
+    setFeedback(prev => ({ ...prev, [clusterId]: action }))
   }, [])
 
-  const filteredClusters = useMemo(() => {
-    let result = clusters.filter(c => !dismissed.has(c.id))
+  // Apply filters to a list of clusters
+  function applyFilters(list: Cluster[]) {
+    let result = list
 
     if (confidenceFilter !== 'all') {
       result = result.filter(c => c.confidence === confidenceFilter)
@@ -145,7 +149,34 @@ export default function OpportunitiesPage() {
     })
 
     return result
-  }, [clusters, dismissed, confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
+  }
+
+  // Group clusters into tiered sections
+  const sections = useMemo(() => {
+    const groups: Record<string, Cluster[]> = {
+      new: [],
+      approve: [],
+      skip: [],
+      dismiss: [],
+    }
+
+    for (const c of clusters) {
+      const action = feedback[c.id]
+      if (action === 'approve' || action === 'skip' || action === 'dismiss') {
+        groups[action].push(c)
+      } else {
+        groups['new'].push(c)
+      }
+    }
+
+    return SECTIONS.map(s => ({
+      ...s,
+      clusters: applyFilters(groups[s.key]),
+      totalUnfiltered: groups[s.key].length,
+    })).filter(s => s.totalUnfiltered > 0)
+  }, [clusters, feedback, confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
+
+  const totalVisible = sections.reduce((sum, s) => sum + s.clusters.length, 0)
 
   const activeFilterCount =
     (confidenceFilter !== 'all' ? 1 : 0) +
@@ -203,8 +234,8 @@ export default function OpportunitiesPage() {
             <div>
               <h1 className='text-2xl font-bold text-gray-900'>Opportunities</h1>
               <p className='text-gray-500 text-sm mt-1'>
-                {filteredClusters.length} opportunit{filteredClusters.length === 1 ? 'y' : 'ies'}
-                {activeFilterCount > 0 && ` (filtered from ${clusters.filter(c => !dismissed.has(c.id)).length})`}
+                {totalVisible} opportunit{totalVisible === 1 ? 'y' : 'ies'}
+                {activeFilterCount > 0 && ` (filtered from ${clusters.length})`}
               </p>
             </div>
 
@@ -334,42 +365,63 @@ export default function OpportunitiesPage() {
             </div>
           )}
 
-          {/* Results */}
-          {filteredClusters.length === 0 ? (
-            clusters.filter(c => !dismissed.has(c.id)).length === 0 ? (
-              <EmptyState
-                processing={workspaceState === 'connected'}
-              />
-            ) : (
-              <div className='text-center py-16'>
-                <p className='text-gray-500 text-sm'>No opportunities match your filters.</p>
-                <button
-                  type='button'
-                  onClick={clearFilters}
-                  className='mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium'
-                >
-                  Clear filters
-                </button>
-              </div>
-            )
-          ) : view === 'grid' ? (
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
-              {filteredClusters.map(cluster => (
-                <OpportunityCard
-                  key={cluster.id}
-                  cluster={cluster}
-                  onFeedback={handleFeedback}
-                />
-              ))}
+          {/* Results — tiered sections */}
+          {clusters.length === 0 ? (
+            <EmptyState processing={workspaceState === 'connected'} />
+          ) : sections.length === 0 ? (
+            <div className='text-center py-16'>
+              <p className='text-gray-500 text-sm'>No opportunities match your filters.</p>
+              <button
+                type='button'
+                onClick={clearFilters}
+                className='mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium'
+              >
+                Clear filters
+              </button>
             </div>
           ) : (
-            <div className='bg-white rounded-xl border border-gray-200 divide-y divide-gray-100'>
-              {filteredClusters.map(cluster => (
-                <OpportunityListRow
-                  key={cluster.id}
-                  cluster={cluster}
-                  onFeedback={handleFeedback}
-                />
+            <div className='space-y-8'>
+              {sections.map(section => (
+                <div key={section.key}>
+                  {/* Section header */}
+                  <div className='flex items-center gap-3 mb-4'>
+                    <h2 className={`text-sm font-semibold ${section.color}`}>
+                      {section.label}
+                    </h2>
+                    <span className='text-xs text-gray-400'>
+                      {section.clusters.length}
+                      {section.clusters.length !== section.totalUnfiltered && ` of ${section.totalUnfiltered}`}
+                    </span>
+                    <div className='flex-1 border-t border-gray-100' />
+                  </div>
+
+                  {/* Section content */}
+                  {section.clusters.length === 0 ? (
+                    <p className='text-xs text-gray-400 pl-1'>No matches for current filters.</p>
+                  ) : view === 'grid' ? (
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
+                      {section.clusters.map(cluster => (
+                        <OpportunityCard
+                          key={cluster.id}
+                          cluster={cluster}
+                          status={section.key === 'new' ? null : section.key as FeedbackAction}
+                          onFeedback={handleFeedback}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className='bg-white rounded-xl border border-gray-200 divide-y divide-gray-100'>
+                      {section.clusters.map(cluster => (
+                        <OpportunityListRow
+                          key={cluster.id}
+                          cluster={cluster}
+                          status={section.key === 'new' ? null : section.key as FeedbackAction}
+                          onFeedback={handleFeedback}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
