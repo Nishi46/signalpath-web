@@ -19,6 +19,7 @@ import {
   FileText,
   FileDown,
   ChevronDown,
+  DollarSign,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -44,6 +45,8 @@ export interface ClusterDetail {
   dimension_s?: number | null
   unique_orgs?: number | null
   unique_requesters?: number | null
+  dimension_v?: number | null
+  revenue_at_risk_usd?: number | null
 }
 
 interface Signal {
@@ -58,6 +61,14 @@ interface OpportunityDetailProps {
   signals: Signal[]
   workspaceId: string
   onRefresh?: () => Promise<void>
+}
+
+function formatRevenue(amount: number | null | undefined): string {
+  if (!amount) return '$0'
+  if (amount >= 1_000_000_000) return `$${(amount / 1_000_000_000).toFixed(1)}B`
+  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`
+  return `$${amount}`
 }
 
 function DimensionBar({ label, value, color, icon: Icon }: {
@@ -298,6 +309,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
   const C = cluster.dimension_c ?? 0
   const R = cluster.dimension_r ?? 0
   const F = cluster.dimension_f ?? 0
+  const V = cluster.dimension_v ?? 0
   const hasSpec = Boolean(cluster.agent_spec && cluster.human_brief)
 
   return (
@@ -337,6 +349,13 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
                 {cluster.unique_orgs} accounts affected
               </span>
             )}
+            {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
+              <span className='flex items-center gap-1.5 text-emerald-600'>
+                <DollarSign className='w-4 h-4' />
+                {formatRevenue(cluster.revenue_at_risk_usd)} at risk
+                <span className='text-xs text-gray-400 italic'>AI estimate</span>
+              </span>
+            )}
           </div>
 
           <div className='flex flex-wrap gap-2 pb-6 border-b border-gray-100'>
@@ -373,6 +392,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
             <DimensionBar icon={TrendingUp} label='Churn & competitive (C)' value={C} color='bg-red-500' />
             <DimensionBar icon={Clock} label='Recency (R)' value={R} color='bg-amber-500' />
             <DimensionBar icon={MessageSquare} label='Frequency (F)' value={F} color='bg-indigo-500' />
+            <DimensionBar icon={DollarSign} label='Revenue at risk (V)' value={V} color='bg-emerald-500' />
           </div>
         </div>
 

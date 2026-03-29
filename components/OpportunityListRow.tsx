@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { ScoreBadge } from './ScoreBadge'
-import { MessageSquare, AlertTriangle, Users, Sparkles, ThumbsUp, SkipForward, X } from 'lucide-react'
+import { MessageSquare, AlertTriangle, Users, Sparkles, ThumbsUp, SkipForward, X, DollarSign } from 'lucide-react'
 
 interface Cluster {
   id: string
@@ -11,12 +11,21 @@ interface Cluster {
   churn_signal_count: number
   confidence?: string | null
   unique_orgs?: number | null
+  revenue_at_risk_usd?: number | null
   spec_generated_at?: string | null
 }
 
 interface OpportunityListRowProps {
   cluster: Cluster
   onFeedback?: (clusterId: string, action: string) => void
+}
+
+function formatRevenue(amount: number | null | undefined): string {
+  if (!amount) return '$0'
+  if (amount >= 1_000_000_000) return `$${(amount / 1_000_000_000).toFixed(1)}B`
+  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`
+  return `$${amount}`
 }
 
 export function OpportunityListRow({ cluster, onFeedback }: OpportunityListRowProps) {
@@ -56,6 +65,12 @@ export function OpportunityListRow({ cluster, onFeedback }: OpportunityListRowPr
             <span className='flex items-center gap-1 text-purple-600'>
               <Users className='w-3 h-3' />
               {cluster.unique_orgs} accounts
+            </span>
+          )}
+          {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
+            <span className='flex items-center gap-1 text-emerald-600'>
+              <DollarSign className='w-3 h-3' />
+              {formatRevenue(cluster.revenue_at_risk_usd)}
             </span>
           )}
           {cluster.spec_generated_at && (
