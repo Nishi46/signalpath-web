@@ -309,7 +309,6 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
   const C = cluster.dimension_c ?? 0
   const R = cluster.dimension_r ?? 0
   const F = cluster.dimension_f ?? 0
-  const V = cluster.dimension_v ?? 0
   const hasSpec = Boolean(cluster.agent_spec && cluster.human_brief)
 
   return (
@@ -392,8 +391,22 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
             <DimensionBar icon={TrendingUp} label='Churn & competitive (C)' value={C} color='bg-red-500' />
             <DimensionBar icon={Clock} label='Recency (R)' value={R} color='bg-amber-500' />
             <DimensionBar icon={MessageSquare} label='Frequency (F)' value={F} color='bg-indigo-500' />
-            <DimensionBar icon={DollarSign} label='Revenue at risk (V)' value={V} color='bg-emerald-500' />
           </div>
+
+          {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
+            <div className='border-t border-gray-100 pt-5 mt-5'>
+              <div className='flex items-center justify-between'>
+                <span className='text-sm text-gray-600 font-medium flex items-center gap-1.5'>
+                  <DollarSign className='w-3.5 h-3.5 text-gray-400' />
+                  Revenue at risk
+                </span>
+                <div className='flex items-center gap-2'>
+                  <span className='text-lg font-bold text-emerald-600'>{formatRevenue(cluster.revenue_at_risk_usd)}</span>
+                  <span className='text-xs text-gray-400 italic'>AI estimate</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6'>
