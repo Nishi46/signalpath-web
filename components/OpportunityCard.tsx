@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { ScoreBadge } from './ScoreBadge'
-import { MessageSquare, AlertTriangle, ThumbsUp, SkipForward, X, Check } from 'lucide-react'
+import { MessageSquare, AlertTriangle, ThumbsUp, SkipForward, X, Check, DollarSign } from 'lucide-react'
 
 type FeedbackAction = 'approve' | 'skip' | 'dismiss'
 
@@ -12,12 +12,21 @@ interface Cluster {
   signal_count: number
   churn_signal_count: number
   confidence?: string | null
+  revenue_at_risk_usd?: number | null
 }
 
 interface OpportunityCardProps {
   cluster: Cluster
   status?: FeedbackAction | null
   onFeedback?: (clusterId: string, action: string) => void
+}
+
+function formatRevenue(amount: number | null | undefined): string {
+  if (!amount) return '$0'
+  if (amount >= 1_000_000_000) return `$${(amount / 1_000_000_000).toFixed(1)}B`
+  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`
+  return `$${amount}`
 }
 
 export function OpportunityCard({ cluster, status, onFeedback }: OpportunityCardProps) {
@@ -51,6 +60,12 @@ export function OpportunityCard({ cluster, status, onFeedback }: OpportunityCard
             <span className='flex items-center gap-1.5 text-red-500'>
               <AlertTriangle className='w-3.5 h-3.5' />
               {cluster.churn_signal_count} churn
+            </span>
+          )}
+          {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
+            <span className='flex items-center gap-1.5 text-emerald-600'>
+              <DollarSign className='w-3.5 h-3.5' />
+              {formatRevenue(cluster.revenue_at_risk_usd)}
             </span>
           )}
         </div>
