@@ -18,6 +18,7 @@ import {
   ShieldAlert,
   FileText,
   FileDown,
+  ChevronDown,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -94,6 +95,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null)
   const [linearConnected, setLinearConnected] = useState<boolean | null>(null)
   const [jiraConnected, setJiraConnected] = useState<boolean | null>(null)
+  const [briefExpanded, setBriefExpanded] = useState(false)
 
   useEffect(() => {
     fetch('/api/workspace-status')
@@ -431,8 +433,25 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
             </p>
           )}
           {cluster.human_brief ? (
-            <div className='prd-document max-w-none' id='prd-content'>
-              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{cluster.human_brief}</ReactMarkdown>
+            <div>
+              <div
+                className={`relative overflow-hidden transition-[max-height] duration-300 ease-in-out ${briefExpanded ? 'max-h-none' : 'max-h-64'}`}
+              >
+                <div className='prd-document max-w-none' id='prd-content'>
+                  <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{cluster.human_brief}</ReactMarkdown>
+                </div>
+                {!briefExpanded && (
+                  <div className='absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none' />
+                )}
+              </div>
+              <button
+                type='button'
+                onClick={() => setBriefExpanded(!briefExpanded)}
+                className='w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-2 mt-1 transition-colors'
+              >
+                {briefExpanded ? 'Show less' : 'Show more'}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${briefExpanded ? 'rotate-180' : ''}`} />
+              </button>
             </div>
           ) : (
             <p className='text-gray-400 text-sm'>
