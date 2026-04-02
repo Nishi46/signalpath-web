@@ -54,11 +54,11 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30 flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 flex items-center justify-center p-4'>
       <div className='w-full max-w-sm'>
         {/* Logo */}
         <div className='flex items-center justify-center gap-2 mb-10'>
-          <div className='w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center'>
+          <div className='w-9 h-9 bg-emerald-600 rounded-lg flex items-center justify-center'>
             <span className='text-white font-bold'>S</span>
           </div>
           <span className='font-bold text-xl text-gray-900'>SignalPath</span>
@@ -77,7 +77,7 @@ export default function SignUpPage() {
                 required
                 value={companyName}
                 onChange={e => setCompanyName(e.target.value)}
-                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
+                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
                 placeholder='Acme Inc.'
               />
             </div>
@@ -90,7 +90,7 @@ export default function SignUpPage() {
                 type='text'
                 value={techStack}
                 onChange={e => setTechStack(e.target.value)}
-                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
+                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
                 placeholder='e.g. React, Next.js, Python, PostgreSQL'
               />
               <p className='text-xs text-gray-400 mt-1'>Used to constrain AI-generated specs to your stack.</p>
@@ -103,7 +103,7 @@ export default function SignUpPage() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
+                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
                 placeholder='you@company.com'
               />
             </div>
@@ -116,7 +116,7 @@ export default function SignUpPage() {
                 minLength={6}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
+                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
                 placeholder='At least 6 characters'
               />
             </div>
@@ -128,7 +128,7 @@ export default function SignUpPage() {
             <button
               type='submit'
               disabled={loading}
-              className='w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
+              className='w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
             >
               {loading ? 'Creating account...' : 'Create account'}
             </button>
@@ -136,7 +136,7 @@ export default function SignUpPage() {
 
           <p className='text-gray-500 text-sm text-center mt-6'>
             Already have an account?{' '}
-            <Link href='/signin' className='text-indigo-600 hover:text-indigo-700 font-medium'>Sign in</Link>
+            <Link href='/signin' className='text-emerald-600 hover:text-emerald-700 font-medium'>Sign in</Link>
           </p>
         </div>
       </div>

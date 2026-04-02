@@ -49,12 +49,12 @@ export function EmailCaptureForm() {
           placeholder='your@email.com'
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className='flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all'
+          className='flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all'
         />
         <button
           type='submit'
           disabled={loading}
-          className='bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer disabled:cursor-not-allowed'
+          className='bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer disabled:cursor-not-allowed'
         >
           {loading ? 'Saving...' : 'Request early access'}
         </button>

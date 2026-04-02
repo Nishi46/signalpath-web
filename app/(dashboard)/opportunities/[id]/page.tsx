@@ -94,7 +94,7 @@ export default function OpportunityDetailPage() {
           <div className='text-center'>
             <h1 className='text-xl font-bold text-gray-900 mb-2'>Opportunity not found</h1>
             <p className='text-gray-500 text-sm mb-4'>This opportunity may have been removed or doesn&apos;t exist.</p>
-            <Link href='/opportunities' className='text-indigo-600 hover:text-indigo-700 text-sm font-medium'>
+            <Link href='/opportunities' className='text-emerald-600 hover:text-emerald-700 text-sm font-medium'>
               Back to Opportunities
             </Link>
           </div>

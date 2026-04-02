@@ -53,14 +53,14 @@ export function ProcessingView({ status, stalledPolls = 0 }: { status: PipelineS
         <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-10 max-w-md w-full text-center'>
           <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${
             stage.status === 'complete' ? 'bg-green-50' :
-            stage.status === 'insufficient' ? 'bg-amber-50' : 'bg-indigo-50'
+            stage.status === 'insufficient' ? 'bg-amber-50' : 'bg-emerald-50'
           }`}>
             {stage.status === 'complete' ? (
               <CheckCircle className='w-8 h-8 text-green-600' />
             ) : stage.status === 'insufficient' ? (
               <AlertTriangle className='w-8 h-8 text-amber-500' />
             ) : (
-              <Loader2 className='w-8 h-8 text-indigo-600 animate-spin' />
+              <Loader2 className='w-8 h-8 text-emerald-600 animate-spin' />
             )}
           </div>
           <h1 className='text-2xl font-bold text-gray-900 mb-2'>Zendesk connected!</h1>
@@ -71,7 +71,7 @@ export function ProcessingView({ status, stalledPolls = 0 }: { status: PipelineS
             <div
               className={`h-2 rounded-full transition-all duration-700 ease-out ${
                 stage.status === 'insufficient' ? 'bg-amber-400' :
-                stage.status === 'complete' ? 'bg-green-500' : 'bg-indigo-600'
+                stage.status === 'complete' ? 'bg-green-500' : 'bg-emerald-600'
               }`}
               style={{ width: `${stage.progress}%` }}
             />
@@ -81,21 +81,21 @@ export function ProcessingView({ status, stalledPolls = 0 }: { status: PipelineS
           <div className={`rounded-2xl p-6 mb-8 ${
             stage.status === 'complete' ? 'bg-green-50 border border-green-100' :
             stage.status === 'insufficient' ? 'bg-amber-50 border border-amber-100' :
-            'bg-indigo-50 border border-indigo-100'
+            'bg-emerald-50 border border-emerald-100'
           }`}>
             <p className={`text-4xl font-bold tabular-nums ${
               stage.status === 'complete' ? 'text-green-700' :
-              stage.status === 'insufficient' ? 'text-amber-700' : 'text-indigo-700'
+              stage.status === 'insufficient' ? 'text-amber-700' : 'text-emerald-700'
             }`}>{status.signals_total.toLocaleString()}</p>
             <p className={`text-sm mt-2 ${
               stage.status === 'complete' ? 'text-green-500' :
-              stage.status === 'insufficient' ? 'text-amber-500' : 'text-indigo-500'
+              stage.status === 'insufficient' ? 'text-amber-500' : 'text-emerald-500'
             }`}>tickets processed so far</p>
           </div>
 
           {stage.status === 'complete' ? (
             <Link href='/opportunities'
-              className='block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl text-sm text-center transition-colors'>
+              className='block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl text-sm text-center transition-colors'>
               View Opportunities
             </Link>
           ) : stage.status === 'insufficient' ? (

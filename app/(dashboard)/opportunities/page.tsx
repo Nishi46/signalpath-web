@@ -244,7 +244,7 @@ export default function OpportunitiesPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as SortField)}
-                className='text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300'
+                className='text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-300'
               >
                 {SORT_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>Sort: {o.label}</option>
@@ -257,14 +257,14 @@ export default function OpportunitiesPage() {
                 onClick={() => setShowFilters(prev => !prev)}
                 className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border transition-colors ${
                   showFilters || activeFilterCount > 0
-                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                 }`}
               >
                 <SlidersHorizontal className='w-3.5 h-3.5' />
                 Filters
                 {activeFilterCount > 0 && (
-                  <span className='bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full inline-flex items-center justify-center'>
+                  <span className='bg-emerald-600 text-white text-[10px] font-bold w-4 h-4 rounded-full inline-flex items-center justify-center'>
                     {activeFilterCount}
                   </span>
                 )}
@@ -306,7 +306,7 @@ export default function OpportunitiesPage() {
                       onClick={() => setConfidenceFilter(c)}
                       className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
                         confidenceFilter === c
-                          ? 'bg-indigo-100 text-indigo-700'
+                          ? 'bg-emerald-100 text-emerald-700'
                           : 'text-gray-500 hover:bg-gray-100'
                       }`}
                     >
@@ -326,7 +326,7 @@ export default function OpportunitiesPage() {
                   step={1}
                   value={minScore}
                   onChange={e => setMinScore(Number(e.target.value))}
-                  className='w-24 accent-indigo-600'
+                  className='w-24 accent-emerald-600'
                 />
                 <span className='text-xs text-gray-700 font-semibold tabular-nums w-4'>{minScore}</span>
               </div>
@@ -337,7 +337,7 @@ export default function OpportunitiesPage() {
                   type='checkbox'
                   checked={churnOnly}
                   onChange={e => setChurnOnly(e.target.checked)}
-                  className='rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/20'
+                  className='rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/20'
                 />
                 <span className='text-xs text-gray-700 font-medium'>Has churn signals</span>
               </label>
@@ -348,7 +348,7 @@ export default function OpportunitiesPage() {
                   type='checkbox'
                   checked={hasSpecOnly}
                   onChange={e => setHasSpecOnly(e.target.checked)}
-                  className='rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/20'
+                  className='rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/20'
                 />
                 <span className='text-xs text-gray-700 font-medium'>Has PRD</span>
               </label>
@@ -374,7 +374,7 @@ export default function OpportunitiesPage() {
               <button
                 type='button'
                 onClick={clearFilters}
-                className='mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium'
+                className='mt-3 text-sm text-emerald-600 hover:text-emerald-700 font-medium'
               >
                 Clear filters
               </button>
