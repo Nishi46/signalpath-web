@@ -15,15 +15,15 @@ export function ConnectView({ subdomain, setSubdomain, connecting, onConnect }: 
       <DashboardNav />
       <div className='flex items-center justify-center p-8 mt-10'>
         <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-10 max-w-md w-full text-center'>
-          <div className='w-14 h-14 bg-emerald-50 rounded-2xl mx-auto mb-6 flex items-center justify-center'>
-            <Link2 className='w-6 h-6 text-emerald-600' />
+          <div className='w-14 h-14 bg-blue-50 rounded-2xl mx-auto mb-6 flex items-center justify-center'>
+            <Link2 className='w-6 h-6 text-blue-600' />
           </div>
           <h1 className='text-2xl font-bold text-gray-900 mb-3'>Connect your Zendesk</h1>
           <p className='text-gray-500 text-sm mb-8 leading-relaxed'>
             SignalPath reads your support tickets and surfaces the product
             opportunities most likely to reduce churn. Setup takes 60 seconds.
           </p>
-          <div className='flex rounded-xl border border-gray-200 overflow-hidden mb-2 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all'>
+          <div className='flex rounded-xl border border-gray-200 overflow-hidden mb-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all'>
             <input
               type='text'
               value={subdomain}
@@ -38,7 +38,7 @@ export function ConnectView({ subdomain, setSubdomain, connecting, onConnect }: 
           <button
             onClick={onConnect}
             disabled={connecting || !subdomain.trim()}
-            className='w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
+            className='w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
           >
             {connecting ? 'Redirecting to Zendesk...' : 'Connect Zendesk'}
           </button>

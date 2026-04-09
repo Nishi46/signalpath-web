@@ -29,11 +29,11 @@ export default function SignInPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 flex items-center justify-center p-4'>
       <div className='w-full max-w-sm'>
         {/* Logo */}
         <div className='flex items-center justify-center gap-2 mb-10'>
-          <div className='w-9 h-9 bg-emerald-600 rounded-lg flex items-center justify-center'>
+          <div className='w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center'>
             <span className='text-white font-bold'>S</span>
           </div>
           <span className='font-bold text-xl text-gray-900'>SignalPath</span>
@@ -52,7 +52,7 @@ export default function SignInPage() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
+                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
                 placeholder='you@company.com'
               />
             </div>
@@ -64,7 +64,7 @@ export default function SignInPage() {
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
+                className='w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors'
                 placeholder='Your password'
               />
             </div>
@@ -76,7 +76,7 @@ export default function SignInPage() {
             <button
               type='submit'
               disabled={loading}
-              className='w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
+              className='w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
@@ -84,7 +84,7 @@ export default function SignInPage() {
 
           <p className='text-gray-500 text-sm text-center mt-6'>
             Don&apos;t have an account?{' '}
-            <Link href='/signup' className='text-emerald-600 hover:text-emerald-700 font-medium'>Sign up</Link>
+            <Link href='/signup' className='text-blue-600 hover:text-blue-700 font-medium'>Sign up</Link>
           </p>
         </div>
       </div>

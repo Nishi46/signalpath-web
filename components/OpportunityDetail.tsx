@@ -390,7 +390,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
             <DimensionBar icon={ShieldAlert} label='Severity (S)' value={S} color='bg-orange-500' />
             <DimensionBar icon={TrendingUp} label='Churn & competitive (C)' value={C} color='bg-red-500' />
             <DimensionBar icon={Clock} label='Recency (R)' value={R} color='bg-amber-500' />
-            <DimensionBar icon={MessageSquare} label='Frequency (F)' value={F} color='bg-emerald-500' />
+            <DimensionBar icon={MessageSquare} label='Frequency (F)' value={F} color='bg-blue-500' />
           </div>
 
           {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
@@ -412,7 +412,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
         <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6'>
           <div className='flex items-center justify-between gap-3 mb-4'>
             <h2 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
-              <Sparkles className='w-4 h-4 text-teal-500' />
+              <Sparkles className='w-4 h-4 text-sky-500' />
               Opportunity brief & agent spec
             </h2>
             <div className='flex flex-wrap gap-2'>
@@ -440,7 +440,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
                 <button
                   type='button'
                   onClick={downloadAgentSpec}
-                  className='inline-flex items-center gap-1.5 text-xs font-medium text-teal-700 bg-teal-50 px-3 py-2 rounded-lg border border-teal-100 hover:bg-teal-100'
+                  className='inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 bg-sky-50 px-3 py-2 rounded-lg border border-sky-100 hover:bg-sky-100'
                 >
                   <Download className='w-3.5 h-3.5' />
                   agent_spec.json
@@ -508,7 +508,7 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
               type='button'
               onClick={() => void handlePushToLinear()}
               disabled={pushingLinear}
-              className='flex-1 bg-emerald-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
               {pushingLinear ? 'Creating ticket...' : linearConnected === false ? 'Connect Linear' : 'Push to Linear'}
             </button>

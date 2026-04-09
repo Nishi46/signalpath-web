@@ -46,7 +46,7 @@ export function OpportunityCard({ cluster, status, onFeedback }: OpportunityCard
     <div className={`bg-white rounded-2xl border border-gray-200 p-6 transition-all duration-200 group ${isDismissed ? 'opacity-40 grayscale' : 'hover:shadow-md hover:border-gray-300'}`}>
       <Link href={`/opportunities/${cluster.id}`} className='block mb-4'>
         <div className='flex items-start justify-between gap-3 mb-4'>
-          <h3 className='text-sm font-semibold text-gray-900 leading-snug group-hover:text-emerald-700 transition-colors'>
+          <h3 className='text-sm font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors'>
             {cluster.label}
           </h3>
           <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />

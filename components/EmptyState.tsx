@@ -16,7 +16,7 @@ export function EmptyState({ processing = false, insufficient = false }: { proce
         </p>
         <Link
           href='/connect'
-          className='bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition-colors'
+          className='bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition-colors'
         >
           Reconnect Zendesk
         </Link>
@@ -27,8 +27,8 @@ export function EmptyState({ processing = false, insufficient = false }: { proce
   if (processing) {
     return (
       <div className='flex flex-col items-center justify-center py-24 text-center'>
-        <div className='w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-5'>
-          <Loader2 className='w-7 h-7 text-emerald-500 animate-spin' />
+        <div className='w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-5'>
+          <Loader2 className='w-7 h-7 text-blue-500 animate-spin' />
         </div>
         <h2 className='text-lg font-semibold text-gray-900 mb-2'>Tickets are still being processed</h2>
         <p className='text-gray-500 text-sm max-w-sm leading-relaxed'>
@@ -50,7 +50,7 @@ export function EmptyState({ processing = false, insufficient = false }: { proce
       </p>
       <Link
         href='/connect'
-        className='bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition-colors'
+        className='bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition-colors'
       >
         Connect Zendesk
       </Link>
