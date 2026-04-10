@@ -7,6 +7,16 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
+interface WorkspaceRow {
+  zendesk_domain: string | null
+  zendesk_token: string | null
+  linear_token: string | null
+  jira_token: string | null
+  labeled_cluster_count: number | null
+  ml_ready: boolean | null
+  ml_model_version: number | null
+}
+
 export async function GET() {
   const workspaceId = await getWorkspaceId()
   if (!workspaceId) {
@@ -15,13 +25,26 @@ export async function GET() {
 
   const { data } = await supabaseAdmin
     .from('workspaces')
-    .select('zendesk_domain, zendesk_token, linear_token, jira_token')
+    .select(
+      'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
+      'labeled_cluster_count, ml_ready, ml_model_version'
+    )
     .eq('id', workspaceId)
-    .single()
+    .single() as { data: WorkspaceRow | null }
+
+  const labeledCount = data?.labeled_cluster_count ?? 0
+  const ML_THRESHOLD = 50
 
   return NextResponse.json({
     zendesk_connected: !!(data?.zendesk_domain && data?.zendesk_token),
     linear_connected: !!data?.linear_token,
     jira_connected: !!data?.jira_token,
+    // ML readiness stats — safe to expose (version number + counts, no model weights or paths).
+    ml_stats: {
+      labeled_cluster_count: labeledCount,
+      ml_ready: data?.ml_ready ?? false,
+      ml_model_version: data?.ml_model_version ?? 0,
+      labels_needed: Math.max(0, ML_THRESHOLD - labeledCount),
+    },
   })
 }
