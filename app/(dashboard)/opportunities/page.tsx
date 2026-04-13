@@ -8,7 +8,9 @@ import { DashboardNav } from '@/components/DashboardNav'
 import { TriageModal } from '@/components/TriageModal'
 import { OnboardingChecklist } from '@/components/OnboardingChecklist'
 import { KeyboardShortcutsButton } from '@/components/KeyboardShortcuts'
+import { SavedViews, type SavedViewFilters } from '@/components/SavedViews'
 import { useWorkspace } from '@/lib/hooks/use-workspace'
+import { useToast } from '@/lib/toast-context'
 import { supabase } from '@/lib/supabase'
 import {
   LayoutGrid,
@@ -17,6 +19,8 @@ import {
   X,
   Zap,
   Search,
+  ThumbsUp,
+  SkipForward,
 } from 'lucide-react'
 
 interface Cluster {
@@ -35,6 +39,8 @@ interface Cluster {
   dimension_f?: number | null
   spec_generated_at?: string | null
   human_brief?: string | null
+  shipped_at?: string | null
+  pm_rating?: string | null
 }
 
 type ViewMode = 'grid' | 'list'
@@ -58,6 +64,7 @@ const SECTIONS: { key: FeedbackAction | 'new'; label: string; color: string }[] 
 
 export default function OpportunitiesPage() {
   const { workspaceId, loading: wsLoading } = useWorkspace()
+  const toast = useToast()
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [loading, setLoading] = useState(true)
   const [feedback, setFeedback] = useState<Record<string, string>>({})
@@ -76,6 +83,10 @@ export default function OpportunitiesPage() {
   // Triage modal
   const [showTriage, setShowTriage] = useState(false)
 
+  // Bulk actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+
   // Onboarding
   const [mlStats, setMlStats] = useState<{ labeled_cluster_count: number; ml_model_version: number } | null>(null)
   const [zendeskConnected, setZendeskConnected] = useState(false)
@@ -87,7 +98,6 @@ export default function OpportunitiesPage() {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('sp_pushed') === '1'
   })
-
 
   const loadClusters = useCallback(async () => {
     if (!workspaceId) return
@@ -118,7 +128,6 @@ export default function OpportunitiesPage() {
 
   useEffect(() => {
     if (wsLoading || !workspaceId) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- loadClusters is a stable useCallback; calling it here is an intentional initial fetch
     void loadClusters()
   }, [workspaceId, wsLoading, loadClusters])
 
@@ -153,7 +162,6 @@ export default function OpportunitiesPage() {
       }
     }
     window.addEventListener('keydown', handler)
-    // Cleanup stored on element to avoid closure issues
     ;(el as HTMLInputElement & { _cleanup?: () => void })._cleanup = () =>
       window.removeEventListener('keydown', handler)
   }, [])
@@ -174,7 +182,6 @@ export default function OpportunitiesPage() {
         if (!data) return
         setZendeskConnected(!!data.zendesk_connected)
         setMlStats(data.ml_stats ?? null)
-        // Detect if user has ever pushed (linear or jira connected = pushed at some point)
         if (data.linear_connected || data.jira_connected) {
           setPushedToIssueTracker(true)
           localStorage.setItem('sp_pushed', '1')
@@ -182,6 +189,61 @@ export default function OpportunitiesPage() {
       })
       .catch(() => {})
   }, [workspaceId])
+
+  // Bulk action handler
+  async function handleBulkAction(action: FeedbackAction) {
+    if (selectedIds.size === 0) return
+    setBulkLoading(true)
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cluster_ids: Array.from(selectedIds), action }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error ?? 'Bulk action failed')
+      }
+      const labels: Record<string, string> = { approve: 'Approved', skip: 'Skipped', dismiss: 'Dismissed' }
+      toast(`${labels[action]} ${selectedIds.size} opportunit${selectedIds.size === 1 ? 'y' : 'ies'}`, 'success')
+      for (const id of selectedIds) {
+        handleFeedback(id, action)
+      }
+      setSelectedIds(new Set())
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Bulk action failed', 'error')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  function handleSelectId(id: string, checked: boolean) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  function handleSelectAll(ids: string[], checked: boolean) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      for (const id of ids) {
+        if (checked) next.add(id)
+        else next.delete(id)
+      }
+      return next
+    })
+  }
+
+  function handleLoadView(filters: SavedViewFilters) {
+    setConfidenceFilter(filters.confidenceFilter)
+    setMinScore(filters.minScore)
+    setChurnOnly(filters.churnOnly)
+    setHasSpecOnly(filters.hasSpecOnly)
+    setSortBy(filters.sortBy)
+  }
 
   // Apply filters (including search) to a list of clusters
   const applyFilters = useCallback((list: Cluster[]) => {
@@ -213,16 +275,21 @@ export default function OpportunitiesPage() {
     return result
   }, [search, confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
 
-  // Group clusters into tiered sections
-  const sections = useMemo(() => {
+  // Group clusters into tiered sections (Shipped is separate, based on cluster.shipped_at)
+  const { sections, shippedSection } = useMemo(() => {
     const groups: Record<string, Cluster[]> = {
       new: [],
       approve: [],
       skip: [],
       dismiss: [],
     }
+    const shipped: Cluster[] = []
 
     for (const c of clusters) {
+      if (c.shipped_at) {
+        shipped.push(c)
+        continue
+      }
       const action = feedback[c.id]
       if (action === 'approve' || action === 'skip' || action === 'dismiss') {
         groups[action].push(c)
@@ -231,14 +298,20 @@ export default function OpportunitiesPage() {
       }
     }
 
-    return SECTIONS.map(s => ({
-      ...s,
-      clusters: applyFilters(groups[s.key]),
-      totalUnfiltered: groups[s.key].length,
-    })).filter(s => s.totalUnfiltered > 0)
+    return {
+      sections: SECTIONS.map(s => ({
+        ...s,
+        clusters: applyFilters(groups[s.key]),
+        totalUnfiltered: groups[s.key].length,
+      })).filter(s => s.totalUnfiltered > 0),
+      shippedSection: shipped.length > 0
+        ? { clusters: applyFilters(shipped), totalUnfiltered: shipped.length }
+        : null,
+    }
   }, [clusters, feedback, applyFilters])
 
   const totalVisible = sections.reduce((sum, s) => sum + s.clusters.length, 0)
+    + (shippedSection?.clusters.length ?? 0)
 
   const activeFilterCount =
     (confidenceFilter !== 'all' ? 1 : 0) +
@@ -252,6 +325,8 @@ export default function OpportunitiesPage() {
     setChurnOnly(false)
     setHasSpecOnly(false)
   }
+
+  const currentFilters: SavedViewFilters = { confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy }
 
   if (loading || wsLoading || !workspaceId) {
     return (
@@ -318,7 +393,7 @@ export default function OpportunitiesPage() {
 
             <div className='flex items-center gap-2'>
               {/* Quick-rate triage */}
-              {clusters.filter(c => !feedback[c.id]).length > 0 && (
+              {clusters.filter(c => !feedback[c.id] && !c.shipped_at).length > 0 && (
                 <button
                   type='button'
                   onClick={() => setShowTriage(true)}
@@ -353,6 +428,9 @@ export default function OpportunitiesPage() {
                   <option key={o.value} value={o.value}>Sort: {o.label}</option>
                 ))}
               </select>
+
+              {/* Saved views */}
+              <SavedViews currentFilters={currentFilters} onLoadView={handleLoadView} />
 
               {/* Filter toggle */}
               <button
@@ -471,7 +549,7 @@ export default function OpportunitiesPage() {
           {/* Results — tiered sections */}
           {clusters.length === 0 ? (
             <EmptyState processing={workspaceState === 'connected'} />
-          ) : sections.length === 0 ? (
+          ) : sections.length === 0 && !shippedSection ? (
             <div className='text-center py-16'>
               <p className='text-gray-500 text-sm'>No opportunities match your filters.</p>
               <button
@@ -484,48 +562,102 @@ export default function OpportunitiesPage() {
             </div>
           ) : (
             <div className='space-y-8'>
-              {sections.map(section => (
-                <div key={section.key}>
-                  {/* Section header */}
+              {sections.map(section => {
+                const sectionIds = section.clusters.map(c => c.id)
+                const allSelected = sectionIds.length > 0 && sectionIds.every(id => selectedIds.has(id))
+
+                return (
+                  <div key={section.key}>
+                    {/* Section header */}
+                    <div className='flex items-center gap-3 mb-4'>
+                      {view === 'list' && section.clusters.length > 0 && (
+                        <input
+                          type='checkbox'
+                          checked={allSelected}
+                          onChange={e => handleSelectAll(sectionIds, e.target.checked)}
+                          className='rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
+                          title='Select all in section'
+                        />
+                      )}
+                      <h2 className={`text-sm font-semibold ${section.color}`}>
+                        {section.label}
+                      </h2>
+                      <span className='text-xs text-gray-400'>
+                        {section.clusters.length}
+                        {section.clusters.length !== section.totalUnfiltered && ` of ${section.totalUnfiltered}`}
+                      </span>
+                      <div className='flex-1 border-t border-gray-100' />
+                    </div>
+
+                    {/* Section content */}
+                    {section.clusters.length === 0 ? (
+                      <p className='text-xs text-gray-400 pl-1'>No matches for current filters.</p>
+                    ) : view === 'grid' ? (
+                      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
+                        {section.clusters.map(cluster => (
+                          <OpportunityCard
+                            key={cluster.id}
+                            cluster={cluster}
+                            status={section.key === 'new' ? null : section.key as FeedbackAction}
+                            onFeedback={handleFeedback}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className='bg-white rounded-xl border border-gray-200 divide-y divide-gray-100'>
+                        {section.clusters.map(cluster => (
+                          <OpportunityListRow
+                            key={cluster.id}
+                            cluster={cluster}
+                            status={section.key === 'new' ? null : section.key as FeedbackAction}
+                            onFeedback={handleFeedback}
+                            selected={selectedIds.has(cluster.id)}
+                            onSelect={handleSelectId}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {/* Shipped section */}
+              {shippedSection && (
+                <div>
                   <div className='flex items-center gap-3 mb-4'>
-                    <h2 className={`text-sm font-semibold ${section.color}`}>
-                      {section.label}
-                    </h2>
+                    <h2 className='text-sm font-semibold text-purple-600'>Shipped</h2>
                     <span className='text-xs text-gray-400'>
-                      {section.clusters.length}
-                      {section.clusters.length !== section.totalUnfiltered && ` of ${section.totalUnfiltered}`}
+                      {shippedSection.clusters.length}
+                      {shippedSection.clusters.length !== shippedSection.totalUnfiltered
+                        && ` of ${shippedSection.totalUnfiltered}`}
                     </span>
                     <div className='flex-1 border-t border-gray-100' />
                   </div>
-
-                  {/* Section content */}
-                  {section.clusters.length === 0 ? (
-                    <p className='text-xs text-gray-400 pl-1'>No matches for current filters.</p>
-                  ) : view === 'grid' ? (
-                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
-                      {section.clusters.map(cluster => (
+                  {view === 'grid' ? (
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 opacity-60'>
+                      {shippedSection.clusters.map(cluster => (
                         <OpportunityCard
                           key={cluster.id}
                           cluster={cluster}
-                          status={section.key === 'new' ? null : section.key as FeedbackAction}
+                          status={null}
                           onFeedback={handleFeedback}
                         />
                       ))}
                     </div>
                   ) : (
                     <div className='bg-white rounded-xl border border-gray-200 divide-y divide-gray-100'>
-                      {section.clusters.map(cluster => (
+                      {shippedSection.clusters.map(cluster => (
                         <OpportunityListRow
                           key={cluster.id}
                           cluster={cluster}
-                          status={section.key === 'new' ? null : section.key as FeedbackAction}
+                          status={null}
                           onFeedback={handleFeedback}
                         />
                       ))}
                     </div>
                   )}
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
@@ -536,12 +668,59 @@ export default function OpportunitiesPage() {
       {/* Triage modal */}
       {showTriage && (
         <TriageModal
-          clusters={clusters.filter(c => !feedback[c.id])}
+          clusters={clusters.filter(c => !feedback[c.id] && !c.shipped_at)}
           labeledCount={mlStats?.labeled_cluster_count ?? Object.keys(feedback).length}
           mlThreshold={50}
           onClose={() => setShowTriage(false)}
           onFeedback={handleFeedback}
         />
+      )}
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-40'>
+          <div className='bg-gray-900 text-white rounded-2xl shadow-xl px-5 py-3 flex items-center gap-4'>
+            <span className='text-sm font-medium'>
+              {selectedIds.size} selected
+            </span>
+            <div className='w-px h-5 bg-white/20' />
+            <button
+              type='button'
+              disabled={bulkLoading}
+              onClick={() => void handleBulkAction('approve')}
+              className='inline-flex items-center gap-1.5 text-sm font-medium text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors'
+            >
+              <ThumbsUp className='w-4 h-4' />
+              Approve ({selectedIds.size})
+            </button>
+            <button
+              type='button'
+              disabled={bulkLoading}
+              onClick={() => void handleBulkAction('skip')}
+              className='inline-flex items-center gap-1.5 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50 transition-colors'
+            >
+              <SkipForward className='w-4 h-4' />
+              Skip ({selectedIds.size})
+            </button>
+            <button
+              type='button'
+              disabled={bulkLoading}
+              onClick={() => void handleBulkAction('dismiss')}
+              className='inline-flex items-center gap-1.5 text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors'
+            >
+              <X className='w-4 h-4' />
+              Dismiss ({selectedIds.size})
+            </button>
+            <div className='w-px h-5 bg-white/20' />
+            <button
+              type='button'
+              onClick={() => setSelectedIds(new Set())}
+              className='text-sm text-gray-400 hover:text-white transition-colors'
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </ErrorBoundary>
   )

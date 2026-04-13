@@ -33,7 +33,7 @@ export function ScoreSparkline({ history }: ScoreSparklineProps) {
   const delta = latest - prev
 
   let badgeClass = 'bg-gray-100 text-gray-500'
-  let deltaLabel = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`
+  const deltaLabel = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`
   if (delta > 0.5) badgeClass = 'bg-green-100 text-green-700'
   else if (delta < -0.5) badgeClass = 'bg-red-100 text-red-700'
 

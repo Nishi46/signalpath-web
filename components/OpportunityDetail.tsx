@@ -8,7 +8,6 @@ import {
   ExternalLink,
   MessageSquare,
   Clock,
-  TrendingUp,
   Download,
   Sparkles,
   ThumbsUp,
@@ -19,6 +18,8 @@ import {
   FileDown,
   ChevronDown,
   DollarSign,
+  Package,
+  Building2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -77,29 +78,6 @@ function formatRevenue(amount: number | null | undefined): string {
   return `$${amount}`
 }
 
-function DimensionBar({ label, value, color, icon: Icon }: {
-  label: string
-  value: number
-  color: string
-  icon: React.ComponentType<{ className?: string }>
-}) {
-  const v = Number.isFinite(value) ? value : 0
-  const pct = Math.min((v / 10) * 100, 100)
-  return (
-    <div className='mb-4 last:mb-0'>
-      <div className='flex justify-between text-sm mb-2'>
-        <span className='text-gray-600 font-medium flex items-center gap-1.5'>
-          <Icon className='w-3.5 h-3.5 text-gray-400' />
-          {label}
-        </span>
-        <span className='text-gray-900 font-semibold tabular-nums'>{v.toFixed(1)} / 10</span>
-      </div>
-      <div className='w-full bg-gray-100 rounded-full h-2'>
-        <div className={`h-2 rounded-full transition-all duration-500 ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  )
-}
 
 export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspaceId, onRefresh }: OpportunityDetailProps) {
   const toast = useToast()
@@ -113,6 +91,17 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   const [linearConnected, setLinearConnected] = useState<boolean | null>(null)
   const [jiraConnected, setJiraConnected] = useState<boolean | null>(null)
   const [briefExpanded, setBriefExpanded] = useState(false)
+  const [shipped, setShipped] = useState(false)
+  const [shippingBusy, setShippingBusy] = useState(false)
+  const [accountsOpen, setAccountsOpen] = useState(false)
+  const [accountsLoading, setAccountsLoading] = useState(false)
+  const [accounts, setAccounts] = useState<{
+    organization_id: string
+    name: string
+    domain: string | null
+    arr_usd: number | null
+    revenue_source: string
+  }[]>([])
 
   useEffect(() => {
     fetch('/api/workspace-status')
@@ -310,12 +299,47 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
     }
   }
 
-  const B = cluster.dimension_b ?? 0
-  const S = cluster.dimension_s ?? 0
-  const C = cluster.dimension_c ?? 0
-  const R = cluster.dimension_r ?? 0
-  const F = cluster.dimension_f ?? 0
   const hasSpec = Boolean(cluster.agent_spec && cluster.human_brief)
+
+  async function handleShip() {
+    setShippingBusy(true)
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cluster_id: cluster.id, action: 'ship' }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error ?? 'Could not mark as shipped')
+      }
+      setShipped(true)
+      toast('Marked as shipped', 'success')
+      void refresh()
+    } catch (e: unknown) {
+      toast(e instanceof Error ? e.message : 'Ship failed', 'error')
+    } finally {
+      setShippingBusy(false)
+    }
+  }
+
+  async function fetchAccounts() {
+    if (accounts.length > 0) return
+    setAccountsLoading(true)
+    try {
+      const res = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/accounts`)
+      if (res.ok) {
+        const data = await res.json()
+        setAccounts(data.accounts ?? [])
+      }
+    } catch { /* non-fatal */ }
+    setAccountsLoading(false)
+  }
+
+  function toggleAccounts() {
+    if (!accountsOpen) void fetchAccounts()
+    setAccountsOpen(prev => !prev)
+  }
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -349,10 +373,15 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               </span>
             )}
             {(cluster.unique_orgs ?? 0) > 0 && (
-              <span className='flex items-center gap-1.5 text-purple-600'>
+              <button
+                type='button'
+                onClick={toggleAccounts}
+                className='flex items-center gap-1.5 text-purple-600 hover:text-purple-700 transition-colors'
+              >
                 <Users className='w-4 h-4' />
                 {cluster.unique_orgs} accounts affected
-              </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${accountsOpen ? 'rotate-180' : ''}`} />
+              </button>
             )}
             {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
               <span className='flex items-center gap-1.5 text-emerald-600'>
@@ -387,8 +416,59 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             >
               <X className='w-3.5 h-3.5' /> Dismiss
             </button>
+            <button
+              type='button'
+              disabled={shippingBusy || shipped}
+              onClick={() => void handleShip()}
+              className='flex items-center gap-1 text-xs text-purple-600 hover:bg-purple-50 px-3 py-2 rounded-lg font-medium border border-purple-100 disabled:opacity-50'
+            >
+              <Package className='w-3.5 h-3.5' />
+              {shippingBusy ? 'Marking…' : shipped ? 'Shipped' : 'Mark as shipped'}
+            </button>
           </div>
 
+
+          {/* Affected accounts drawer */}
+          {accountsOpen && (
+            <div className='border-t border-gray-100 pt-5 mt-5'>
+              <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3'>
+                <Building2 className='w-4 h-4 text-purple-500' />
+                Affected accounts
+              </h3>
+              {accountsLoading ? (
+                <div className='space-y-2'>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className='h-10 bg-gray-100 rounded-xl animate-pulse' />
+                  ))}
+                </div>
+              ) : accounts.length === 0 ? (
+                <p className='text-sm text-gray-400'>No account data available.</p>
+              ) : (
+                <div className='space-y-1'>
+                  {accounts.map(acc => (
+                    <div key={acc.organization_id} className='flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50'>
+                      <div className='min-w-0'>
+                        <p className='text-sm font-medium text-gray-900 truncate'>{acc.name}</p>
+                        {acc.domain && (
+                          <p className='text-xs text-gray-400'>{acc.domain}</p>
+                        )}
+                      </div>
+                      {acc.arr_usd ? (
+                        <div className='shrink-0 flex items-center gap-1.5'>
+                          <span className='text-sm font-semibold text-emerald-600'>
+                            {formatRevenue(acc.arr_usd)}
+                          </span>
+                          <span className='text-[10px] text-gray-400 font-medium bg-gray-100 px-1.5 py-0.5 rounded-full'>
+                            {acc.revenue_source === 'crm' ? 'CRM' : 'est'}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className='border-t border-gray-100 pt-6 mt-6'>
             <ScoreBreakdownPanel

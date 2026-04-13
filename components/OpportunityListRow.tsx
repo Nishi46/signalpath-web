@@ -1,7 +1,18 @@
 'use client'
 import Link from 'next/link'
 import { ScoreBadge } from './ScoreBadge'
-import { MessageSquare, AlertTriangle, Users, Sparkles, ThumbsUp, SkipForward, X, DollarSign, Check } from 'lucide-react'
+import {
+  MessageSquare,
+  AlertTriangle,
+  Users,
+  Sparkles,
+  ThumbsUp,
+  SkipForward,
+  X,
+  DollarSign,
+  Check,
+  Package,
+} from 'lucide-react'
 
 interface Cluster {
   id: string
@@ -13,6 +24,7 @@ interface Cluster {
   unique_orgs?: number | null
   revenue_at_risk_usd?: number | null
   spec_generated_at?: string | null
+  shipped_at?: string | null
 }
 
 type FeedbackAction = 'approve' | 'skip' | 'dismiss'
@@ -21,6 +33,8 @@ interface OpportunityListRowProps {
   cluster: Cluster
   status?: FeedbackAction | null
   onFeedback?: (clusterId: string, action: string) => void
+  selected?: boolean
+  onSelect?: (id: string, checked: boolean) => void
 }
 
 function formatRevenue(amount: number | null | undefined): string {
@@ -31,7 +45,9 @@ function formatRevenue(amount: number | null | undefined): string {
   return `$${amount}`
 }
 
-export function OpportunityListRow({ cluster, status, onFeedback }: OpportunityListRowProps) {
+export function OpportunityListRow({ cluster, status, onFeedback, selected, onSelect }: OpportunityListRowProps) {
+  const isShipped = Boolean(cluster.shipped_at)
+
   async function handleFeedback(action: 'approve' | 'skip' | 'dismiss') {
     await fetch('/api/feedback', {
       method: 'POST',
@@ -43,9 +59,25 @@ export function OpportunityListRow({ cluster, status, onFeedback }: OpportunityL
 
   const isDismissed = status === 'dismiss'
   const hasStatus = status === 'approve' || status === 'skip'
+  const showCheckbox = onSelect !== undefined
 
   return (
-    <div className={`flex items-center gap-4 px-5 py-4 transition-colors group ${isDismissed ? 'opacity-40 grayscale' : 'hover:bg-gray-50'}`}>
+    <div
+      className={`flex items-center gap-3 px-4 py-4 transition-colors group ${
+        isDismissed || isShipped ? 'opacity-50 grayscale' : 'hover:bg-gray-50'
+      }`}
+    >
+      {/* Checkbox (bulk select) */}
+      {showCheckbox && (
+        <input
+          type='checkbox'
+          checked={selected ?? false}
+          onChange={e => onSelect?.(cluster.id, e.target.checked)}
+          onClick={e => e.stopPropagation()}
+          className='shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
+        />
+      )}
+
       {/* Score */}
       <div className='shrink-0'>
         <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
@@ -89,7 +121,14 @@ export function OpportunityListRow({ cluster, status, onFeedback }: OpportunityL
       </Link>
 
       {/* Actions / Status badge */}
-      {hasStatus ? (
+      {isShipped ? (
+        <div className='shrink-0'>
+          <span className='inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-purple-50 text-purple-700'>
+            <Package className='w-3 h-3' />
+            Shipped
+          </span>
+        </div>
+      ) : hasStatus ? (
         <div className='shrink-0'>
           <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
             status === 'approve'
@@ -104,7 +143,7 @@ export function OpportunityListRow({ cluster, status, onFeedback }: OpportunityL
         <div className='shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
           <button
             type='button'
-            onClick={() => handleFeedback('approve')}
+            onClick={() => void handleFeedback('approve')}
             className='p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors'
             title='Approve'
           >
@@ -112,7 +151,7 @@ export function OpportunityListRow({ cluster, status, onFeedback }: OpportunityL
           </button>
           <button
             type='button'
-            onClick={() => handleFeedback('skip')}
+            onClick={() => void handleFeedback('skip')}
             className='p-1.5 text-gray-400 hover:bg-gray-100 rounded-md transition-colors'
             title='Skip'
           >
@@ -120,7 +159,7 @@ export function OpportunityListRow({ cluster, status, onFeedback }: OpportunityL
           </button>
           <button
             type='button'
-            onClick={() => handleFeedback('dismiss')}
+            onClick={() => void handleFeedback('dismiss')}
             className='p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors'
             title='Dismiss'
           >

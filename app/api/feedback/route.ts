@@ -15,38 +15,57 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { cluster_id, action } = body
+  const { action } = body
 
-  if (!cluster_id || !action) {
-    return NextResponse.json({ error: 'cluster_id and action required' }, { status: 400 })
+  // Support both single cluster_id (string) and batch cluster_ids (string[])
+  const clusterIds: string[] = Array.isArray(body.cluster_ids)
+    ? body.cluster_ids
+    : body.cluster_id
+      ? [body.cluster_id]
+      : []
+
+  if (clusterIds.length === 0 || !action) {
+    return NextResponse.json({ error: 'cluster_id(s) and action required' }, { status: 400 })
   }
 
-  if (!['approve', 'skip', 'dismiss'].includes(action)) {
-    return NextResponse.json({ error: 'action must be approve, skip, or dismiss' }, { status: 400 })
+  if (!['approve', 'skip', 'dismiss', 'ship'].includes(action)) {
+    return NextResponse.json({ error: 'action must be approve, skip, dismiss, or ship' }, { status: 400 })
   }
 
-  // workspaceId comes from the authenticated JWT — cannot be spoofed by the client.
-  const row: Record<string, unknown> = {
-    workspace_id: workspaceId,
-    cluster_id,
-    action,
-  }
-  if (userId) {
-    row.user_id = userId
-  }
+  // Insert feedback rows for each cluster (ship action goes to clusters table only, not feedback)
+  if (action !== 'ship') {
+    const rows = clusterIds.map(cluster_id => {
+      const row: Record<string, unknown> = { workspace_id: workspaceId, cluster_id, action }
+      if (userId) row.user_id = userId
+      return row
+    })
 
-  const { error } = await supabaseAdmin.from('feedback').insert(row)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const { error } = await supabaseAdmin.from('feedback').insert(rows)
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
   }
 
-  // Update the cluster's pm_rating (optional column — ignore errors gracefully).
+  // Update pm_rating / shipped_at on clusters (workspace-scoped)
+  const clusterUpdate: Record<string, unknown> =
+    action === 'ship'
+      ? { shipped_at: new Date().toISOString() }
+      : { pm_rating: action }
+
   await supabaseAdmin
     .from('clusters')
-    .update({ pm_rating: action })
-    .eq('id', cluster_id)
-    .eq('workspace_id', workspaceId) // workspace isolation: only update own clusters
+    .update(clusterUpdate)
+    .in('id', clusterIds)
+    .eq('workspace_id', workspaceId)
+
+  // For ship action, skip ML refresh (no new label was added)
+  if (action === 'ship') {
+    return NextResponse.json({ success: true })
+  }
+
+  // Use first cluster_id for backward compat variable
+  const cluster_id = clusterIds[0]
+  void cluster_id // used below via clusterIds
 
   // ── ML stats refresh + training trigger ──────────────────────────────────
   // This is a post-save side-effect. Failures must NOT affect the feedback
