@@ -27,6 +27,7 @@ import rehypeSanitize from 'rehype-sanitize'
 import { exportPrdToDocx } from '@/lib/export-prd'
 import { ScoreBreakdownPanel, type ScoreHistoryEntry } from './ScoreBreakdownPanel'
 import { ScoreSparkline } from './ScoreSparkline'
+import { useToast } from '@/lib/toast-context'
 
 export interface ClusterDetail {
   id: string
@@ -101,6 +102,7 @@ function DimensionBar({ label, value, color, icon: Icon }: {
 }
 
 export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspaceId, onRefresh }: OpportunityDetailProps) {
+  const toast = useToast()
   const [pushingLinear, setPushingLinear] = useState(false)
   const [pushingJira, setPushingJira] = useState(false)
   const [pushedLinear, setPushedLinear] = useState<string | null>(null)
@@ -108,7 +110,6 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   const [pushError, setPushError] = useState<string | null>(null)
   const [specBusy, setSpecBusy] = useState(false)
   const [specError, setSpecError] = useState<string | null>(null)
-  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null)
   const [linearConnected, setLinearConnected] = useState<boolean | null>(null)
   const [jiraConnected, setJiraConnected] = useState<boolean | null>(null)
   const [briefExpanded, setBriefExpanded] = useState(false)
@@ -241,7 +242,6 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   }
 
   async function handleFeedback(action: 'approve' | 'skip' | 'dismiss') {
-    setFeedbackMsg(null)
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
@@ -252,10 +252,11 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
         const err = await res.json()
         throw new Error(err.error ?? 'Could not save feedback')
       }
-      setFeedbackMsg(action === 'approve' ? 'Marked as approve.' : action === 'skip' ? 'Skipped.' : 'Dismissed.')
+      const labels: Record<string, string> = { approve: 'Approved', skip: 'Skipped', dismiss: 'Dismissed' }
+      toast(labels[action], action === 'approve' ? 'success' : 'info')
       void refresh()
     } catch (e: unknown) {
-      setFeedbackMsg(e instanceof Error ? e.message : 'Feedback failed')
+      toast(e instanceof Error ? e.message : 'Feedback failed', 'error')
     }
   }
 
@@ -387,9 +388,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               <X className='w-3.5 h-3.5' /> Dismiss
             </button>
           </div>
-          {feedbackMsg && (
-            <p className='text-xs text-gray-600 mt-3'>{feedbackMsg}</p>
-          )}
+
 
           <div className='border-t border-gray-100 pt-6 mt-6'>
             <ScoreBreakdownPanel

@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { ScoreBadge } from './ScoreBadge'
 import { MessageSquare, AlertTriangle, ThumbsUp, SkipForward, X, Check, DollarSign } from 'lucide-react'
+import { useToast } from '@/lib/toast-context'
 
 type FeedbackAction = 'approve' | 'skip' | 'dismiss'
 
@@ -30,13 +31,22 @@ function formatRevenue(amount: number | null | undefined): string {
 }
 
 export function OpportunityCard({ cluster, status, onFeedback }: OpportunityCardProps) {
+  const toast = useToast()
+
   async function handleFeedback(action: 'approve' | 'skip' | 'dismiss') {
-    await fetch('/api/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cluster_id: cluster.id, action }),
-    })
-    onFeedback?.(cluster.id, action)
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cluster_id: cluster.id, action }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      onFeedback?.(cluster.id, action)
+      const labels: Record<string, string> = { approve: 'Approved', skip: 'Skipped', dismiss: 'Dismissed' }
+      toast(labels[action], action === 'approve' ? 'success' : 'info')
+    } catch {
+      toast('Could not save — please try again', 'error')
+    }
   }
 
   const isDismissed = status === 'dismiss'

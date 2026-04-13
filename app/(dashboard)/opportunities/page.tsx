@@ -5,6 +5,9 @@ import { OpportunityListRow } from '@/components/OpportunityListRow'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DashboardNav } from '@/components/DashboardNav'
+import { TriageModal } from '@/components/TriageModal'
+import { OnboardingChecklist } from '@/components/OnboardingChecklist'
+import { KeyboardShortcutsButton } from '@/components/KeyboardShortcuts'
 import { useWorkspace } from '@/lib/hooks/use-workspace'
 import { supabase } from '@/lib/supabase'
 import {
@@ -12,6 +15,8 @@ import {
   List,
   SlidersHorizontal,
   X,
+  Zap,
+  Search,
 } from 'lucide-react'
 
 interface Cluster {
@@ -66,6 +71,23 @@ export default function OpportunitiesPage() {
   const [churnOnly, setChurnOnly] = useState(false)
   const [hasSpecOnly, setHasSpecOnly] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [search, setSearch] = useState('')
+
+  // Triage modal
+  const [showTriage, setShowTriage] = useState(false)
+
+  // Onboarding
+  const [mlStats, setMlStats] = useState<{ labeled_cluster_count: number; ml_model_version: number } | null>(null)
+  const [zendeskConnected, setZendeskConnected] = useState(false)
+  const [checklistDismissed, setChecklistDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('sp_checklist_dismissed') === '1'
+  })
+  const [pushedToIssueTracker, setPushedToIssueTracker] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('sp_pushed') === '1'
+  })
+
 
   const loadClusters = useCallback(async () => {
     if (!workspaceId) return
@@ -122,14 +144,53 @@ export default function OpportunitiesPage() {
     }
   }, [workspaceId, loadClusters])
 
-  const handleFeedback = useCallback((clusterId: string, action: string) => {
-    setFeedback(prev => ({ ...prev, [clusterId]: action }))
+  const searchInputRef = useCallback((el: HTMLInputElement | null) => {
+    if (!el) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement !== el) {
+        e.preventDefault()
+        el.focus()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    // Cleanup stored on element to avoid closure issues
+    ;(el as HTMLInputElement & { _cleanup?: () => void })._cleanup = () =>
+      window.removeEventListener('keydown', handler)
   }, [])
 
-  // Apply filters to a list of clusters
+  const handleFeedback = useCallback((clusterId: string, action: string) => {
+    setFeedback(prev => ({ ...prev, [clusterId]: action }))
+    if (action === 'approve' || action === 'skip' || action === 'dismiss') {
+      setMlStats(prev => prev ? { ...prev, labeled_cluster_count: prev.labeled_cluster_count + 1 } : prev)
+    }
+  }, [])
+
+  // Fetch workspace status for onboarding checklist
+  useEffect(() => {
+    if (!workspaceId) return
+    fetch('/api/workspace-status')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return
+        setZendeskConnected(!!data.zendesk_connected)
+        setMlStats(data.ml_stats ?? null)
+        // Detect if user has ever pushed (linear or jira connected = pushed at some point)
+        if (data.linear_connected || data.jira_connected) {
+          setPushedToIssueTracker(true)
+          localStorage.setItem('sp_pushed', '1')
+        }
+      })
+      .catch(() => {})
+  }, [workspaceId])
+
+  // Apply filters (including search) to a list of clusters
   const applyFilters = useCallback((list: Cluster[]) => {
     let result = list
 
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter(c => c.label.toLowerCase().includes(q))
+    }
     if (confidenceFilter !== 'all') {
       result = result.filter(c => c.confidence === confidenceFilter)
     }
@@ -150,7 +211,7 @@ export default function OpportunitiesPage() {
     })
 
     return result
-  }, [confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
+  }, [search, confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
 
   // Group clusters into tiered sections
   const sections = useMemo(() => {
@@ -230,8 +291,23 @@ export default function OpportunitiesPage() {
       <div className='min-h-screen bg-gray-50'>
         <DashboardNav />
         <div className='max-w-6xl mx-auto px-6 py-10'>
+          {/* Onboarding checklist */}
+          {!checklistDismissed && (
+            <OnboardingChecklist
+              zendeskConnected={zendeskConnected}
+              hasClusters={clusters.length > 0}
+              ratedCount={Object.keys(feedback).length}
+              pushed={pushedToIssueTracker}
+              mlActive={(mlStats?.ml_model_version ?? 0) > 0}
+              onDismiss={() => {
+                setChecklistDismissed(true)
+                localStorage.setItem('sp_checklist_dismissed', '1')
+              }}
+            />
+          )}
+
           {/* Header */}
-          <div className='flex items-end justify-between mb-6'>
+          <div className='flex items-end justify-between mb-4'>
             <div>
               <h1 className='text-2xl font-bold text-gray-900'>Opportunities</h1>
               <p className='text-gray-500 text-sm mt-1'>
@@ -241,6 +317,32 @@ export default function OpportunitiesPage() {
             </div>
 
             <div className='flex items-center gap-2'>
+              {/* Quick-rate triage */}
+              {clusters.filter(c => !feedback[c.id]).length > 0 && (
+                <button
+                  type='button'
+                  onClick={() => setShowTriage(true)}
+                  className='inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors'
+                >
+                  <Zap className='w-3.5 h-3.5' />
+                  Rate quickly
+                </button>
+              )}
+
+              {/* Search */}
+              <div className='relative'>
+                <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none' />
+                <input
+                  ref={searchInputRef}
+                  type='text'
+                  placeholder='Search… [/]'
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); (e.target as HTMLInputElement).blur() } }}
+                  className='pl-8 pr-3 py-2 text-xs border border-gray-200 rounded-lg bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 w-40'
+                />
+              </div>
+
               {/* Sort */}
               <select
                 value={sortBy}
@@ -428,6 +530,19 @@ export default function OpportunitiesPage() {
           )}
         </div>
       </div>
+
+      <KeyboardShortcutsButton />
+
+      {/* Triage modal */}
+      {showTriage && (
+        <TriageModal
+          clusters={clusters.filter(c => !feedback[c.id])}
+          labeledCount={mlStats?.labeled_cluster_count ?? Object.keys(feedback).length}
+          mlThreshold={50}
+          onClose={() => setShowTriage(false)}
+          onFeedback={handleFeedback}
+        />
+      )}
     </ErrorBoundary>
   )
 }
