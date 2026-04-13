@@ -101,6 +101,62 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className='max-w-3xl mx-auto px-8 py-20'>
+        <div className='text-center mb-14'>
+          <p className='text-sm font-semibold text-blue-600 mb-3 uppercase tracking-wide'>FAQ</p>
+          <h2 className='text-3xl font-bold text-gray-900'>Common questions</h2>
+        </div>
+        <div className='divide-y divide-gray-100'>
+          {[
+            {
+              q: 'How long does setup take?',
+              a: 'About five minutes. You connect your Zendesk account via OAuth — no API keys to copy, no spreadsheets to export. SignalPath pulls the last 90 days of tickets automatically and the first ranked opportunities are ready within 48 hours.',
+            },
+            {
+              q: 'Do you read the content of our support tickets?',
+              a: 'SignalPath processes ticket text to detect patterns and cluster similar problems. We never store raw ticket content beyond what is needed for analysis, and your data is never used to train models for other customers. Each workspace is fully isolated.',
+            },
+            {
+              q: 'What if we use Intercom, Freshdesk, or another help desk?',
+              a: 'Zendesk is the only direct integration right now. Intercom and Freshdesk are on the roadmap. If you are on a different platform, reach out — we can often import via CSV while a native connector is built.',
+            },
+            {
+              q: 'How is the opportunity score calculated?',
+              a: 'The formula weighs six dimensions: account breadth (how many customers are affected), severity, churn risk, recency, frequency, and revenue at risk. Once your team rates 50 opportunities, a personalized XGBoost model replaces the formula and learns your actual priorities.',
+            },
+            {
+              q: 'Can I push opportunities directly into our roadmap tool?',
+              a: 'Yes. SignalPath has one-click push to Linear and Jira. Each opportunity becomes a ticket pre-filled with a summary, evidence quotes, and affected account count. More integrations — including GitHub Issues and Productboard — are planned.',
+            },
+            {
+              q: 'Is there a free trial?',
+              a: 'We are running a 90-day paid pilot with a small number of teams. The pilot includes full access, white-glove onboarding, and a monthly review call. Spots are limited — request access above and we will be in touch within one business day.',
+            },
+            {
+              q: 'How is revenue at risk estimated?',
+              a: "We estimate revenue by matching affected Zendesk organizations to their ARR via a CRM integration (HubSpot or Salesforce). If no CRM is connected we fall back to an AI estimate based on the organization's size signals in tickets. The source is always labelled so you know how confident the number is.",
+            },
+            {
+              q: 'How do you handle data security?',
+              a: 'All data is encrypted in transit (TLS) and at rest. OAuth tokens are encrypted with Fernet before storage. Row-level security in Postgres ensures no workspace can access another\'s data. We do not sell or share your data with third parties.',
+            },
+          ].map(({ q, a }) => (
+            <details key={q} className='group py-5'>
+              <summary className='flex items-center justify-between cursor-pointer list-none gap-4'>
+                <span className='font-semibold text-gray-900 text-base'>{q}</span>
+                <span className='flex-shrink-0 w-5 h-5 rounded-full bg-gray-100 group-open:bg-blue-100 flex items-center justify-center transition-colors'>
+                  <svg className='w-3 h-3 text-gray-500 group-open:text-blue-600 group-open:rotate-180 transition-transform' fill='none' viewBox='0 0 10 10' stroke='currentColor' strokeWidth='1.5'>
+                    <path strokeLinecap='round' strokeLinejoin='round' d='M2 3.5l3 3 3-3' />
+                  </svg>
+                </span>
+              </summary>
+              <p className='mt-3 text-gray-500 text-sm leading-relaxed'>{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className='border-t border-gray-100 py-8 text-center'>
         <p className='text-xs text-gray-400'>&copy; {new Date().getFullYear()} SignalPath. All rights reserved.</p>

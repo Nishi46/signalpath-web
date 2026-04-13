@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { OpportunityDetail, type ClusterDetail } from '@/components/OpportunityDetail'
+import { type ScoreHistoryEntry } from '@/components/ScoreBreakdownPanel'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DashboardNav } from '@/components/DashboardNav'
 import { useWorkspace } from '@/lib/hooks/use-workspace'
@@ -21,6 +22,7 @@ export default function OpportunityDetailPage() {
 
   const [cluster, setCluster] = useState<ClusterDetail | null>(null)
   const [signals, setSignals] = useState<Signal[]>([])
+  const [scoreHistory, setScoreHistory] = useState<ScoreHistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -35,6 +37,7 @@ export default function OpportunityDetailPage() {
       const data = await res.json()
       setCluster(data.cluster)
       setSignals(data.signals)
+      setScoreHistory(data.score_history ?? [])
       setNotFound(false)
     } catch {
       setNotFound(true)
@@ -108,6 +111,7 @@ export default function OpportunityDetailPage() {
       <OpportunityDetail
         cluster={cluster}
         signals={signals}
+        scoreHistory={scoreHistory}
         workspaceId={workspaceId}
         onRefresh={load}
       />

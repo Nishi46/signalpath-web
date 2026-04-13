@@ -24,7 +24,8 @@ export async function GET(
     .select(
       `id, label, opportunity_score, signal_count, churn_signal_count, recent_signal_count, centroid, scored_at,
        human_brief, agent_spec, spec_generated_at, confidence, dimension_f, dimension_r, dimension_c,
-       dimension_b, dimension_s, dimension_v, unique_orgs, unique_requesters, revenue_at_risk_usd`,
+       dimension_b, dimension_s, dimension_v, unique_orgs, unique_requesters, revenue_at_risk_usd,
+       scoring_model, ml_review_needed, revenue_source`,
     )
     .eq('id', id)
     .eq('workspace_id', workspaceId)
@@ -41,5 +42,17 @@ export async function GET(
     .order('created_at', { ascending: false })
     .limit(10)
 
-  return NextResponse.json({ cluster, signals: signals ?? [] })
+  // 5.3: Include last 12 score history rows (ascending = oldest first for sparkline)
+  const { data: scoreHistory } = await supabaseAdmin
+    .from('cluster_score_history')
+    .select(
+      'id, score, scoring_model, revenue_source, dimension_b, dimension_s, dimension_c, ' +
+      'dimension_r, dimension_f, dimension_v, scored_at',
+    )
+    .eq('cluster_id', id)
+    .eq('workspace_id', workspaceId)
+    .order('scored_at', { ascending: true })
+    .limit(12)
+
+  return NextResponse.json({ cluster, signals: signals ?? [], score_history: scoreHistory ?? [] })
 }

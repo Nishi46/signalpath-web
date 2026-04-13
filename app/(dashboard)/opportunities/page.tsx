@@ -96,6 +96,7 @@ export default function OpportunitiesPage() {
 
   useEffect(() => {
     if (wsLoading || !workspaceId) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loadClusters is a stable useCallback; calling it here is an intentional initial fetch
     void loadClusters()
   }, [workspaceId, wsLoading, loadClusters])
 
@@ -126,7 +127,7 @@ export default function OpportunitiesPage() {
   }, [])
 
   // Apply filters to a list of clusters
-  function applyFilters(list: Cluster[]) {
+  const applyFilters = useCallback((list: Cluster[]) => {
     let result = list
 
     if (confidenceFilter !== 'all') {
@@ -149,7 +150,7 @@ export default function OpportunitiesPage() {
     })
 
     return result
-  }
+  }, [confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
 
   // Group clusters into tiered sections
   const sections = useMemo(() => {
@@ -174,7 +175,7 @@ export default function OpportunitiesPage() {
       clusters: applyFilters(groups[s.key]),
       totalUnfiltered: groups[s.key].length,
     })).filter(s => s.totalUnfiltered > 0)
-  }, [clusters, feedback, confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
+  }, [clusters, feedback, applyFilters])
 
   const totalVisible = sections.reduce((sum, s) => sum + s.clusters.length, 0)
 

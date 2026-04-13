@@ -15,7 +15,6 @@ import {
   SkipForward,
   X,
   Users,
-  ShieldAlert,
   FileText,
   FileDown,
   ChevronDown,
@@ -26,6 +25,8 @@ import { supabase } from '@/lib/supabase'
 import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import { exportPrdToDocx } from '@/lib/export-prd'
+import { ScoreBreakdownPanel, type ScoreHistoryEntry } from './ScoreBreakdownPanel'
+import { ScoreSparkline } from './ScoreSparkline'
 
 export interface ClusterDetail {
   id: string
@@ -47,6 +48,9 @@ export interface ClusterDetail {
   unique_requesters?: number | null
   dimension_v?: number | null
   revenue_at_risk_usd?: number | null
+  scoring_model?: string | null
+  ml_review_needed?: boolean | null
+  revenue_source?: string | null
 }
 
 interface Signal {
@@ -59,6 +63,7 @@ interface Signal {
 interface OpportunityDetailProps {
   cluster: ClusterDetail
   signals: Signal[]
+  scoreHistory?: ScoreHistoryEntry[]
   workspaceId: string
   onRefresh?: () => Promise<void>
 }
@@ -95,7 +100,7 @@ function DimensionBar({ label, value, color, icon: Icon }: {
   )
 }
 
-export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: OpportunityDetailProps) {
+export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspaceId, onRefresh }: OpportunityDetailProps) {
   const [pushingLinear, setPushingLinear] = useState(false)
   const [pushingJira, setPushingJira] = useState(false)
   const [pushedLinear, setPushedLinear] = useState<string | null>(null)
@@ -352,7 +357,9 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
               <span className='flex items-center gap-1.5 text-emerald-600'>
                 <DollarSign className='w-4 h-4' />
                 {formatRevenue(cluster.revenue_at_risk_usd)} at risk
-                <span className='text-xs text-gray-400 italic'>AI estimate</span>
+                <span className='text-xs text-gray-400 italic'>
+                  {cluster.revenue_source === 'crm' ? 'CRM' : 'AI estimate'}
+                </span>
               </span>
             )}
           </div>
@@ -385,12 +392,11 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
           )}
 
           <div className='border-t border-gray-100 pt-6 mt-6'>
-            <h2 className='text-sm font-semibold text-gray-900 mb-5'>Score dimensions (0–10)</h2>
-            <DimensionBar icon={Users} label='Account breadth (B)' value={B} color='bg-purple-500' />
-            <DimensionBar icon={ShieldAlert} label='Severity (S)' value={S} color='bg-orange-500' />
-            <DimensionBar icon={TrendingUp} label='Churn & competitive (C)' value={C} color='bg-red-500' />
-            <DimensionBar icon={Clock} label='Recency (R)' value={R} color='bg-amber-500' />
-            <DimensionBar icon={MessageSquare} label='Frequency (F)' value={F} color='bg-blue-500' />
+            <ScoreBreakdownPanel
+              cluster={cluster}
+              mlModelVersion={cluster.scoring_model?.startsWith('ml_v') ? parseInt(cluster.scoring_model.slice(4)) : 0}
+              scoreHistory={scoreHistory}
+            />
           </div>
 
           {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
@@ -402,11 +408,37 @@ export function OpportunityDetail({ cluster, signals, workspaceId, onRefresh }: 
                 </span>
                 <div className='flex items-center gap-2'>
                   <span className='text-lg font-bold text-emerald-600'>{formatRevenue(cluster.revenue_at_risk_usd)}</span>
-                  <span className='text-xs text-gray-400 italic'>AI estimate</span>
+                  <span className='text-xs text-gray-400 italic'>
+                    {cluster.revenue_source === 'crm' ? 'CRM' : 'AI estimate'}
+                  </span>
                 </div>
               </div>
             </div>
           )}
+
+          {/* Scoring transparency panel */}
+          <div className='border-t border-gray-100 pt-5 mt-5 space-y-3'>
+            <div className='flex items-center justify-between'>
+              <span className='text-xs text-gray-500 font-medium'>Score trend</span>
+              <div className='flex items-center gap-2'>
+                {cluster.ml_review_needed && (
+                  <span className='text-xs font-medium text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full'>
+                    Review needed
+                  </span>
+                )}
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  cluster.scoring_model?.startsWith('ml_')
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                    : 'bg-blue-50 text-blue-700 border border-blue-100'
+                }`}>
+                  {cluster.scoring_model?.startsWith('ml_v')
+                    ? `Personalized ML v${cluster.scoring_model.slice(4)}`
+                    : 'Formula'}
+                </span>
+              </div>
+            </div>
+            <ScoreSparkline history={scoreHistory} />
+          </div>
         </div>
 
         <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6'>

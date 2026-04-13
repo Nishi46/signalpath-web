@@ -21,11 +21,33 @@ function ConnectContent() {
     signals_total: 0, signals_embedded: 0, signals_clustered: 0, clusters: 0,
   })
   const [stalledPolls, setStalledPolls] = useState(0)
+  const [hubspotConnected, setHubspotConnected] = useState(false)
+  const [salesforceConnected, setSalesforceConnected] = useState(false)
+  const [connectingCrm, setConnectingCrm] = useState<'hubspot' | 'salesforce' | null>(null)
   const searchParams = useSearchParams()
   const router = useRouter()
   const connected = searchParams.get('connected') === 'true'
   const linearConnected = searchParams.get('linear_connected') === 'true'
   const jiraConnected = searchParams.get('jira_connected') === 'true'
+  const crmParam = searchParams.get('crm')
+
+  // Fetch current CRM connection status on mount
+  useEffect(() => {
+    fetch('/api/workspace-status')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return
+        setHubspotConnected(!!data.hubspot_connected)
+        setSalesforceConnected(!!data.salesforce_connected)
+      })
+      .catch(() => { /* ignore */ })
+  }, [])
+
+  // Handle CRM OAuth return params (?crm=hubspot&connected=true)
+  useEffect(() => {
+    if (crmParam === 'hubspot') setHubspotConnected(true)
+    if (crmParam === 'salesforce') setSalesforceConnected(true)
+  }, [crmParam])
 
   // After Linear/Jira OAuth, redirect back to the page the user was on
   useEffect(() => {
@@ -37,6 +59,64 @@ function ConnectContent() {
       }
     }
   }, [linearConnected, jiraConnected, router])
+
+  async function handleConnectHubspot() {
+    setConnectingCrm('hubspot')
+    try {
+      const res = await fetch('/api/auth-hubspot')
+      if (!res.ok) {
+        alert((await res.json().catch(() => ({}))).error ?? 'HubSpot connection failed')
+        setConnectingCrm(null)
+        return
+      }
+      const { redirect_url } = await res.json()
+      try {
+        const url = new URL(redirect_url)
+        if (!url.hostname.endsWith('.hubspot.com')) {
+          alert('Unexpected redirect URL')
+          setConnectingCrm(null)
+          return
+        }
+      } catch {
+        alert('Invalid redirect URL')
+        setConnectingCrm(null)
+        return
+      }
+      window.location.href = redirect_url
+    } catch {
+      alert('Network error — please try again')
+      setConnectingCrm(null)
+    }
+  }
+
+  async function handleConnectSalesforce() {
+    setConnectingCrm('salesforce')
+    try {
+      const res = await fetch('/api/auth-salesforce')
+      if (!res.ok) {
+        alert((await res.json().catch(() => ({}))).error ?? 'Salesforce connection failed')
+        setConnectingCrm(null)
+        return
+      }
+      const { redirect_url } = await res.json()
+      try {
+        const url = new URL(redirect_url)
+        if (!url.hostname.endsWith('.salesforce.com') && !url.hostname.endsWith('.force.com')) {
+          alert('Unexpected redirect URL')
+          setConnectingCrm(null)
+          return
+        }
+      } catch {
+        alert('Invalid redirect URL')
+        setConnectingCrm(null)
+        return
+      }
+      window.location.href = redirect_url
+    } catch {
+      alert('Network error — please try again')
+      setConnectingCrm(null)
+    }
+  }
 
   async function handleConnect() {
     if (!subdomain.trim() || !workspaceId) return
@@ -128,6 +208,11 @@ function ConnectContent() {
       setSubdomain={setSubdomain}
       connecting={connecting}
       onConnect={handleConnect}
+      hubspotConnected={hubspotConnected}
+      salesforceConnected={salesforceConnected}
+      onConnectHubspot={handleConnectHubspot}
+      onConnectSalesforce={handleConnectSalesforce}
+      connectingCrm={connectingCrm}
     />
   )
 }
