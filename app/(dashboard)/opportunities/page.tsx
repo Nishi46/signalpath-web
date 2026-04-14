@@ -107,8 +107,12 @@ export default function OpportunitiesPage() {
         const data = await res.json()
         setClusters(data.clusters)
         setFeedback(data.feedback ?? {})
+      } else {
+        console.error('Failed to load clusters:', res.status, await res.text().catch(() => ''))
       }
-    } catch { /* network error */ }
+    } catch (e) {
+      console.error('Network error loading clusters:', e)
+    }
     setLoading(false)
   }, [workspaceId])
 
