@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
+import { createClient } from '@supabase/supabase-js'
 import {
   Sparkles,
   CheckCircle2,
@@ -31,23 +32,47 @@ interface WorkspaceSettings {
 }
 
 async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSettings> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  try {
-    const res = await fetch(`${baseUrl}/api/workspace-status`, {
-      headers: { 'x-workspace-id': workspaceId },
-      cache: 'no-store',
-    })
-    if (!res.ok) throw new Error('Failed')
-    return await res.json()
-  } catch {
-    return {
-      zendesk_connected: false,
-      linear_connected: false,
-      jira_connected: false,
-      hubspot_connected: false,
-      salesforce_connected: false,
-      ml_stats: { labeled_cluster_count: 0, ml_ready: false, ml_model_version: 0, labels_needed: ML_THRESHOLD },
-    }
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+
+  type WsRow = {
+    zendesk_domain: string | null
+    zendesk_token: string | null
+    linear_token: string | null
+    jira_token: string | null
+    hubspot_token: string | null
+    salesforce_token: string | null
+    labeled_cluster_count: number | null
+    ml_ready: boolean | null
+    ml_model_version: number | null
+  }
+
+  const { data } = await supabaseAdmin
+    .from('workspaces')
+    .select(
+      'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
+      'hubspot_token, salesforce_token, ' +
+      'labeled_cluster_count, ml_ready, ml_model_version'
+    )
+    .eq('id', workspaceId)
+    .single() as { data: WsRow | null }
+
+  const labeledCount = data?.labeled_cluster_count ?? 0
+
+  return {
+    zendesk_connected: !!(data?.zendesk_domain && data?.zendesk_token),
+    linear_connected: !!data?.linear_token,
+    jira_connected: !!data?.jira_token,
+    hubspot_connected: !!data?.hubspot_token,
+    salesforce_connected: !!data?.salesforce_token,
+    ml_stats: {
+      labeled_cluster_count: labeledCount,
+      ml_ready: data?.ml_ready ?? false,
+      ml_model_version: data?.ml_model_version ?? 0,
+      labels_needed: Math.max(0, ML_THRESHOLD - labeledCount),
+    },
   }
 }
 
