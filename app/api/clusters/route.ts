@@ -16,7 +16,7 @@ export async function GET() {
   const { data: clusters, error: clustersError } = await supabaseAdmin
     .from('clusters')
     .select(
-      'id, label, opportunity_score, signal_count, churn_signal_count, confidence, dimension_f, dimension_r, dimension_c, dimension_b, dimension_s, dimension_v, unique_orgs, revenue_at_risk_usd, spec_generated_at, human_brief, shipped_at, pm_rating',
+      'id, label, opportunity_score, signal_count, churn_signal_count, confidence, dimension_f, dimension_r, dimension_c, dimension_b, dimension_s, dimension_v, unique_orgs, revenue_at_risk_usd, spec_generated_at, human_brief, shipped_at',
     )
     .eq('workspace_id', workspaceId)
     .order('opportunity_score', { ascending: false })

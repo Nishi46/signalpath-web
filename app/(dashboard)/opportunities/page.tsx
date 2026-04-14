@@ -40,7 +40,6 @@ interface Cluster {
   spec_generated_at?: string | null
   human_brief?: string | null
   shipped_at?: string | null
-  pm_rating?: string | null
 }
 
 type ViewMode = 'grid' | 'list'
