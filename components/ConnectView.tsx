@@ -1,10 +1,14 @@
 'use client'
 import { DashboardNav } from './DashboardNav'
-import { Link2, CheckCircle2, DollarSign } from 'lucide-react'
+import { Link2, CheckCircle2, DollarSign, ExternalLink } from 'lucide-react'
 
 interface ConnectViewProps {
   subdomain: string
   setSubdomain: (v: string) => void
+  email: string
+  setEmail: (v: string) => void
+  apiToken: string
+  setApiToken: (v: string) => void
   connecting: boolean
   onConnect: () => void
   hubspotConnected?: boolean
@@ -17,6 +21,10 @@ interface ConnectViewProps {
 export function ConnectView({
   subdomain,
   setSubdomain,
+  email,
+  setEmail,
+  apiToken,
+  setApiToken,
   connecting,
   onConnect,
   hubspotConnected = false,
@@ -25,45 +33,95 @@ export function ConnectView({
   onConnectSalesforce,
   connectingCrm = null,
 }: ConnectViewProps) {
+  const canConnect = subdomain.trim() && email.trim() && apiToken.trim() && !connecting
+
   return (
     <div className='min-h-screen bg-gray-50'>
       <DashboardNav />
       <div className='max-w-lg mx-auto px-6 py-10 space-y-6'>
 
         {/* ── Zendesk (required) ──────────────────────────────────────────── */}
-        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center'>
+        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-8'>
           <div className='w-14 h-14 bg-blue-50 rounded-2xl mx-auto mb-6 flex items-center justify-center'>
             <Link2 className='w-6 h-6 text-blue-600' />
           </div>
-          <h1 className='text-2xl font-bold text-gray-900 mb-3'>Connect your Zendesk</h1>
-          <p className='text-gray-500 text-sm mb-8 leading-relaxed'>
+          <h1 className='text-2xl font-bold text-gray-900 mb-2 text-center'>Connect your Zendesk</h1>
+          <p className='text-gray-500 text-sm mb-8 leading-relaxed text-center'>
             SignalPath reads your support tickets and surfaces the product
             opportunities most likely to reduce churn. Setup takes 60 seconds.
           </p>
-          <div className='flex rounded-xl border border-gray-200 overflow-hidden mb-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all'>
-            <input
-              type='text'
-              value={subdomain}
-              onChange={e => setSubdomain(e.target.value)}
-              placeholder='yourcompany'
-              className='flex-1 px-4 py-3 text-sm outline-none bg-gray-50 focus:bg-white transition-colors'
-              onKeyDown={e => e.key === 'Enter' && !connecting && subdomain.trim() && onConnect()}
-            />
-            <span className='px-4 py-3 bg-gray-50 text-gray-400 text-sm border-l border-gray-200 flex items-center'>
-              .zendesk.com
-            </span>
+
+          <div className='space-y-3'>
+            {/* Subdomain */}
+            <div>
+              <label className='block text-xs font-medium text-gray-600 mb-1.5'>Zendesk subdomain</label>
+              <div className='flex rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all'>
+                <input
+                  type='text'
+                  value={subdomain}
+                  onChange={e => setSubdomain(e.target.value)}
+                  placeholder='yourcompany'
+                  className='flex-1 px-4 py-3 text-sm outline-none bg-gray-50 focus:bg-white transition-colors'
+                />
+                <span className='px-4 py-3 bg-gray-50 text-gray-400 text-sm border-l border-gray-200 flex items-center select-none'>
+                  .zendesk.com
+                </span>
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className='block text-xs font-medium text-gray-600 mb-1.5'>Zendesk admin email</label>
+              <input
+                type='email'
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder='you@yourcompany.com'
+                className='w-full px-4 py-3 text-sm rounded-xl border border-gray-200 outline-none bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all'
+              />
+            </div>
+
+            {/* API token */}
+            <div>
+              <div className='flex items-center justify-between mb-1.5'>
+                <label className='text-xs font-medium text-gray-600'>API token</label>
+                <a
+                  href={`https://${subdomain || 'yourcompany'}.zendesk.com/admin/apps-integrations/apis/zendesk-api/settings`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1'
+                >
+                  Get token in Zendesk <ExternalLink className='w-3 h-3' />
+                </a>
+              </div>
+              <input
+                type='password'
+                value={apiToken}
+                onChange={e => setApiToken(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && canConnect && onConnect()}
+                placeholder='Paste your API token'
+                className='w-full px-4 py-3 text-sm rounded-xl border border-gray-200 outline-none bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono'
+              />
+            </div>
           </div>
-          <p className='text-xs text-gray-400 mb-6'>Enter the subdomain from your Zendesk URL</p>
+
+          {/* How to get a token */}
+          <div className='mt-4 p-3 bg-blue-50 rounded-xl text-xs text-blue-700 leading-relaxed'>
+            <strong>How to get your API token:</strong> In Zendesk, go to{' '}
+            <strong>Admin Center → Apps and Integrations → APIs → Zendesk API</strong>,
+            then click <strong>Add API token</strong>, copy it, and paste it above.
+          </div>
+
           <button
             onClick={onConnect}
-            disabled={connecting || !subdomain.trim()}
-            className='w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
+            disabled={!canConnect}
+            className='w-full mt-5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
           >
-            {connecting ? 'Redirecting to Zendesk…' : 'Connect Zendesk'}
+            {connecting ? 'Verifying and connecting…' : 'Connect Zendesk'}
           </button>
         </div>
 
-        {/* ── Revenue data — CRM (optional, PRO) ─────────────────────────── */}
+        {/* ── Revenue data — CRM (optional) ───────────────────────────────── */}
         <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
           <div className='flex items-center gap-3 mb-5'>
             <div className='w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center'>
