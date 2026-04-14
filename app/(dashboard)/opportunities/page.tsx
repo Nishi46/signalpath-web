@@ -89,6 +89,7 @@ export default function OpportunitiesPage() {
   // Onboarding
   const [mlStats, setMlStats] = useState<{ labeled_cluster_count: number; ml_model_version: number } | null>(null)
   const [zendeskConnected, setZendeskConnected] = useState(false)
+  const [signalCount, setSignalCount] = useState<number | null>(null)
   const [checklistDismissed, setChecklistDismissed] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('sp_checklist_dismissed') === '1'
@@ -158,7 +159,7 @@ export default function OpportunitiesPage() {
     }
   }, [])
 
-  // Fetch workspace status for onboarding checklist
+  // Fetch workspace status for onboarding checklist + signal count for empty state
   useEffect(() => {
     if (!workspaceId) return
     fetch('/api/workspace-status')
@@ -172,6 +173,10 @@ export default function OpportunitiesPage() {
           localStorage.setItem('sp_pushed', '1')
         }
       })
+      .catch(() => {})
+    fetch('/api/signal-count')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setSignalCount(data.count) })
       .catch(() => {})
   }, [workspaceId])
 
@@ -533,7 +538,10 @@ export default function OpportunitiesPage() {
 
           {/* Results — tiered sections */}
           {clusters.length === 0 ? (
-            <EmptyState processing={zendeskConnected} />
+            <EmptyState
+              processing={zendeskConnected && signalCount === null}
+              insufficient={zendeskConnected && signalCount !== null && signalCount < 3}
+            />
           ) : sections.length === 0 && !shippedSection ? (
             <div className='text-center py-16'>
               <p className='text-gray-500 text-sm'>No opportunities match your filters.</p>
