@@ -68,7 +68,6 @@ export default function OpportunitiesPage() {
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [loading, setLoading] = useState(true)
   const [feedback, setFeedback] = useState<Record<string, string>>({})
-  const [workspaceState, setWorkspaceState] = useState<'idle' | 'connected' | 'not-connected'>('idle')
 
   // View & filter state
   const [view, setView] = useState<ViewMode>('grid')
@@ -107,24 +106,10 @@ export default function OpportunitiesPage() {
         const data = await res.json()
         setClusters(data.clusters)
         setFeedback(data.feedback ?? {})
-
-        if (data.clusters.length === 0 && workspaceState === 'idle') {
-          try {
-            const wsRes = await fetch('/api/workspace-status')
-            if (wsRes.ok) {
-              const ws = await wsRes.json()
-              setWorkspaceState(ws.zendesk_connected ? 'connected' : 'not-connected')
-            } else {
-              setWorkspaceState('not-connected')
-            }
-          } catch {
-            setWorkspaceState('not-connected')
-          }
-        }
       }
     } catch { /* network error */ }
     setLoading(false)
-  }, [workspaceId, workspaceState])
+  }, [workspaceId])
 
   useEffect(() => {
     if (wsLoading || !workspaceId) return
@@ -548,7 +533,7 @@ export default function OpportunitiesPage() {
 
           {/* Results — tiered sections */}
           {clusters.length === 0 ? (
-            <EmptyState processing={workspaceState === 'connected'} />
+            <EmptyState processing={zendeskConnected} />
           ) : sections.length === 0 && !shippedSection ? (
             <div className='text-center py-16'>
               <p className='text-gray-500 text-sm'>No opportunities match your filters.</p>
