@@ -19,17 +19,22 @@ export async function GET(
   const { id } = await params
 
   // Ensure cluster belongs to the authenticated user's workspace
-  const { data: cluster } = await supabaseAdmin
+  const { data: cluster, error: clusterError } = await supabaseAdmin
     .from('clusters')
     .select(
       `id, label, opportunity_score, signal_count, churn_signal_count, recent_signal_count, centroid, scored_at,
        human_brief, agent_spec, spec_generated_at, confidence, dimension_f, dimension_r, dimension_c,
        dimension_b, dimension_s, dimension_v, unique_orgs, unique_requesters, revenue_at_risk_usd,
-       scoring_model, ml_review_needed, revenue_source`,
+       scoring_model, ml_review_needed`,
     )
     .eq('id', id)
     .eq('workspace_id', workspaceId)
     .single()
+
+  if (clusterError) {
+    console.error('[/api/clusters/[id]] Supabase error:', clusterError.message, 'id:', id)
+    return NextResponse.json({ error: 'query failed', detail: clusterError.message }, { status: 500 })
+  }
 
   if (!cluster) {
     return NextResponse.json({ error: 'not found' }, { status: 404 })
