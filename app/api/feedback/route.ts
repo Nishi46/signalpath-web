@@ -46,14 +46,17 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Update shipped_at on clusters for ship action (workspace-scoped)
-  if (action === 'ship') {
-    await supabaseAdmin
-      .from('clusters')
-      .update({ shipped_at: new Date().toISOString() })
-      .in('id', clusterIds)
-      .eq('workspace_id', workspaceId)
-  }
+  // Update pm_rating / shipped_at on clusters (workspace-scoped)
+  const clusterUpdate: Record<string, unknown> =
+    action === 'ship'
+      ? { shipped_at: new Date().toISOString() }
+      : { pm_rating: action }
+
+  await supabaseAdmin
+    .from('clusters')
+    .update(clusterUpdate)
+    .in('id', clusterIds)
+    .eq('workspace_id', workspaceId)
 
   // For ship action, skip ML refresh (no new label was added)
   if (action === 'ship') {

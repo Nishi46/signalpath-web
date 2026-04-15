@@ -20,7 +20,7 @@ export async function GET() {
   const [clustersRes, workspaceRes, topRes] = await Promise.all([
     supabaseAdmin
       .from('clusters')
-      .select('id, opportunity_score, signal_count, churn_signal_count, revenue_at_risk_usd, label, confidence, scored_at')
+      .select('id, opportunity_score, signal_count, churn_signal_count, revenue_at_risk_usd, label, confidence, scored_at, pm_rating')
       .eq('workspace_id', workspaceId),
     supabaseAdmin
       .from('workspaces')
@@ -31,6 +31,7 @@ export async function GET() {
       .from('clusters')
       .select('id, label, opportunity_score, churn_signal_count, revenue_at_risk_usd, confidence')
       .eq('workspace_id', workspaceId)
+      .is('pm_rating', null)
       .order('opportunity_score', { ascending: false })
       .limit(3),
   ])
@@ -42,7 +43,7 @@ export async function GET() {
   const totalOpportunities = clusters.length
   const totalRevenue = clusters.reduce((sum, c) => sum + (c.revenue_at_risk_usd ?? 0), 0)
   const churnRiskCount = clusters.filter(c => c.churn_signal_count > 0).length
-  const ratedCount = 0
+  const ratedCount = clusters.filter(c => c.pm_rating).length
 
   // This week vs last week (by scored_at)
   const thisWeek = clusters.filter(c => c.scored_at && c.scored_at >= weekAgo).length
