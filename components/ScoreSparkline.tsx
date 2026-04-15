@@ -32,12 +32,8 @@ export function ScoreSparkline({ history }: ScoreSparklineProps) {
   const prev = history[history.length - 2].score
   const delta = latest - prev
 
-  let badgeClass = 'bg-gray-100 text-gray-500'
-  const deltaLabel = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`
-  if (delta > 0.5) badgeClass = 'bg-green-100 text-green-700'
-  else if (delta < -0.5) badgeClass = 'bg-red-100 text-red-700'
-
   const lineColor = delta > 0.5 ? '#10b981' : delta < -0.5 ? '#ef4444' : '#94a3b8'
+  const showDelta = Math.abs(delta) >= 0.1
 
   return (
     <div className='flex items-center gap-2'>
@@ -51,9 +47,17 @@ export function ScoreSparkline({ history }: ScoreSparklineProps) {
           strokeLinecap='round'
         />
       </svg>
-      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${badgeClass}`}>
-        {deltaLabel}
-      </span>
+      {showDelta ? (
+        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+          delta > 0.5 ? 'bg-green-100 text-green-700' :
+          delta < -0.5 ? 'bg-red-100 text-red-700' :
+          'bg-gray-100 text-gray-500'
+        }`}>
+          {delta >= 0 ? '+' : ''}{delta.toFixed(1)}
+        </span>
+      ) : (
+        <span className='text-[10px] text-gray-400'>Stable</span>
+      )}
     </div>
   )
 }

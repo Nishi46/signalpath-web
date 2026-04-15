@@ -498,7 +498,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           {/* Scoring transparency panel */}
           <div className='border-t border-gray-100 pt-5 mt-5 space-y-3'>
             <div className='flex items-center justify-between'>
-              <span className='text-xs text-gray-500 font-medium'>Score trend</span>
+              <span className='text-xs text-gray-500 font-medium'>Scoring model</span>
               <div className='flex items-center gap-2'>
                 {cluster.ml_review_needed && (
                   <span className='text-xs font-medium text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full'>
@@ -516,7 +516,14 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                 </span>
               </div>
             </div>
-            <ScoreSparkline history={scoreHistory} />
+            {scoreHistory.length >= 2 && (
+              <div>
+                <span className='text-xs text-gray-500 font-medium'>Score trend</span>
+                <div className='mt-1.5'>
+                  <ScoreSparkline history={scoreHistory} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
