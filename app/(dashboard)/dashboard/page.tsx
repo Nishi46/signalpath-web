@@ -5,14 +5,16 @@ import Link from 'next/link'
 import {
   TrendingUp,
   AlertTriangle,
-  Star,
   Brain,
   ArrowRight,
   ArrowUp,
   ArrowDown,
   Minus,
   DollarSign,
-  BarChart3,
+  Layers,
+  ThumbsUp,
+  Zap,
+  PlugZap,
 } from 'lucide-react'
 
 interface DashboardStats {
@@ -41,27 +43,121 @@ interface DashboardStats {
 function formatRevenue(amount: number): string {
   if (amount >= 1_000_000_000) return `$${(amount / 1_000_000_000).toFixed(1)}B`
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`
+  if (amount >= 1_000) return `$${Math.round(amount / 1_000)}K`
   return `$${amount}`
 }
 
-function WeekTrend({ current, previous }: { current: number; previous: number }) {
-  if (previous === 0 && current === 0) return <span className='text-xs text-gray-400'>No data</span>
+function scoreColor(score: number): { bg: string; text: string; ring: string } {
+  if (score >= 7) return { bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-200' }
+  if (score >= 4) return { bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-200' }
+  return { bg: 'bg-gray-50', text: 'text-gray-500', ring: 'ring-gray-200' }
+}
+
+function StatCard({
+  icon: Icon,
+  iconBg,
+  iconColor,
+  label,
+  value,
+  sub,
+  trend,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  iconBg: string
+  iconColor: string
+  label: string
+  value: string | number
+  sub?: React.ReactNode
+  trend?: React.ReactNode
+}) {
+  return (
+    <div className='bg-white rounded-2xl border border-gray-200 p-5 flex flex-col gap-3'>
+      <div className='flex items-center justify-between'>
+        <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center`}>
+          <Icon className={`w-4 h-4 ${iconColor}`} />
+        </div>
+        {trend}
+      </div>
+      <div>
+        <p className='text-2xl font-bold text-gray-900 tabular-nums leading-none'>{value}</p>
+        <p className='text-xs font-medium text-gray-500 mt-1.5'>{label}</p>
+      </div>
+      {sub && <div className='border-t border-gray-50 pt-2.5'>{sub}</div>}
+    </div>
+  )
+}
+
+function WeekBadge({ current, previous }: { current: number; previous: number }) {
+  if (previous === 0 && current === 0) return null
   const delta = current - previous
   if (delta === 0) return (
-    <span className='flex items-center gap-0.5 text-xs text-gray-400'>
-      <Minus className='w-3 h-3' /> Same as last week
+    <span className='flex items-center gap-0.5 text-[11px] font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full'>
+      <Minus className='w-3 h-3' /> Same
     </span>
   )
   const pct = previous > 0 ? Math.round(Math.abs(delta / previous) * 100) : 100
   return delta > 0 ? (
-    <span className='flex items-center gap-0.5 text-xs text-emerald-600'>
-      <ArrowUp className='w-3 h-3' />{pct}% vs last week
+    <span className='flex items-center gap-0.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full'>
+      <ArrowUp className='w-3 h-3' />{pct}%
     </span>
   ) : (
-    <span className='flex items-center gap-0.5 text-xs text-red-500'>
-      <ArrowDown className='w-3 h-3' />{pct}% vs last week
+    <span className='flex items-center gap-0.5 text-[11px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full'>
+      <ArrowDown className='w-3 h-3' />{pct}%
     </span>
+  )
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className='min-h-screen bg-gray-50'>
+      <DashboardNav />
+      <div className='max-w-5xl mx-auto px-6 py-10'>
+        <div className='h-7 bg-gray-200 rounded-lg w-36 animate-pulse mb-1' />
+        <div className='h-4 bg-gray-100 rounded w-48 animate-pulse mb-8' />
+        <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className='bg-white rounded-2xl border border-gray-200 p-5 animate-pulse'>
+              <div className='w-8 h-8 bg-gray-100 rounded-xl mb-4' />
+              <div className='h-7 bg-gray-200 rounded w-16 mb-2' />
+              <div className='h-3 bg-gray-100 rounded w-24' />
+            </div>
+          ))}
+        </div>
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-5'>
+          <div className='bg-white rounded-2xl border border-gray-200 p-6 animate-pulse h-52' />
+          <div className='bg-white rounded-2xl border border-gray-200 p-6 animate-pulse h-52' />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EmptyDashboard() {
+  return (
+    <div className='min-h-screen bg-gray-50'>
+      <DashboardNav />
+      <div className='max-w-5xl mx-auto px-6 py-10'>
+        <div className='mb-8'>
+          <h1 className='text-2xl font-bold text-gray-900'>Dashboard</h1>
+          <p className='text-sm text-gray-500 mt-1'>Your workspace overview</p>
+        </div>
+        <div className='bg-white border border-gray-200 rounded-2xl p-10 flex flex-col items-center text-center max-w-sm mx-auto'>
+          <div className='w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4'>
+            <PlugZap className='w-7 h-7 text-blue-500' />
+          </div>
+          <h2 className='text-base font-semibold text-gray-900 mb-2'>No data yet</h2>
+          <p className='text-sm text-gray-500 mb-6 leading-relaxed'>
+            Connect Zendesk or Intercom to start surfacing product opportunities from your support conversations.
+          </p>
+          <Link
+            href='/connect'
+            className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors'
+          >
+            Connect a data source <ArrowRight className='w-4 h-4' />
+          </Link>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -77,177 +173,258 @@ export default function DashboardPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) {
-    return (
-      <div className='min-h-screen bg-gray-50'>
-        <DashboardNav />
-        <div className='max-w-6xl mx-auto px-6 py-10'>
-          <div className='h-7 bg-gray-200 rounded w-48 animate-pulse mb-8' />
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8'>
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className='bg-white rounded-2xl border border-gray-200 p-6 animate-pulse'>
-                <div className='h-3 bg-gray-100 rounded w-24 mb-3' />
-                <div className='h-8 bg-gray-200 rounded w-20 mb-2' />
-                <div className='h-3 bg-gray-100 rounded w-28' />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <LoadingSkeleton />
+  if (!stats || stats.total_opportunities === 0) return <EmptyDashboard />
 
-  const ml = stats?.ml_stats
-  const mlProgress = Math.min(((ml?.labeled_cluster_count ?? 0) / 50) * 100, 100)
+  const ml = stats.ml_stats
+  const mlProgress = Math.min(((ml.labeled_cluster_count) / 50) * 100, 100)
+  const unrated = Math.max(0, stats.total_opportunities - stats.rated_count)
+  const isModelActive = ml.ml_model_version > 0
 
   return (
     <div className='min-h-screen bg-gray-50'>
       <DashboardNav />
-      <div className='max-w-6xl mx-auto px-6 py-10'>
-        <div className='mb-8'>
+      <div className='max-w-5xl mx-auto px-6 py-10'>
+
+        {/* Header */}
+        <div className='mb-7'>
           <h1 className='text-2xl font-bold text-gray-900'>Dashboard</h1>
-          <p className='text-gray-500 text-sm mt-1'>Workspace overview</p>
+          <p className='text-sm text-gray-500 mt-1'>Your workspace overview</p>
         </div>
 
         {/* Stat cards */}
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8'>
-          <div className='bg-white rounded-2xl border border-gray-200 p-6'>
-            <div className='flex items-center gap-2 text-xs font-medium text-gray-500 mb-3'>
-              <BarChart3 className='w-3.5 h-3.5' />
-              Total opportunities
-            </div>
-            <div className='text-3xl font-bold text-gray-900 mb-2'>{stats?.total_opportunities ?? 0}</div>
-            <WeekTrend current={stats?.new_this_week ?? 0} previous={stats?.new_last_week ?? 0} />
-          </div>
+        <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+          <StatCard
+            icon={Layers}
+            iconBg='bg-blue-50'
+            iconColor='text-blue-600'
+            label='Total opportunities'
+            value={stats.total_opportunities}
+            trend={<WeekBadge current={stats.new_this_week} previous={stats.new_last_week} />}
+            sub={
+              <p className='text-xs text-gray-400'>
+                <span className='font-medium text-gray-600'>{stats.new_this_week}</span> new this week
+              </p>
+            }
+          />
 
-          <div className='bg-white rounded-2xl border border-gray-200 p-6'>
-            <div className='flex items-center gap-2 text-xs font-medium text-gray-500 mb-3'>
-              <DollarSign className='w-3.5 h-3.5' />
-              Revenue at risk
-            </div>
-            <div className='text-3xl font-bold text-emerald-600 mb-2'>
-              {formatRevenue(stats?.total_revenue_at_risk ?? 0)}
-            </div>
-            <p className='text-xs text-gray-400'>across all opportunities</p>
-          </div>
+          <StatCard
+            icon={DollarSign}
+            iconBg='bg-emerald-50'
+            iconColor='text-emerald-600'
+            label='Revenue at risk'
+            value={formatRevenue(stats.total_revenue_at_risk)}
+            sub={<p className='text-xs text-gray-400'>across all clusters</p>}
+          />
 
-          <div className='bg-white rounded-2xl border border-gray-200 p-6'>
-            <div className='flex items-center gap-2 text-xs font-medium text-gray-500 mb-3'>
-              <AlertTriangle className='w-3.5 h-3.5' />
-              Churn risks
-            </div>
-            <div className='text-3xl font-bold text-red-600 mb-2'>{stats?.churn_risk_count ?? 0}</div>
-            <p className='text-xs text-gray-400'>with churn signals</p>
-          </div>
+          <StatCard
+            icon={AlertTriangle}
+            iconBg='bg-red-50'
+            iconColor='text-red-500'
+            label='Churn risks'
+            value={stats.churn_risk_count}
+            sub={
+              stats.churn_risk_count > 0 ? (
+                <Link
+                  href='/opportunities?filter=churn'
+                  className='text-xs text-red-500 hover:text-red-600 font-medium flex items-center gap-1 transition-colors'
+                >
+                  Review now <ArrowRight className='w-3 h-3' />
+                </Link>
+              ) : (
+                <p className='text-xs text-gray-400'>No churn signals</p>
+              )
+            }
+          />
 
-          <div className='bg-white rounded-2xl border border-gray-200 p-6'>
-            <div className='flex items-center gap-2 text-xs font-medium text-gray-500 mb-3'>
-              <Star className='w-3.5 h-3.5' />
-              Rated
-            </div>
-            <div className='text-3xl font-bold text-gray-900 mb-2'>{stats?.rated_count ?? 0}</div>
-            <p className='text-xs text-gray-400'>
-              of {stats?.total_opportunities ?? 0} total
-            </p>
-          </div>
+          <StatCard
+            icon={ThumbsUp}
+            iconBg='bg-violet-50'
+            iconColor='text-violet-600'
+            label='Rated'
+            value={stats.rated_count}
+            sub={
+              <div className='flex items-center gap-2'>
+                <div className='flex-1 bg-gray-100 rounded-full h-1.5'>
+                  <div
+                    className='bg-violet-400 h-1.5 rounded-full transition-all duration-500'
+                    style={{ width: `${Math.min((stats.rated_count / Math.max(stats.total_opportunities, 1)) * 100, 100)}%` }}
+                  />
+                </div>
+                <span className='text-[11px] text-gray-400 shrink-0 tabular-nums'>
+                  {unrated} left
+                </span>
+              </div>
+            }
+          />
         </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-          {/* ML Model status */}
-          <div className='bg-white rounded-2xl border border-gray-200 p-6'>
-            <div className='flex items-center justify-between mb-4'>
-              <h2 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
-                <Brain className='w-4 h-4 text-blue-500' />
-                Personalized model
-              </h2>
-              {(ml?.ml_model_version ?? 0) > 0 ? (
-                <span className='text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full'>
-                  Active — v{ml!.ml_model_version}
-                </span>
-              ) : ml?.ml_ready ? (
-                <span className='text-xs font-medium text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full'>
-                  Ready to train
-                </span>
-              ) : (
-                <span className='text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full'>
-                  Needs labels
-                </span>
-              )}
-            </div>
-            <div className='mb-2 flex justify-between text-xs text-gray-500'>
-              <span>{ml?.labeled_cluster_count ?? 0} ratings collected</span>
-              <span>{ml?.labels_needed ?? 50} to go</span>
-            </div>
-            <div className='w-full bg-gray-100 rounded-full h-2 mb-3'>
-              <div
-                className='h-2 rounded-full bg-blue-500 transition-all duration-500'
-                style={{ width: `${mlProgress}%` }}
-              />
-            </div>
-            <p className='text-xs text-gray-400'>
-              {mlProgress >= 100
-                ? 'Threshold reached. Model retrains automatically after every 10 new ratings.'
-                : `Rate ${ml?.labels_needed ?? 50} more opportunities to unlock the personalized model.`}
-            </p>
-            <Link
-              href='/opportunities'
-              className='mt-4 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700'
-            >
-              Rate opportunities <ArrowRight className='w-3 h-3' />
-            </Link>
-          </div>
+        {/* Lower panels */}
+        <div className='grid grid-cols-1 lg:grid-cols-5 gap-5'>
 
-          {/* Top opportunities */}
-          <div className='bg-white rounded-2xl border border-gray-200 p-6'>
-            <div className='flex items-center justify-between mb-4'>
+          {/* Top opportunities — wider */}
+          <div className='lg:col-span-3 bg-white rounded-2xl border border-gray-200 overflow-hidden'>
+            <div className='flex items-center justify-between px-5 py-4 border-b border-gray-50'>
               <h2 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
                 <TrendingUp className='w-4 h-4 text-blue-500' />
                 Top unrated
               </h2>
               <Link
                 href='/opportunities'
-                className='text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1'
+                className='text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors'
               >
                 See all <ArrowRight className='w-3 h-3' />
               </Link>
             </div>
-            {(stats?.top_opportunities?.length ?? 0) === 0 ? (
-              <p className='text-sm text-gray-400'>All opportunities have been rated.</p>
+
+            {stats.top_opportunities.length === 0 ? (
+              <div className='px-5 py-8 text-center'>
+                <p className='text-sm text-gray-500'>All opportunities have been rated.</p>
+                <Link href='/opportunities' className='text-xs text-blue-600 mt-1 inline-block'>
+                  View them →
+                </Link>
+              </div>
             ) : (
-              <div className='space-y-1'>
-                {stats!.top_opportunities.map(opp => (
-                  <Link
-                    key={opp.id}
-                    href={`/opportunities/${opp.id}`}
-                    className='flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors -mx-2 group'
-                  >
-                    <div className='min-w-0 flex-1'>
-                      <p className='text-sm font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors'>
-                        {opp.label}
-                      </p>
-                      <div className='flex items-center gap-3 mt-0.5'>
-                        {opp.churn_signal_count > 0 && (
-                          <span className='text-xs text-red-500 flex items-center gap-0.5'>
-                            <AlertTriangle className='w-3 h-3' />
-                            {opp.churn_signal_count} churn
-                          </span>
-                        )}
-                        {opp.revenue_at_risk_usd ? (
-                          <span className='text-xs text-emerald-600'>
-                            {formatRevenue(opp.revenue_at_risk_usd)}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className='shrink-0 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center'>
-                      <span className='text-sm font-bold text-blue-700'>
-                        {opp.opportunity_score.toFixed(1)}
+              <div className='divide-y divide-gray-50'>
+                {stats.top_opportunities.map((opp, idx) => {
+                  const colors = scoreColor(opp.opportunity_score)
+                  return (
+                    <Link
+                      key={opp.id}
+                      href={`/opportunities/${opp.id}`}
+                      className='flex items-center gap-3.5 px-5 py-3.5 hover:bg-gray-50/60 transition-colors group'
+                    >
+                      <span className='text-xs font-bold text-gray-300 w-4 shrink-0 tabular-nums'>
+                        {idx + 1}
                       </span>
-                    </div>
-                  </Link>
-                ))}
+                      <div className='flex-1 min-w-0'>
+                        <p className='text-sm font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors'>
+                          {opp.label}
+                        </p>
+                        <div className='flex items-center gap-2.5 mt-0.5'>
+                          {opp.churn_signal_count > 0 && (
+                            <span className='flex items-center gap-0.5 text-[11px] text-red-500 font-medium'>
+                              <AlertTriangle className='w-3 h-3' />
+                              {opp.churn_signal_count} churn
+                            </span>
+                          )}
+                          {opp.revenue_at_risk_usd != null && opp.revenue_at_risk_usd > 0 && (
+                            <span className='text-[11px] text-emerald-600 font-medium'>
+                              {formatRevenue(opp.revenue_at_risk_usd)}
+                            </span>
+                          )}
+                          {opp.confidence && (
+                            <span className='text-[11px] text-gray-400'>{opp.confidence} confidence</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`shrink-0 w-10 h-10 rounded-xl ring-1 ${colors.bg} ${colors.ring} flex items-center justify-center`}>
+                        <span className={`text-sm font-bold ${colors.text} tabular-nums`}>
+                          {opp.opportunity_score.toFixed(1)}
+                        </span>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             )}
+          </div>
+
+          {/* Right column */}
+          <div className='lg:col-span-2 flex flex-col gap-5'>
+
+            {/* ML Model */}
+            <div className='bg-white rounded-2xl border border-gray-200 overflow-hidden'>
+              <div className='flex items-center justify-between px-5 py-4 border-b border-gray-50'>
+                <h2 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
+                  <Brain className='w-4 h-4 text-violet-500' />
+                  Scoring model
+                </h2>
+                {isModelActive ? (
+                  <span className='flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full'>
+                    <Zap className='w-3 h-3' /> Active
+                  </span>
+                ) : ml.ml_ready ? (
+                  <span className='text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full'>
+                    Training
+                  </span>
+                ) : (
+                  <span className='text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full'>
+                    Learning
+                  </span>
+                )}
+              </div>
+              <div className='px-5 py-4'>
+                {isModelActive ? (
+                  <div className='space-y-3'>
+                    <p className='text-xs text-gray-500 leading-relaxed'>
+                      Opportunities are scored using your team&apos;s rating history. Retrains every 10 new ratings.
+                    </p>
+                    <div className='flex items-center justify-between py-2 px-3 bg-gray-50 rounded-xl text-xs'>
+                      <span className='text-gray-500'>Ratings used</span>
+                      <span className='font-semibold text-gray-700 tabular-nums'>{ml.labeled_cluster_count}</span>
+                    </div>
+                    <div className='flex items-center justify-between py-2 px-3 bg-gray-50 rounded-xl text-xs'>
+                      <span className='text-gray-500'>Model version</span>
+                      <span className='font-semibold text-gray-700'>v{ml.ml_model_version}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className='space-y-3'>
+                    <div className='flex items-end justify-between'>
+                      <span className='text-2xl font-bold text-gray-900 tabular-nums'>
+                        {ml.labeled_cluster_count}
+                        <span className='text-sm font-normal text-gray-400 ml-1'>/ 50</span>
+                      </span>
+                      <span className='text-xs text-gray-400 mb-1'>{ml.labels_needed} to go</span>
+                    </div>
+                    <div className='w-full bg-gray-100 rounded-full h-1.5'>
+                      <div
+                        className='bg-violet-500 h-1.5 rounded-full transition-all duration-700'
+                        style={{ width: `${mlProgress}%` }}
+                      />
+                    </div>
+                    <p className='text-xs text-gray-400 leading-relaxed'>
+                      Rate opportunities to unlock personalized scoring tailored to your team.
+                    </p>
+                    <Link
+                      href='/opportunities'
+                      className='flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-700 transition-colors'
+                    >
+                      Rate now <ArrowRight className='w-3 h-3' />
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick stats summary */}
+            <div className='bg-white rounded-2xl border border-gray-200 p-5'>
+              <h2 className='text-sm font-semibold text-gray-900 mb-3'>This week</h2>
+              <div className='space-y-2.5'>
+                <div className='flex items-center justify-between text-xs'>
+                  <span className='text-gray-500'>New opportunities</span>
+                  <span className='font-semibold text-gray-800 tabular-nums'>{stats.new_this_week}</span>
+                </div>
+                <div className='flex items-center justify-between text-xs'>
+                  <span className='text-gray-500'>Last week</span>
+                  <span className='font-semibold text-gray-800 tabular-nums'>{stats.new_last_week}</span>
+                </div>
+                <div className='flex items-center justify-between text-xs'>
+                  <span className='text-gray-500'>Churn risks</span>
+                  <span className={`font-semibold tabular-nums ${stats.churn_risk_count > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+                    {stats.churn_risk_count}
+                  </span>
+                </div>
+                <div className='pt-1 border-t border-gray-50 flex items-center justify-between text-xs'>
+                  <span className='text-gray-500'>Rated so far</span>
+                  <span className='font-semibold text-gray-800 tabular-nums'>
+                    {stats.rated_count} / {stats.total_opportunities}
+                  </span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
