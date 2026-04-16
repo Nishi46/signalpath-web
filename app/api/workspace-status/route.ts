@@ -17,6 +17,7 @@ interface WorkspaceRow {
   ml_model_version: number | null
   hubspot_token: string | null
   salesforce_token: string | null
+  intercom_token: string | null
 }
 
 export async function GET() {
@@ -30,7 +31,7 @@ export async function GET() {
     .select(
       'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
       'labeled_cluster_count, ml_ready, ml_model_version, ' +
-      'hubspot_token, salesforce_token'
+      'hubspot_token, salesforce_token, intercom_token'
     )
     .eq('id', workspaceId)
     .single() as { data: WorkspaceRow | null }
@@ -45,6 +46,7 @@ export async function GET() {
     // Boolean flags only — encrypted token strings are NEVER sent to the frontend.
     hubspot_connected: !!data?.hubspot_token,
     salesforce_connected: !!data?.salesforce_token,
+    intercom_connected: !!data?.intercom_token,
     // ML readiness stats — safe to expose (version number + counts, no model weights or paths).
     ml_stats: {
       labeled_cluster_count: labeledCount,

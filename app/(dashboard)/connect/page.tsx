@@ -26,14 +26,17 @@ function ConnectContent() {
   const [hubspotConnected, setHubspotConnected] = useState(false)
   const [salesforceConnected, setSalesforceConnected] = useState(false)
   const [connectingCrm, setConnectingCrm] = useState<'hubspot' | 'salesforce' | null>(null)
+  const [intercomConnected, setIntercomConnected] = useState(false)
+  const [connectingIntercom, setConnectingIntercom] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
   const connected = searchParams.get('connected') === 'true'
   const linearConnected = searchParams.get('linear_connected') === 'true'
   const jiraConnected = searchParams.get('jira_connected') === 'true'
   const crmParam = searchParams.get('crm')
+  const intercomParam = searchParams.get('intercom_connected') === 'true'
 
-  // Fetch current CRM connection status on mount
+  // Fetch current connection status on mount
   useEffect(() => {
     fetch('/api/workspace-status')
       .then(r => r.ok ? r.json() : null)
@@ -41,6 +44,7 @@ function ConnectContent() {
         if (!data) return
         setHubspotConnected(!!data.hubspot_connected)
         setSalesforceConnected(!!data.salesforce_connected)
+        setIntercomConnected(!!data.intercom_connected)
       })
       .catch(() => { /* ignore */ })
   }, [])
@@ -50,6 +54,11 @@ function ConnectContent() {
     if (crmParam === 'hubspot') setHubspotConnected(true)
     if (crmParam === 'salesforce') setSalesforceConnected(true)
   }, [crmParam])
+
+  // Handle Intercom OAuth return param (?intercom_connected=true)
+  useEffect(() => {
+    if (intercomParam) setIntercomConnected(true)
+  }, [intercomParam])
 
   // After Linear/Jira OAuth, redirect back to the page the user was on
   useEffect(() => {
@@ -61,6 +70,35 @@ function ConnectContent() {
       }
     }
   }, [linearConnected, jiraConnected, router])
+
+  async function handleConnectIntercom() {
+    setConnectingIntercom(true)
+    try {
+      const res = await fetch('/api/auth-intercom')
+      if (!res.ok) {
+        alert((await res.json().catch(() => ({}))).error ?? 'Intercom connection failed')
+        setConnectingIntercom(false)
+        return
+      }
+      const { redirect_url } = await res.json()
+      try {
+        const url = new URL(redirect_url)
+        if (!url.hostname.endsWith('.intercom.com') && url.hostname !== 'app.intercom.com') {
+          alert('Unexpected redirect URL')
+          setConnectingIntercom(false)
+          return
+        }
+      } catch {
+        alert('Invalid redirect URL')
+        setConnectingIntercom(false)
+        return
+      }
+      window.location.href = redirect_url
+    } catch {
+      alert('Network error — please try again')
+      setConnectingIntercom(false)
+    }
+  }
 
   async function handleConnectHubspot() {
     setConnectingCrm('hubspot')
@@ -212,6 +250,9 @@ function ConnectContent() {
       onConnectHubspot={handleConnectHubspot}
       onConnectSalesforce={handleConnectSalesforce}
       connectingCrm={connectingCrm}
+      intercomConnected={intercomConnected}
+      onConnectIntercom={handleConnectIntercom}
+      connectingIntercom={connectingIntercom}
     />
   )
 }

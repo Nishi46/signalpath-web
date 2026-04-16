@@ -6,11 +6,11 @@ import {
   Sparkles,
   CheckCircle2,
   Loader2,
-  Plug,
-  User,
-  Bell,
   AlertTriangle,
-  ExternalLink,
+  ArrowRight,
+  LogOut,
+  Brain,
+  Zap,
 } from 'lucide-react'
 import { SignOutButton } from '@/components/SignOutButton'
 import { DashboardNav } from '@/components/DashboardNav'
@@ -23,6 +23,7 @@ interface WorkspaceSettings {
   jira_connected: boolean
   hubspot_connected: boolean
   salesforce_connected: boolean
+  intercom_connected: boolean
   ml_stats: {
     labeled_cluster_count: number
     ml_ready: boolean
@@ -44,6 +45,7 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     jira_token: string | null
     hubspot_token: string | null
     salesforce_token: string | null
+    intercom_token: string | null
     labeled_cluster_count: number | null
     ml_ready: boolean | null
     ml_model_version: number | null
@@ -53,7 +55,7 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     .from('workspaces')
     .select(
       'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
-      'hubspot_token, salesforce_token, ' +
+      'hubspot_token, salesforce_token, intercom_token, ' +
       'labeled_cluster_count, ml_ready, ml_model_version'
     )
     .eq('id', workspaceId)
@@ -67,6 +69,7 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     jira_connected: !!data?.jira_token,
     hubspot_connected: !!data?.hubspot_token,
     salesforce_connected: !!data?.salesforce_token,
+    intercom_connected: !!data?.intercom_token,
     ml_stats: {
       labeled_cluster_count: labeledCount,
       ml_ready: data?.ml_ready ?? false,
@@ -76,54 +79,70 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
   }
 }
 
-function SectionHeader({ icon: Icon, title, description }: {
-  icon: React.ComponentType<{ className?: string }>
-  title: string
-  description: string
-}) {
+// Brand-colored integration icon badges
+function IntegrationIcon({ abbr, color }: { abbr: string; color: string }) {
   return (
-    <div className='flex items-center gap-3 mb-5'>
-      <div className='w-9 h-9 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0'>
-        <Icon className='w-4.5 h-4.5 text-gray-600' />
-      </div>
-      <div>
-        <h2 className='text-sm font-semibold text-gray-900'>{title}</h2>
-        <p className='text-xs text-gray-500'>{description}</p>
-      </div>
+    <div
+      className='w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white text-xs font-bold'
+      style={{ backgroundColor: color }}
+    >
+      {abbr}
     </div>
   )
 }
 
-function IntegrationRow({ label, description, connected, badge }: {
+function IntegrationCard({
+  abbr,
+  color,
+  label,
+  description,
+  connected,
+  badge,
+}: {
+  abbr: string
+  color: string
   label: string
   description: string
   connected: boolean
   badge?: string
 }) {
   return (
-    <div className='flex items-center justify-between py-3 border-b border-gray-50 last:border-0'>
-      <div className='flex items-center gap-3'>
-        <div className={`w-2 h-2 rounded-full shrink-0 ${connected ? 'bg-emerald-400' : 'bg-gray-200'}`} />
-        <div>
-          <div className='flex items-center gap-2'>
-            <span className='text-sm font-medium text-gray-800'>{label}</span>
-            {badge && (
-              <span className='text-[10px] font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wide'>
-                {badge}
-              </span>
-            )}
-          </div>
-          <p className='text-xs text-gray-400 mt-0.5'>{description}</p>
+    <div className='flex items-center gap-3 py-3 border-b border-gray-50 last:border-0'>
+      <IntegrationIcon abbr={abbr} color={color} />
+      <div className='flex-1 min-w-0'>
+        <div className='flex items-center gap-2'>
+          <span className='text-sm font-medium text-gray-900'>{label}</span>
+          {badge && (
+            <span className='text-[10px] font-semibold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-md uppercase tracking-wide'>
+              {badge}
+            </span>
+          )}
         </div>
+        <p className='text-xs text-gray-400 mt-0.5 truncate'>{description}</p>
       </div>
-      <span className={`text-xs font-medium px-2.5 py-1 rounded-lg ${
-        connected
-          ? 'bg-emerald-50 text-emerald-700'
-          : 'bg-gray-100 text-gray-500'
-      }`}>
-        {connected ? 'Connected' : 'Not connected'}
-      </span>
+      {connected ? (
+        <div className='flex items-center gap-1.5 text-emerald-600 text-xs font-medium shrink-0'>
+          <CheckCircle2 className='w-3.5 h-3.5' />
+          Connected
+        </div>
+      ) : (
+        <Link
+          href='/connect'
+          className='flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-blue-600 shrink-0 transition-colors group'
+        >
+          Connect
+          <ArrowRight className='w-3 h-3 group-hover:translate-x-0.5 transition-transform' />
+        </Link>
+      )}
     </div>
+  )
+}
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className='text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 px-0.5'>
+      {children}
+    </p>
   )
 }
 
@@ -138,211 +157,227 @@ export default async function SettingsPage() {
   const isTraining = ml.ml_ready && ml.ml_model_version === 0
   const isActive   = ml.ml_model_version > 0
 
-  const integrations = [
+  const signalSources = [
     {
-      label: 'Zendesk',
-      description: 'Import support tickets and detect product signals.',
+      abbr: 'ZD', color: '#78CC66',
+      label: 'Zendesk', description: 'Import support tickets and detect product signals.',
       connected: settings.zendesk_connected,
     },
     {
-      label: 'Linear',
-      description: 'Push opportunities as tickets with one click.',
+      abbr: 'IC', color: '#1F8DED',
+      label: 'Intercom', description: 'Import user conversations as additional signals.',
+      connected: settings.intercom_connected,
+    },
+  ]
+
+  const issueTrackers = [
+    {
+      abbr: 'LN', color: '#5E6AD2',
+      label: 'Linear', description: 'Push opportunities as tickets with one click.',
       connected: settings.linear_connected,
     },
     {
-      label: 'Jira',
-      description: 'Push opportunities to your Jira project.',
+      abbr: 'JR', color: '#0052CC',
+      label: 'Jira', description: 'Push opportunities to your Jira project.',
       connected: settings.jira_connected,
     },
+  ]
+
+  const crmIntegrations = [
     {
-      label: 'HubSpot',
-      description: 'Link CRM accounts to replace AI-estimated revenue with real ARR.',
+      abbr: 'HS', color: '#FF7A59',
+      label: 'HubSpot', description: 'Link CRM accounts to replace AI-estimated ARR.',
       connected: settings.hubspot_connected,
       badge: 'pro',
     },
     {
-      label: 'Salesforce',
-      description: 'Pull AnnualRevenue from Account records for accurate scoring.',
+      abbr: 'SF', color: '#00A1E0',
+      label: 'Salesforce', description: 'Pull AnnualRevenue from Account records.',
       connected: settings.salesforce_connected,
       badge: 'pro',
     },
   ]
 
-  const connectedCount = integrations.filter(i => i.connected).length
+  const allIntegrations = [...signalSources, ...issueTrackers, ...crmIntegrations]
+  const connectedCount = allIntegrations.filter(i => i.connected).length
 
   return (
     <div className='min-h-screen bg-gray-50'>
       <DashboardNav />
       <div className='max-w-2xl mx-auto px-6 py-10'>
-        <h1 className='text-xl font-bold text-gray-900 mb-1'>Settings</h1>
-        <p className='text-sm text-gray-500 mb-8'>Manage your workspace, integrations, and model.</p>
+
+        {/* Page header */}
+        <div className='mb-8'>
+          <h1 className='text-2xl font-bold text-gray-900'>Settings</h1>
+          <p className='text-sm text-gray-500 mt-1'>Manage your workspace, integrations, and scoring model.</p>
+        </div>
 
         <div className='space-y-4'>
 
+          {/* ── Integrations ──────────────────────────────────────────────── */}
+          <div className='bg-white border border-gray-200 rounded-2xl overflow-hidden'>
+            {/* Header */}
+            <div className='flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-50'>
+              <div>
+                <h2 className='text-sm font-semibold text-gray-900'>Integrations</h2>
+                <p className='text-xs text-gray-400 mt-0.5'>
+                  {connectedCount} of {allIntegrations.length} connected
+                </p>
+              </div>
+              <div className='flex items-center gap-1.5'>
+                {Array.from({ length: allIntegrations.length }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      i < connectedCount ? 'bg-emerald-400' : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Groups */}
+            <div className='px-6 py-4 space-y-5'>
+              <div>
+                <GroupLabel>Signal sources</GroupLabel>
+                {signalSources.map(i => <IntegrationCard key={i.label} {...i} />)}
+              </div>
+              <div>
+                <GroupLabel>Issue trackers</GroupLabel>
+                {issueTrackers.map(i => <IntegrationCard key={i.label} {...i} />)}
+              </div>
+              <div>
+                <GroupLabel>CRM</GroupLabel>
+                {crmIntegrations.map(i => <IntegrationCard key={i.label} {...i} />)}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Personalized Scoring Model ────────────────────────────────── */}
+          <div className='bg-white border border-gray-200 rounded-2xl overflow-hidden'>
+            <div className='px-6 pt-5 pb-4 border-b border-gray-50 flex items-center gap-3'>
+              <div className='w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center shrink-0'>
+                <Brain className='w-4.5 h-4.5 text-violet-600' />
+              </div>
+              <div>
+                <h2 className='text-sm font-semibold text-gray-900'>Personalized Scoring</h2>
+                <p className='text-xs text-gray-400'>Learns your team&apos;s priorities from ratings.</p>
+              </div>
+              {isActive && (
+                <span className='ml-auto flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg'>
+                  <Zap className='w-3 h-3' />
+                  Active · v{ml.ml_model_version}
+                </span>
+              )}
+            </div>
+
+            <div className='px-6 py-5'>
+              {/* State A: collecting labels */}
+              {!isTraining && !isActive && (
+                <div className='space-y-4'>
+                  <div className='flex items-end justify-between'>
+                    <div>
+                      <p className='text-2xl font-bold text-gray-900 tabular-nums'>
+                        {ml.labeled_cluster_count}
+                        <span className='text-sm font-normal text-gray-400 ml-1'>/ {ML_THRESHOLD}</span>
+                      </p>
+                      <p className='text-xs text-gray-500 mt-0.5'>ratings collected</p>
+                    </div>
+                    <p className='text-xs text-gray-400 mb-1'>
+                      {ml.labels_needed > 0 ? `${ml.labels_needed} to go` : 'Training soon'}
+                    </p>
+                  </div>
+                  <div className='w-full bg-gray-100 rounded-full h-2'>
+                    <div
+                      className='bg-violet-500 h-2 rounded-full transition-all duration-700'
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                  <div className='flex items-start gap-2.5 p-3.5 bg-violet-50 rounded-xl'>
+                    <Sparkles className='w-3.5 h-3.5 text-violet-500 mt-0.5 shrink-0' />
+                    <p className='text-xs text-violet-700 leading-relaxed'>
+                      Rate opportunities as <strong>Approve</strong>, <strong>Skip</strong>, or <strong>Dismiss</strong> to teach the model your team&apos;s priorities.{' '}
+                      <Link href='/opportunities' className='font-semibold underline underline-offset-2'>
+                        Go to Opportunities →
+                      </Link>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* State B: training in progress */}
+              {isTraining && (
+                <div className='flex items-center gap-3.5 py-1'>
+                  <div className='w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0'>
+                    <Loader2 className='w-4.5 h-4.5 text-blue-500 animate-spin' />
+                  </div>
+                  <div>
+                    <p className='text-sm font-semibold text-gray-900'>Training in progress</p>
+                    <p className='text-xs text-gray-500 mt-0.5'>Usually under a minute. Refresh to check.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* State C: model active */}
+              {isActive && (
+                <div className='space-y-3'>
+                  <div className='flex items-center gap-2.5'>
+                    <CheckCircle2 className='w-4 h-4 text-emerald-500 shrink-0' />
+                    <p className='text-sm font-medium text-gray-800'>Model is scoring your opportunities</p>
+                  </div>
+                  <p className='text-xs text-gray-500 leading-relaxed'>
+                    Scores reflect your team&apos;s actual priorities. The model retrains automatically
+                    every 10 new ratings to stay current.
+                  </p>
+                  <div className='flex items-center justify-between py-2.5 px-3.5 bg-gray-50 rounded-xl text-xs text-gray-500'>
+                    <span>Ratings collected</span>
+                    <span className='font-semibold text-gray-700 tabular-nums'>{ml.labeled_cluster_count}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* ── Account ─────────────────────────────────────────────────────── */}
-          <div className='bg-white border border-gray-200 rounded-2xl p-6'>
-            <SectionHeader
-              icon={User}
-              title='Account'
-              description='Your workspace identity and session.'
-            />
-            <div className='space-y-3'>
-              <div className='flex items-center justify-between py-2.5 border-b border-gray-50'>
+          <div className='bg-white border border-gray-200 rounded-2xl overflow-hidden'>
+            <div className='px-6 pt-5 pb-4 border-b border-gray-50'>
+              <h2 className='text-sm font-semibold text-gray-900'>Account</h2>
+              <p className='text-xs text-gray-400 mt-0.5'>Your workspace identity and session.</p>
+            </div>
+            <div className='px-6 py-2'>
+              <div className='flex items-center justify-between py-3.5 border-b border-gray-50'>
                 <span className='text-sm text-gray-600'>Workspace ID</span>
-                <span className='text-xs font-mono text-gray-400 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100'>
+                <span className='text-xs font-mono text-gray-400 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100 select-all'>
                   {workspaceId.slice(0, 8)}…
                 </span>
               </div>
-              <div className='flex items-center justify-between py-2.5'>
-                <div>
-                  <p className='text-sm text-gray-800 font-medium'>Sign out</p>
-                  <p className='text-xs text-gray-400 mt-0.5'>End your current session on this device.</p>
+              <div className='flex items-center justify-between py-3.5'>
+                <div className='flex items-center gap-2.5'>
+                  <LogOut className='w-4 h-4 text-gray-400' />
+                  <div>
+                    <p className='text-sm font-medium text-gray-800'>Sign out</p>
+                    <p className='text-xs text-gray-400 mt-0.5'>End your current session.</p>
+                  </div>
                 </div>
                 <SignOutButton />
               </div>
             </div>
           </div>
 
-          {/* ── Integrations ─────────────────────────────────────────────────── */}
-          <div className='bg-white border border-gray-200 rounded-2xl p-6'>
-            <div className='flex items-start justify-between mb-5'>
-              <div className='flex items-center gap-3'>
-                <div className='w-9 h-9 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0'>
-                  <Plug className='w-4 h-4 text-gray-600' />
-                </div>
-                <div>
-                  <h2 className='text-sm font-semibold text-gray-900'>Integrations</h2>
-                  <p className='text-xs text-gray-500'>
-                    {connectedCount} of {integrations.length} connected
-                  </p>
-                </div>
-              </div>
-              <Link
-                href='/connect'
-                className='inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors'
-              >
-                Manage <ExternalLink className='w-3 h-3' />
-              </Link>
-            </div>
-            <div>
-              {integrations.map(i => (
-                <IntegrationRow key={i.label} {...i} />
-              ))}
-            </div>
-          </div>
-
-          {/* ── Personalized Scoring Model ────────────────────────────────── */}
-          <div className='bg-white border border-gray-200 rounded-2xl p-6'>
-            <SectionHeader
-              icon={Sparkles}
-              title='Personalized Scoring Model'
-              description='Learns which opportunities your team actually prioritises.'
-            />
-
-            {/* State A: collecting labels */}
-            {!isTraining && !isActive && (
-              <div className='space-y-3'>
-                <div className='flex items-center justify-between text-xs text-gray-500'>
-                  <span>Ratings collected</span>
-                  <span className='font-medium text-gray-700'>
-                    {ml.labeled_cluster_count} / {ML_THRESHOLD}
-                  </span>
-                </div>
-                <div className='w-full bg-gray-100 rounded-full h-2'>
-                  <div
-                    className='bg-blue-500 h-2 rounded-full transition-all duration-500'
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-                <p className='text-xs text-gray-500'>
-                  {ml.labels_needed > 0
-                    ? `Your scoring model improves at ${ML_THRESHOLD} ratings — ${ml.labels_needed} to go.`
-                    : 'Almost there — model training will start automatically.'}
-                </p>
-                <div className='mt-3 p-3 bg-blue-50 rounded-xl text-xs text-blue-700'>
-                  <span className='font-medium'>How to collect ratings: </span>
-                  Go to{' '}
-                  <Link href='/opportunities' className='underline underline-offset-2'>
-                    Opportunities
-                  </Link>{' '}
-                  and Approve, Skip, or Dismiss each cluster. Every rating teaches your model your team&apos;s priorities.
-                </div>
-              </div>
-            )}
-
-            {/* State B: training in progress */}
-            {isTraining && (
-              <div className='flex items-center gap-3 py-2'>
-                <Loader2 className='w-4 h-4 text-blue-500 animate-spin shrink-0' />
-                <div>
-                  <p className='text-sm font-medium text-gray-800'>Training your personalized model…</p>
-                  <p className='text-xs text-gray-500 mt-0.5'>
-                    This usually takes under a minute. Refresh to check progress.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* State C: model active */}
-            {isActive && (
-              <div className='space-y-3'>
-                <div className='flex items-center gap-2.5'>
-                  <CheckCircle2 className='w-4 h-4 text-emerald-500 shrink-0' />
-                  <p className='text-sm font-medium text-gray-800'>
-                    Personalized scoring model active{' '}
-                    <span className='text-xs font-normal text-gray-500'>(v{ml.ml_model_version})</span>
-                  </p>
-                </div>
-                <p className='text-xs text-gray-500'>
-                  Scoring now reflects your team&apos;s actual priorities. The model retrains
-                  automatically every 10 new ratings.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* ── Notifications ─────────────────────────────────────────────── */}
-          <div className='bg-white border border-gray-200 rounded-2xl p-6'>
-            <SectionHeader
-              icon={Bell}
-              title='Notifications'
-              description='Control when SignalPath emails your team.'
-            />
-            <div className='space-y-1'>
-              {[
-                { label: 'New clusters detected', desc: 'When a pipeline run surfaces new opportunity clusters.', defaultOn: true },
-                { label: 'Model trained', desc: 'When your personalized scoring model finishes training.', defaultOn: true },
-                { label: 'Weekly digest', desc: 'A summary of your top opportunities every Monday.', defaultOn: false },
-                { label: 'CRM sync errors', desc: 'When HubSpot or Salesforce sync fails.', defaultOn: true },
-              ].map(({ label, desc, defaultOn }) => (
-                <div key={label} className='flex items-center justify-between py-3 border-b border-gray-50 last:border-0'>
-                  <div>
-                    <p className='text-sm font-medium text-gray-800'>{label}</p>
-                    <p className='text-xs text-gray-400 mt-0.5'>{desc}</p>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <span className='text-xs text-gray-400'>Coming soon</span>
-                    <div className={`w-9 h-5 rounded-full flex items-center px-0.5 ${defaultOn ? 'bg-blue-100' : 'bg-gray-100'} opacity-50`}>
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${defaultOn ? 'translate-x-4' : 'translate-x-0'}`} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* ── Danger Zone ───────────────────────────────────────────────── */}
-          <div className='bg-white border border-red-100 rounded-2xl p-6'>
-            <SectionHeader
-              icon={AlertTriangle}
-              title='Danger zone'
-              description='Irreversible actions — proceed carefully.'
-            />
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between py-3 border-b border-gray-50'>
+          <div className='bg-white border border-red-100 rounded-2xl overflow-hidden'>
+            <div className='px-6 pt-5 pb-4 border-b border-red-50 flex items-center gap-2.5'>
+              <AlertTriangle className='w-4 h-4 text-red-400 shrink-0' />
+              <div>
+                <h2 className='text-sm font-semibold text-gray-900'>Danger zone</h2>
+                <p className='text-xs text-gray-400 mt-0.5'>Irreversible actions — proceed carefully.</p>
+              </div>
+            </div>
+            <div className='px-6 py-2'>
+              <div className='flex items-center justify-between py-3.5 border-b border-gray-50'>
                 <div>
                   <p className='text-sm font-medium text-gray-800'>Export workspace data</p>
-                  <p className='text-xs text-gray-400 mt-0.5'>Download all clusters, signals, and feedback as JSON.</p>
+                  <p className='text-xs text-gray-400 mt-0.5'>Download clusters, signals, and feedback as JSON.</p>
                 </div>
                 <button
                   disabled
@@ -351,9 +386,9 @@ export default async function SettingsPage() {
                   Coming soon
                 </button>
               </div>
-              <div className='flex items-center justify-between py-3'>
+              <div className='flex items-center justify-between py-3.5'>
                 <div>
-                  <p className='text-sm font-medium text-red-700'>Delete workspace</p>
+                  <p className='text-sm font-medium text-red-600'>Delete workspace</p>
                   <p className='text-xs text-gray-400 mt-0.5'>Permanently delete all data. This cannot be undone.</p>
                 </div>
                 <button

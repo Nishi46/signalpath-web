@@ -1,6 +1,6 @@
 'use client'
 import { DashboardNav } from './DashboardNav'
-import { Link2, CheckCircle2, DollarSign, ExternalLink } from 'lucide-react'
+import { Link2, CheckCircle2, DollarSign, MessageSquare, ExternalLink } from 'lucide-react'
 
 interface ConnectViewProps {
   subdomain: string
@@ -16,6 +16,9 @@ interface ConnectViewProps {
   onConnectHubspot?: () => void
   onConnectSalesforce?: () => void
   connectingCrm?: 'hubspot' | 'salesforce' | null
+  intercomConnected?: boolean
+  onConnectIntercom?: () => void
+  connectingIntercom?: boolean
 }
 
 export function ConnectView({
@@ -32,6 +35,9 @@ export function ConnectView({
   onConnectHubspot,
   onConnectSalesforce,
   connectingCrm = null,
+  intercomConnected = false,
+  onConnectIntercom,
+  connectingIntercom = false,
 }: ConnectViewProps) {
   const canConnect = subdomain.trim() && email.trim() && apiToken.trim() && !connecting
 
@@ -119,6 +125,45 @@ export function ConnectView({
           >
             {connecting ? 'Verifying and connecting…' : 'Connect Zendesk'}
           </button>
+        </div>
+
+        {/* ── Support signals — Intercom (optional) ───────────────────────── */}
+        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
+          <div className='flex items-center gap-3 mb-5'>
+            <div className='w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center'>
+              <MessageSquare className='w-5 h-5 text-blue-600' />
+            </div>
+            <div>
+              <h2 className='text-sm font-semibold text-gray-900'>Support signals <span className='ml-1 text-xs font-normal text-gray-400'>(optional)</span></h2>
+              <p className='text-xs text-gray-500'>Add more signal sources to improve opportunity detection.</p>
+            </div>
+          </div>
+
+          <div className='flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50'>
+            <div className='flex items-center gap-3'>
+              <div className='w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center'>
+                <span className='text-blue-600 font-bold text-xs'>IC</span>
+              </div>
+              <div>
+                <p className='text-sm font-medium text-gray-800'>Intercom</p>
+                <p className='text-xs text-gray-400'>Imports user conversations as product signals</p>
+              </div>
+            </div>
+            {intercomConnected ? (
+              <div className='flex items-center gap-1.5 text-emerald-600 text-xs font-medium'>
+                <CheckCircle2 className='w-4 h-4' />
+                Connected
+              </div>
+            ) : (
+              <button
+                onClick={onConnectIntercom}
+                disabled={connectingIntercom}
+                className='text-xs font-medium px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors'
+              >
+                {connectingIntercom ? 'Redirecting…' : 'Connect'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ── Revenue data — CRM (optional) ───────────────────────────────── */}
