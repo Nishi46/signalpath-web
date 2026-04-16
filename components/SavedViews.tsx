@@ -8,6 +8,9 @@ export interface SavedViewFilters {
   churnOnly: boolean
   hasSpecOnly: boolean
   sortBy: 'opportunity_score' | 'signal_count' | 'churn_signal_count' | 'unique_orgs'
+  sourceFilter: 'all' | 'zendesk' | 'intercom'
+  minRevenue: number
+  maxRevenue: number
 }
 
 interface SavedView {

@@ -41,12 +41,16 @@ interface Cluster {
   human_brief?: string | null
   shipped_at?: string | null
   pm_rating?: string | null
+  signal_sources?: string[] | null
 }
 
 type ViewMode = 'grid' | 'list'
 type SortField = 'opportunity_score' | 'signal_count' | 'churn_signal_count' | 'unique_orgs'
 type ConfidenceFilter = 'all' | 'High' | 'Medium' | 'Low'
+type SourceFilter = 'all' | 'zendesk' | 'intercom'
 type FeedbackAction = 'approve' | 'skip' | 'dismiss'
+
+const MAX_REVENUE_SLIDER = 10_000_000 // $10M ceiling for slider
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'opportunity_score', label: 'Score' },
@@ -73,9 +77,12 @@ export default function OpportunitiesPage() {
   const [view, setView] = useState<ViewMode>('grid')
   const [sortBy, setSortBy] = useState<SortField>('opportunity_score')
   const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>('all')
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
   const [minScore, setMinScore] = useState(0)
   const [churnOnly, setChurnOnly] = useState(false)
   const [hasSpecOnly, setHasSpecOnly] = useState(false)
+  const [minRevenue, setMinRevenue] = useState(0)
+  const [maxRevenue, setMaxRevenue] = useState(MAX_REVENUE_SLIDER)
   const [showFilters, setShowFilters] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -237,6 +244,9 @@ export default function OpportunitiesPage() {
     setChurnOnly(filters.churnOnly)
     setHasSpecOnly(filters.hasSpecOnly)
     setSortBy(filters.sortBy)
+    setSourceFilter(filters.sourceFilter ?? 'all')
+    setMinRevenue(filters.minRevenue ?? 0)
+    setMaxRevenue(filters.maxRevenue ?? MAX_REVENUE_SLIDER)
   }
 
   // Apply filters (including search) to a list of clusters
@@ -250,6 +260,9 @@ export default function OpportunitiesPage() {
     if (confidenceFilter !== 'all') {
       result = result.filter(c => c.confidence === confidenceFilter)
     }
+    if (sourceFilter !== 'all') {
+      result = result.filter(c => c.signal_sources?.includes(sourceFilter))
+    }
     if (minScore > 0) {
       result = result.filter(c => c.opportunity_score >= minScore)
     }
@@ -259,6 +272,12 @@ export default function OpportunitiesPage() {
     if (hasSpecOnly) {
       result = result.filter(c => c.spec_generated_at)
     }
+    if (minRevenue > 0) {
+      result = result.filter(c => (c.revenue_at_risk_usd ?? 0) >= minRevenue)
+    }
+    if (maxRevenue < MAX_REVENUE_SLIDER) {
+      result = result.filter(c => (c.revenue_at_risk_usd ?? 0) <= maxRevenue)
+    }
 
     result.sort((a, b) => {
       const av = (a[sortBy] as number) ?? 0
@@ -267,7 +286,7 @@ export default function OpportunitiesPage() {
     })
 
     return result
-  }, [search, confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy])
+  }, [search, confidenceFilter, sourceFilter, minScore, churnOnly, hasSpecOnly, minRevenue, maxRevenue, sortBy])
 
   // Group clusters into tiered sections (Shipped is separate, based on cluster.shipped_at)
   const { sections, shippedSection } = useMemo(() => {
@@ -309,18 +328,26 @@ export default function OpportunitiesPage() {
 
   const activeFilterCount =
     (confidenceFilter !== 'all' ? 1 : 0) +
+    (sourceFilter !== 'all' ? 1 : 0) +
     (minScore > 0 ? 1 : 0) +
     (churnOnly ? 1 : 0) +
-    (hasSpecOnly ? 1 : 0)
+    (hasSpecOnly ? 1 : 0) +
+    (minRevenue > 0 || maxRevenue < MAX_REVENUE_SLIDER ? 1 : 0)
 
   function clearFilters() {
     setConfidenceFilter('all')
+    setSourceFilter('all')
     setMinScore(0)
     setChurnOnly(false)
     setHasSpecOnly(false)
+    setMinRevenue(0)
+    setMaxRevenue(MAX_REVENUE_SLIDER)
   }
 
-  const currentFilters: SavedViewFilters = { confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy }
+  const currentFilters: SavedViewFilters = {
+    confidenceFilter, minScore, churnOnly, hasSpecOnly, sortBy,
+    sourceFilter, minRevenue, maxRevenue,
+  }
 
   if (loading || wsLoading || !workspaceId) {
     return (
@@ -469,74 +496,148 @@ export default function OpportunitiesPage() {
 
           {/* Filter bar */}
           {showFilters && (
-            <div className='bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap items-center gap-4'>
-              {/* Confidence */}
-              <div className='flex items-center gap-2'>
-                <span className='text-xs text-gray-500 font-medium'>Confidence</span>
-                <div className='flex items-center gap-1'>
-                  {(['all', 'High', 'Medium', 'Low'] as const).map(c => (
-                    <button
-                      key={c}
-                      type='button'
-                      onClick={() => setConfidenceFilter(c)}
-                      className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
-                        confidenceFilter === c
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-500 hover:bg-gray-100'
-                      }`}
-                    >
-                      {c === 'all' ? 'All' : c}
-                    </button>
-                  ))}
+            <div className='bg-white rounded-xl border border-gray-200 p-4 mb-6 space-y-3'>
+              <div className='flex flex-wrap items-center gap-x-6 gap-y-3'>
+
+                {/* Source */}
+                <div className='flex items-center gap-2'>
+                  <span className='text-xs text-gray-500 font-medium w-16 shrink-0'>Source</span>
+                  <div className='flex items-center gap-1'>
+                    {([
+                      { value: 'all', label: 'All' },
+                      { value: 'zendesk', label: 'Zendesk' },
+                      { value: 'intercom', label: 'Intercom' },
+                    ] as const).map(({ value, label }) => (
+                      <button
+                        key={value}
+                        type='button'
+                        onClick={() => setSourceFilter(value)}
+                        className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                          sourceFilter === value
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'text-gray-500 hover:bg-gray-100'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Confidence */}
+                <div className='flex items-center gap-2'>
+                  <span className='text-xs text-gray-500 font-medium w-16 shrink-0'>Confidence</span>
+                  <div className='flex items-center gap-1'>
+                    {(['all', 'High', 'Medium', 'Low'] as const).map(c => (
+                      <button
+                        key={c}
+                        type='button'
+                        onClick={() => setConfidenceFilter(c)}
+                        className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                          confidenceFilter === c
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'text-gray-500 hover:bg-gray-100'
+                        }`}
+                      >
+                        {c === 'all' ? 'All' : c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Toggles */}
+                <div className='flex items-center gap-4'>
+                  <label className='flex items-center gap-1.5 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      checked={churnOnly}
+                      onChange={e => setChurnOnly(e.target.checked)}
+                      className='rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
+                    />
+                    <span className='text-xs text-gray-700 font-medium'>Churn signals</span>
+                  </label>
+                  <label className='flex items-center gap-1.5 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      checked={hasSpecOnly}
+                      onChange={e => setHasSpecOnly(e.target.checked)}
+                      className='rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
+                    />
+                    <span className='text-xs text-gray-700 font-medium'>Has PRD</span>
+                  </label>
+                </div>
+
+                {activeFilterCount > 0 && (
+                  <button
+                    type='button'
+                    onClick={clearFilters}
+                    className='ml-auto text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1'
+                  >
+                    <X className='w-3 h-3' /> Clear all
+                  </button>
+                )}
               </div>
 
-              {/* Min score */}
-              <div className='flex items-center gap-2'>
-                <span className='text-xs text-gray-500 font-medium'>Min score</span>
-                <input
-                  type='range'
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={minScore}
-                  onChange={e => setMinScore(Number(e.target.value))}
-                  className='w-24 accent-blue-600'
-                />
-                <span className='text-xs text-gray-700 font-semibold tabular-nums w-4'>{minScore}</span>
+              {/* Score + Revenue sliders — second row */}
+              <div className='flex flex-wrap items-center gap-x-6 gap-y-3 pt-3 border-t border-gray-50'>
+
+                {/* Min score */}
+                <div className='flex items-center gap-2'>
+                  <span className='text-xs text-gray-500 font-medium w-16 shrink-0'>Min score</span>
+                  <input
+                    type='range'
+                    min={0}
+                    max={10}
+                    step={1}
+                    value={minScore}
+                    onChange={e => setMinScore(Number(e.target.value))}
+                    className='w-28 accent-blue-600'
+                  />
+                  <span className='text-xs font-semibold text-gray-700 tabular-nums w-4'>{minScore}</span>
+                </div>
+
+                {/* Revenue range */}
+                <div className='flex items-center gap-2'>
+                  <span className='text-xs text-gray-500 font-medium w-16 shrink-0'>Revenue</span>
+                  <div className='flex items-center gap-1.5'>
+                    <span className='text-xs text-gray-400'>Min</span>
+                    <input
+                      type='range'
+                      min={0}
+                      max={MAX_REVENUE_SLIDER}
+                      step={50_000}
+                      value={minRevenue}
+                      onChange={e => {
+                        const v = Number(e.target.value)
+                        setMinRevenue(v)
+                        if (v > maxRevenue) setMaxRevenue(v)
+                      }}
+                      className='w-24 accent-blue-600'
+                    />
+                    <span className='text-xs font-semibold text-gray-700 tabular-nums w-14'>
+                      {minRevenue === 0 ? 'Any' : `$${(minRevenue / 1000).toFixed(0)}K`}
+                    </span>
+                    <span className='text-xs text-gray-400'>Max</span>
+                    <input
+                      type='range'
+                      min={0}
+                      max={MAX_REVENUE_SLIDER}
+                      step={50_000}
+                      value={maxRevenue}
+                      onChange={e => {
+                        const v = Number(e.target.value)
+                        setMaxRevenue(v)
+                        if (v < minRevenue) setMinRevenue(v)
+                      }}
+                      className='w-24 accent-blue-600'
+                    />
+                    <span className='text-xs font-semibold text-gray-700 tabular-nums w-14'>
+                      {maxRevenue >= MAX_REVENUE_SLIDER ? 'Any' : `$${(maxRevenue / 1000).toFixed(0)}K`}
+                    </span>
+                  </div>
+                </div>
+
               </div>
-
-              {/* Churn only */}
-              <label className='flex items-center gap-1.5 cursor-pointer'>
-                <input
-                  type='checkbox'
-                  checked={churnOnly}
-                  onChange={e => setChurnOnly(e.target.checked)}
-                  className='rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
-                />
-                <span className='text-xs text-gray-700 font-medium'>Has churn signals</span>
-              </label>
-
-              {/* Has spec */}
-              <label className='flex items-center gap-1.5 cursor-pointer'>
-                <input
-                  type='checkbox'
-                  checked={hasSpecOnly}
-                  onChange={e => setHasSpecOnly(e.target.checked)}
-                  className='rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
-                />
-                <span className='text-xs text-gray-700 font-medium'>Has PRD</span>
-              </label>
-
-              {activeFilterCount > 0 && (
-                <button
-                  type='button'
-                  onClick={clearFilters}
-                  className='ml-auto text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1'
-                >
-                  <X className='w-3 h-3' /> Clear all
-                </button>
-              )}
             </div>
           )}
 
