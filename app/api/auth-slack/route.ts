@@ -1,0 +1,31 @@
+import { NextResponse } from 'next/server'
+import { getWorkspaceId } from '@/lib/get-workspace-id'
+import { API_URL, internalHeaders } from '@/lib/internal-api'
+
+/**
+ * GET /api/auth-slack
+ * Returns a Slack OAuth redirect URL for the authenticated workspace.
+ * X-Internal-Key is added server-side — never exposed to the browser.
+ */
+export async function GET() {
+  const workspaceId = await getWorkspaceId()
+  if (!workspaceId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const res = await fetch(
+    `${API_URL}/auth/slack/init?workspace_id=${workspaceId}`,
+    { headers: internalHeaders(), cache: 'no-store' },
+  )
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    return NextResponse.json(
+      { error: body.detail ?? 'Slack OAuth init failed' },
+      { status: res.status },
+    )
+  }
+
+  const data = await res.json()
+  return NextResponse.json(data)
+}

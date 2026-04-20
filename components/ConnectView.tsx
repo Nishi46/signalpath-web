@@ -1,6 +1,6 @@
 'use client'
 import { DashboardNav } from './DashboardNav'
-import { Link2, CheckCircle2, DollarSign, MessageSquare, ExternalLink } from 'lucide-react'
+import { Link2, CheckCircle2, DollarSign, MessageSquare, Bell, ExternalLink } from 'lucide-react'
 
 interface ConnectViewProps {
   subdomain: string
@@ -19,6 +19,9 @@ interface ConnectViewProps {
   intercomConnected?: boolean
   onConnectIntercom?: () => void
   connectingIntercom?: boolean
+  slackConnected?: boolean
+  onConnectSlack?: () => void
+  connectingSlack?: boolean
 }
 
 export function ConnectView({
@@ -38,6 +41,9 @@ export function ConnectView({
   intercomConnected = false,
   onConnectIntercom,
   connectingIntercom = false,
+  slackConnected = false,
+  onConnectSlack,
+  connectingSlack = false,
 }: ConnectViewProps) {
   const canConnect = subdomain.trim() && email.trim() && apiToken.trim() && !connecting
 
@@ -161,6 +167,45 @@ export function ConnectView({
                 className='text-xs font-medium px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors'
               >
                 {connectingIntercom ? 'Redirecting…' : 'Connect'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Notifications — Slack (optional) ────────────────────────────── */}
+        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
+          <div className='flex items-center gap-3 mb-5'>
+            <div className='w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center'>
+              <Bell className='w-5 h-5 text-violet-600' />
+            </div>
+            <div>
+              <h2 className='text-sm font-semibold text-gray-900'>Notifications <span className='ml-1 text-xs font-normal text-gray-400'>(optional)</span></h2>
+              <p className='text-xs text-gray-500'>Get notified when high-priority opportunities surface.</p>
+            </div>
+          </div>
+
+          <div className='flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50'>
+            <div className='flex items-center gap-3'>
+              <div className='w-8 h-8 rounded-lg bg-[#4A154B] flex items-center justify-center'>
+                <span className='text-white font-bold text-xs'>SL</span>
+              </div>
+              <div>
+                <p className='text-sm font-medium text-gray-800'>Slack</p>
+                <p className='text-xs text-gray-400'>Weekly digest + instant alerts for scores ≥ 8.0</p>
+              </div>
+            </div>
+            {slackConnected ? (
+              <div className='flex items-center gap-1.5 text-emerald-600 text-xs font-medium'>
+                <CheckCircle2 className='w-4 h-4' />
+                Connected
+              </div>
+            ) : (
+              <button
+                onClick={onConnectSlack}
+                disabled={connectingSlack}
+                className='text-xs font-medium px-3 py-1.5 rounded-lg bg-[#4A154B] text-white hover:bg-[#611f69] disabled:opacity-50 transition-colors'
+              >
+                {connectingSlack ? 'Redirecting…' : 'Connect'}
               </button>
             )}
           </div>

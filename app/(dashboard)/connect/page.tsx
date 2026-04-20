@@ -28,6 +28,8 @@ function ConnectContent() {
   const [connectingCrm, setConnectingCrm] = useState<'hubspot' | 'salesforce' | null>(null)
   const [intercomConnected, setIntercomConnected] = useState(false)
   const [connectingIntercom, setConnectingIntercom] = useState(false)
+  const [slackConnected, setSlackConnected] = useState(false)
+  const [connectingSlack, setConnectingSlack] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
   const connected = searchParams.get('connected') === 'true'
@@ -35,6 +37,7 @@ function ConnectContent() {
   const jiraConnected = searchParams.get('jira_connected') === 'true'
   const crmParam = searchParams.get('crm')
   const intercomParam = searchParams.get('intercom_connected') === 'true'
+  const slackParam = searchParams.get('slack_connected') === 'true'
 
   // Fetch current connection status on mount
   useEffect(() => {
@@ -45,6 +48,7 @@ function ConnectContent() {
         setHubspotConnected(!!data.hubspot_connected)
         setSalesforceConnected(!!data.salesforce_connected)
         setIntercomConnected(!!data.intercom_connected)
+        setSlackConnected(!!data.slack_connected)
       })
       .catch(() => { /* ignore */ })
   }, [])
@@ -60,6 +64,11 @@ function ConnectContent() {
     if (intercomParam) setIntercomConnected(true)
   }, [intercomParam])
 
+  // Handle Slack OAuth return param (?slack_connected=true)
+  useEffect(() => {
+    if (slackParam) setSlackConnected(true)
+  }, [slackParam])
+
   // After Linear/Jira OAuth, redirect back to the page the user was on
   useEffect(() => {
     if (linearConnected || jiraConnected) {
@@ -70,6 +79,35 @@ function ConnectContent() {
       }
     }
   }, [linearConnected, jiraConnected, router])
+
+  async function handleConnectSlack() {
+    setConnectingSlack(true)
+    try {
+      const res = await fetch('/api/auth-slack')
+      if (!res.ok) {
+        alert((await res.json().catch(() => ({}))).error ?? 'Slack connection failed')
+        setConnectingSlack(false)
+        return
+      }
+      const { redirect_url } = await res.json()
+      try {
+        const url = new URL(redirect_url)
+        if (!url.hostname.endsWith('.slack.com')) {
+          alert('Unexpected redirect URL')
+          setConnectingSlack(false)
+          return
+        }
+      } catch {
+        alert('Invalid redirect URL')
+        setConnectingSlack(false)
+        return
+      }
+      window.location.href = redirect_url
+    } catch {
+      alert('Network error — please try again')
+      setConnectingSlack(false)
+    }
+  }
 
   async function handleConnectIntercom() {
     setConnectingIntercom(true)
@@ -253,6 +291,9 @@ function ConnectContent() {
       intercomConnected={intercomConnected}
       onConnectIntercom={handleConnectIntercom}
       connectingIntercom={connectingIntercom}
+      slackConnected={slackConnected}
+      onConnectSlack={handleConnectSlack}
+      connectingSlack={connectingSlack}
     />
   )
 }

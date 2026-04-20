@@ -24,6 +24,7 @@ interface WorkspaceSettings {
   hubspot_connected: boolean
   salesforce_connected: boolean
   intercom_connected: boolean
+  slack_connected: boolean
   ml_stats: {
     labeled_cluster_count: number
     ml_ready: boolean
@@ -46,6 +47,7 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     hubspot_token: string | null
     salesforce_token: string | null
     intercom_token: string | null
+    slack_webhook_url: string | null
     labeled_cluster_count: number | null
     ml_ready: boolean | null
     ml_model_version: number | null
@@ -55,7 +57,7 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     .from('workspaces')
     .select(
       'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
-      'hubspot_token, salesforce_token, intercom_token, ' +
+      'hubspot_token, salesforce_token, intercom_token, slack_webhook_url, ' +
       'labeled_cluster_count, ml_ready, ml_model_version'
     )
     .eq('id', workspaceId)
@@ -70,6 +72,7 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     hubspot_connected: !!data?.hubspot_token,
     salesforce_connected: !!data?.salesforce_token,
     intercom_connected: !!data?.intercom_token,
+    slack_connected: !!data?.slack_webhook_url,
     ml_stats: {
       labeled_cluster_count: labeledCount,
       ml_ready: data?.ml_ready ?? false,
@@ -167,6 +170,11 @@ export default async function SettingsPage() {
       abbr: 'IC', color: '#1F8DED',
       label: 'Intercom', description: 'Import user conversations as additional signals.',
       connected: settings.intercom_connected,
+    },
+    {
+      abbr: 'SL', color: '#4A154B',
+      label: 'Slack', description: 'Weekly digest + instant alerts for high-scoring opportunities.',
+      connected: settings.slack_connected,
     },
   ]
 
