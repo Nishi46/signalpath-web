@@ -9,11 +9,83 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* ---- Landing page animations ---- */
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 12px 2px rgba(249, 115, 22, 0.20); }
+  50%       { box-shadow: 0 0 28px 6px rgba(249, 115, 22, 0.38); }
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+.animate-slide-in-right { animation: slideInRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-slide-up        { animation: slideUp    0.42s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in         { animation: fadeIn     0.25s ease both; }
+.animate-glow-pulse      { animation: glowPulse  2.4s ease-in-out infinite; }
+.animate-dot-pulse       { animation: dotPulse   1.8s ease-in-out infinite; }
+
+/* Bento tile base */
+.bento-tile {
+  background: #1A1D24;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  width: 100%;
+  height: 100%;
+}
+
+/* Range input dark theme */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #3B82F6;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+}
+input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #3B82F6;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
 }
 
 /* Ensure inputs/textareas inherit the site font instead of system defaults */
