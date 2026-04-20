@@ -37,20 +37,20 @@ export function OnboardingChecklist({
   if (allDone) return null
 
   return (
-    <div className='bg-white border border-blue-100 rounded-2xl p-5 mb-6 relative'>
+    <div className='bg-[#1A1D24] border border-blue-500/15 rounded-2xl p-5 mb-6 relative'>
       <div className='flex items-start justify-between mb-4'>
         <div>
-          <h3 className='text-sm font-semibold text-gray-900'>Getting started</h3>
-          <p className='text-xs text-gray-500 mt-0.5'>{completedCount} of {steps.length} steps complete</p>
+          <h3 className='text-sm font-semibold text-white'>Getting started</h3>
+          <p className='text-xs text-white/40 mt-0.5'>{completedCount} of {steps.length} steps complete</p>
         </div>
         <button
           onClick={onDismiss}
-          className='text-xs text-gray-400 hover:text-gray-600 transition-colors'
+          className='text-xs text-white/30 hover:text-white/60 transition-colors'
         >
           Dismiss
         </button>
       </div>
-      <div className='w-full bg-gray-100 rounded-full h-1 mb-4'>
+      <div className='w-full bg-white/[0.07] rounded-full h-1 mb-4'>
         <div
           className='bg-blue-500 h-1 rounded-full transition-all duration-500'
           style={{ width: `${(completedCount / steps.length) * 100}%` }}
@@ -60,9 +60,9 @@ export function OnboardingChecklist({
         {steps.map(step => (
           <li key={step.label} className='flex items-center gap-2.5'>
             {step.done
-              ? <CheckCircle2 className='w-4 h-4 text-emerald-500 shrink-0' />
-              : <Circle className='w-4 h-4 text-gray-300 shrink-0' />}
-            <span className={`text-xs ${step.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+              ? <CheckCircle2 className='w-4 h-4 text-emerald-400 shrink-0' />
+              : <Circle className='w-4 h-4 text-white/20 shrink-0' />}
+            <span className={`text-xs ${step.done ? 'text-white/25 line-through' : 'text-white/60'}`}>
               {step.label}
             </span>
           </li>

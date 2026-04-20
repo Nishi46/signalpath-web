@@ -60,10 +60,10 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
 ]
 
 const SECTIONS: { key: FeedbackAction | 'new'; label: string; color: string }[] = [
-  { key: 'new', label: 'New', color: 'text-gray-900' },
-  { key: 'approve', label: 'Approved', color: 'text-green-700' },
-  { key: 'skip', label: 'Skipped', color: 'text-gray-500' },
-  { key: 'dismiss', label: 'Dismissed', color: 'text-gray-400' },
+  { key: 'new', label: 'New', color: 'text-white' },
+  { key: 'approve', label: 'Approved', color: 'text-emerald-400' },
+  { key: 'skip', label: 'Skipped', color: 'text-white/40' },
+  { key: 'dismiss', label: 'Dismissed', color: 'text-white/25' },
 ]
 
 export default function OpportunitiesPage() {
@@ -351,28 +351,28 @@ export default function OpportunitiesPage() {
 
   if (loading || wsLoading || !workspaceId) {
     return (
-      <div className='min-h-screen bg-gray-50'>
+      <div className='min-h-screen bg-[#111318]'>
         <DashboardNav />
         <div className='max-w-6xl mx-auto px-6 py-10'>
           <div className='mb-8'>
-            <div className='h-7 bg-gray-200 rounded w-48 animate-pulse' />
-            <div className='h-4 bg-gray-100 rounded w-80 mt-2 animate-pulse' />
+            <div className='h-7 bg-white/[0.08] rounded w-48 animate-pulse' />
+            <div className='h-4 bg-white/[0.05] rounded w-80 mt-2 animate-pulse' />
           </div>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className='bg-white rounded-2xl border border-gray-200 p-6 animate-pulse'>
+              <div key={i} className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-6 animate-pulse'>
                 <div className='flex items-start justify-between gap-3 mb-3'>
-                  <div className='h-4 bg-gray-200 rounded w-2/3' />
-                  <div className='h-6 w-12 bg-gray-200 rounded-full' />
+                  <div className='h-4 bg-white/[0.08] rounded w-2/3' />
+                  <div className='h-6 w-12 bg-white/[0.06] rounded-full' />
                 </div>
                 <div className='flex gap-4 mt-4'>
-                  <div className='h-3 bg-gray-100 rounded w-16' />
-                  <div className='h-3 bg-gray-100 rounded w-24' />
+                  <div className='h-3 bg-white/[0.05] rounded w-16' />
+                  <div className='h-3 bg-white/[0.05] rounded w-24' />
                 </div>
-                <div className='flex gap-2 pt-3 mt-4 border-t border-gray-100'>
-                  <div className='h-7 bg-gray-100 rounded-lg w-16' />
-                  <div className='h-7 bg-gray-100 rounded-lg w-12' />
-                  <div className='h-7 bg-gray-100 rounded-lg w-16' />
+                <div className='flex gap-2 pt-3 mt-4 border-t border-white/[0.05]'>
+                  <div className='h-7 bg-white/[0.05] rounded-lg w-16' />
+                  <div className='h-7 bg-white/[0.05] rounded-lg w-12' />
+                  <div className='h-7 bg-white/[0.05] rounded-lg w-16' />
                 </div>
               </div>
             ))}
@@ -384,7 +384,7 @@ export default function OpportunitiesPage() {
 
   return (
     <ErrorBoundary>
-      <div className='min-h-screen bg-gray-50'>
+      <div className='min-h-screen bg-[#111318]'>
         <DashboardNav />
         <div className='max-w-6xl mx-auto px-6 py-10'>
           {/* Onboarding checklist */}
@@ -405,8 +405,8 @@ export default function OpportunitiesPage() {
           {/* Header */}
           <div className='flex items-end justify-between mb-4'>
             <div>
-              <h1 className='text-2xl font-bold text-gray-900'>Opportunities</h1>
-              <p className='text-gray-500 text-sm mt-1'>
+              <h1 className='text-2xl font-bold text-white'>Opportunities</h1>
+              <p className='text-white/40 text-sm mt-1'>
                 {totalVisible} opportunit{totalVisible === 1 ? 'y' : 'ies'}
                 {activeFilterCount > 0 && ` (filtered from ${clusters.length})`}
               </p>
@@ -427,7 +427,7 @@ export default function OpportunitiesPage() {
 
               {/* Search */}
               <div className='relative'>
-                <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none' />
+                <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none' />
                 <input
                   ref={searchInputRef}
                   type='text'
@@ -435,7 +435,7 @@ export default function OpportunitiesPage() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); (e.target as HTMLInputElement).blur() } }}
-                  className='pl-8 pr-3 py-2 text-xs border border-gray-200 rounded-lg bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 w-40'
+                  className='pl-8 pr-3 py-2 text-xs border border-white/[0.08] rounded-lg bg-white/[0.06] text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 w-40'
                 />
               </div>
 
@@ -443,7 +443,7 @@ export default function OpportunitiesPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as SortField)}
-                className='text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300'
+                className='text-xs border border-white/[0.08] rounded-lg px-3 py-2 bg-white/[0.06] text-white/70 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50'
               >
                 {SORT_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>Sort: {o.label}</option>
@@ -459,8 +459,8 @@ export default function OpportunitiesPage() {
                 onClick={() => setShowFilters(prev => !prev)}
                 className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border transition-colors ${
                   showFilters || activeFilterCount > 0
-                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                    ? 'bg-blue-600/15 text-blue-400 border-blue-500/20'
+                    : 'bg-white/[0.05] text-white/60 border-white/[0.08] hover:bg-white/[0.08]'
                 }`}
               >
                 <SlidersHorizontal className='w-3.5 h-3.5' />
@@ -473,11 +473,11 @@ export default function OpportunitiesPage() {
               </button>
 
               {/* View toggle */}
-              <div className='flex items-center border border-gray-200 rounded-lg overflow-hidden'>
+              <div className='flex items-center border border-white/[0.08] rounded-lg overflow-hidden'>
                 <button
                   type='button'
                   onClick={() => setView('grid')}
-                  className={`p-2 transition-colors ${view === 'grid' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+                  className={`p-2 transition-colors ${view === 'grid' ? 'bg-white/[0.08] text-white' : 'bg-transparent text-white/30 hover:text-white/60'}`}
                   title='Grid view'
                 >
                   <LayoutGrid className='w-4 h-4' />
@@ -485,7 +485,7 @@ export default function OpportunitiesPage() {
                 <button
                   type='button'
                   onClick={() => setView('list')}
-                  className={`p-2 transition-colors ${view === 'list' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-400 hover:text-gray-600'}`}
+                  className={`p-2 transition-colors ${view === 'list' ? 'bg-white/[0.08] text-white' : 'bg-transparent text-white/30 hover:text-white/60'}`}
                   title='List view'
                 >
                   <List className='w-4 h-4' />
@@ -496,12 +496,12 @@ export default function OpportunitiesPage() {
 
           {/* Filter bar */}
           {showFilters && (
-            <div className='bg-white rounded-xl border border-gray-200 p-4 mb-6 space-y-3'>
+            <div className='bg-[#1A1D24] rounded-xl border border-white/[0.07] p-4 mb-6 space-y-3'>
               <div className='flex flex-wrap items-center gap-x-6 gap-y-3'>
 
                 {/* Source */}
                 <div className='flex items-center gap-2'>
-                  <span className='text-xs text-gray-500 font-medium w-16 shrink-0'>Source</span>
+                  <span className='text-xs text-white/40 font-medium w-16 shrink-0'>Source</span>
                   <div className='flex items-center gap-1'>
                     {([
                       { value: 'all', label: 'All' },
@@ -514,8 +514,8 @@ export default function OpportunitiesPage() {
                         onClick={() => setSourceFilter(value)}
                         className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
                           sourceFilter === value
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-gray-500 hover:bg-gray-100'
+                            ? 'bg-blue-500/15 text-blue-400'
+                            : 'text-white/40 hover:bg-white/[0.06]'
                         }`}
                       >
                         {label}
@@ -526,7 +526,7 @@ export default function OpportunitiesPage() {
 
                 {/* Confidence */}
                 <div className='flex items-center gap-2'>
-                  <span className='text-xs text-gray-500 font-medium w-16 shrink-0'>Confidence</span>
+                  <span className='text-xs text-white/40 font-medium w-16 shrink-0'>Confidence</span>
                   <div className='flex items-center gap-1'>
                     {(['all', 'High', 'Medium', 'Low'] as const).map(c => (
                       <button
@@ -535,8 +535,8 @@ export default function OpportunitiesPage() {
                         onClick={() => setConfidenceFilter(c)}
                         className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
                           confidenceFilter === c
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-gray-500 hover:bg-gray-100'
+                            ? 'bg-blue-500/15 text-blue-400'
+                            : 'text-white/40 hover:bg-white/[0.06]'
                         }`}
                       >
                         {c === 'all' ? 'All' : c}
@@ -552,18 +552,18 @@ export default function OpportunitiesPage() {
                       type='checkbox'
                       checked={churnOnly}
                       onChange={e => setChurnOnly(e.target.checked)}
-                      className='rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
+                      className='rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/20'
                     />
-                    <span className='text-xs text-gray-700 font-medium'>Churn signals</span>
+                    <span className='text-xs text-white/60 font-medium'>Churn signals</span>
                   </label>
                   <label className='flex items-center gap-1.5 cursor-pointer'>
                     <input
                       type='checkbox'
                       checked={hasSpecOnly}
                       onChange={e => setHasSpecOnly(e.target.checked)}
-                      className='rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
+                      className='rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/20'
                     />
-                    <span className='text-xs text-gray-700 font-medium'>Has PRD</span>
+                    <span className='text-xs text-white/60 font-medium'>Has PRD</span>
                   </label>
                 </div>
 
@@ -571,7 +571,7 @@ export default function OpportunitiesPage() {
                   <button
                     type='button'
                     onClick={clearFilters}
-                    className='ml-auto text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1'
+                    className='ml-auto text-xs text-white/40 hover:text-white/70 flex items-center gap-1 transition-colors'
                   >
                     <X className='w-3 h-3' /> Clear all
                   </button>
@@ -579,11 +579,11 @@ export default function OpportunitiesPage() {
               </div>
 
               {/* Score + Revenue sliders — second row */}
-              <div className='flex flex-wrap items-center gap-x-6 gap-y-3 pt-3 border-t border-gray-50'>
+              <div className='flex flex-wrap items-center gap-x-6 gap-y-3 pt-3 border-t border-white/[0.05]'>
 
                 {/* Min score */}
                 <div className='flex items-center gap-2'>
-                  <span className='text-xs text-gray-500 font-medium w-16 shrink-0'>Min score</span>
+                  <span className='text-xs text-white/40 font-medium w-16 shrink-0'>Min score</span>
                   <input
                     type='range'
                     min={0}
@@ -591,16 +591,16 @@ export default function OpportunitiesPage() {
                     step={1}
                     value={minScore}
                     onChange={e => setMinScore(Number(e.target.value))}
-                    className='w-28 accent-blue-600'
+                    className='w-28 accent-blue-500'
                   />
-                  <span className='text-xs font-semibold text-gray-700 tabular-nums w-4'>{minScore}</span>
+                  <span className='text-xs font-semibold text-white/70 tabular-nums w-4'>{minScore}</span>
                 </div>
 
                 {/* Revenue range */}
                 <div className='flex items-center gap-2'>
-                  <span className='text-xs text-gray-500 font-medium w-16 shrink-0'>Revenue</span>
+                  <span className='text-xs text-white/40 font-medium w-16 shrink-0'>Revenue</span>
                   <div className='flex items-center gap-1.5'>
-                    <span className='text-xs text-gray-400'>Min</span>
+                    <span className='text-xs text-white/30'>Min</span>
                     <input
                       type='range'
                       min={0}
@@ -612,12 +612,12 @@ export default function OpportunitiesPage() {
                         setMinRevenue(v)
                         if (v > maxRevenue) setMaxRevenue(v)
                       }}
-                      className='w-24 accent-blue-600'
+                      className='w-24 accent-blue-500'
                     />
-                    <span className='text-xs font-semibold text-gray-700 tabular-nums w-14'>
+                    <span className='text-xs font-semibold text-white/70 tabular-nums w-14'>
                       {minRevenue === 0 ? 'Any' : `$${(minRevenue / 1000).toFixed(0)}K`}
                     </span>
-                    <span className='text-xs text-gray-400'>Max</span>
+                    <span className='text-xs text-white/30'>Max</span>
                     <input
                       type='range'
                       min={0}
@@ -629,9 +629,9 @@ export default function OpportunitiesPage() {
                         setMaxRevenue(v)
                         if (v < minRevenue) setMinRevenue(v)
                       }}
-                      className='w-24 accent-blue-600'
+                      className='w-24 accent-blue-500'
                     />
-                    <span className='text-xs font-semibold text-gray-700 tabular-nums w-14'>
+                    <span className='text-xs font-semibold text-white/70 tabular-nums w-14'>
                       {maxRevenue >= MAX_REVENUE_SLIDER ? 'Any' : `$${(maxRevenue / 1000).toFixed(0)}K`}
                     </span>
                   </div>
@@ -649,11 +649,11 @@ export default function OpportunitiesPage() {
             />
           ) : sections.length === 0 && !shippedSection ? (
             <div className='text-center py-16'>
-              <p className='text-gray-500 text-sm'>No opportunities match your filters.</p>
+              <p className='text-white/40 text-sm'>No opportunities match your filters.</p>
               <button
                 type='button'
                 onClick={clearFilters}
-                className='mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium'
+                className='mt-3 text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors'
               >
                 Clear filters
               </button>
@@ -673,23 +673,23 @@ export default function OpportunitiesPage() {
                           type='checkbox'
                           checked={allSelected}
                           onChange={e => handleSelectAll(sectionIds, e.target.checked)}
-                          className='rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
+                          className='rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/20'
                           title='Select all in section'
                         />
                       )}
                       <h2 className={`text-sm font-semibold ${section.color}`}>
                         {section.label}
                       </h2>
-                      <span className='text-xs text-gray-400'>
+                      <span className='text-xs text-white/30'>
                         {section.clusters.length}
                         {section.clusters.length !== section.totalUnfiltered && ` of ${section.totalUnfiltered}`}
                       </span>
-                      <div className='flex-1 border-t border-gray-100' />
+                      <div className='flex-1 border-t border-white/[0.07]' />
                     </div>
 
                     {/* Section content */}
                     {section.clusters.length === 0 ? (
-                      <p className='text-xs text-gray-400 pl-1'>No matches for current filters.</p>
+                      <p className='text-xs text-white/30 pl-1'>No matches for current filters.</p>
                     ) : view === 'grid' ? (
                       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
                         {section.clusters.map(cluster => (
@@ -702,7 +702,7 @@ export default function OpportunitiesPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className='bg-white rounded-xl border border-gray-200 divide-y divide-gray-100'>
+                      <div className='bg-[#1A1D24] rounded-xl border border-white/[0.07] divide-y divide-white/[0.05]'>
                         {section.clusters.map(cluster => (
                           <OpportunityListRow
                             key={cluster.id}
@@ -723,13 +723,13 @@ export default function OpportunitiesPage() {
               {shippedSection && (
                 <div>
                   <div className='flex items-center gap-3 mb-4'>
-                    <h2 className='text-sm font-semibold text-purple-600'>Shipped</h2>
-                    <span className='text-xs text-gray-400'>
+                    <h2 className='text-sm font-semibold text-violet-400'>Shipped</h2>
+                    <span className='text-xs text-white/30'>
                       {shippedSection.clusters.length}
                       {shippedSection.clusters.length !== shippedSection.totalUnfiltered
                         && ` of ${shippedSection.totalUnfiltered}`}
                     </span>
-                    <div className='flex-1 border-t border-gray-100' />
+                    <div className='flex-1 border-t border-white/[0.07]' />
                   </div>
                   {view === 'grid' ? (
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 opacity-60'>
@@ -743,7 +743,7 @@ export default function OpportunitiesPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className='bg-white rounded-xl border border-gray-200 divide-y divide-gray-100'>
+                    <div className='bg-[#1A1D24] rounded-xl border border-white/[0.07] divide-y divide-white/[0.05]'>
                       {shippedSection.clusters.map(cluster => (
                         <OpportunityListRow
                           key={cluster.id}

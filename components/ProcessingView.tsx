@@ -46,65 +46,58 @@ function getStage(status: PipelineStatus, stalledPolls: number): { label: string
 export function ProcessingView({ status, stalledPolls = 0 }: { status: PipelineStatus; stalledPolls?: number }) {
   const stage = getStage(status, stalledPolls)
 
+  const accentColor = stage.status === 'complete' ? '#10B981' : stage.status === 'insufficient' ? '#F59E0B' : '#3B82F6'
+  const iconBg = stage.status === 'complete' ? 'bg-emerald-500/10' : stage.status === 'insufficient' ? 'bg-amber-500/10' : 'bg-blue-500/10'
+  const statBg = stage.status === 'complete' ? 'bg-emerald-500/8 border-emerald-500/15' : stage.status === 'insufficient' ? 'bg-amber-500/8 border-amber-500/15' : 'bg-blue-500/8 border-blue-500/15'
+  const statText = stage.status === 'complete' ? 'text-emerald-400' : stage.status === 'insufficient' ? 'text-amber-400' : 'text-blue-400'
+
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-[#111318]'>
       <DashboardNav />
       <div className='flex items-center justify-center p-8 mt-10'>
-        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-10 max-w-md w-full text-center'>
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${
-            stage.status === 'complete' ? 'bg-green-50' :
-            stage.status === 'insufficient' ? 'bg-amber-50' : 'bg-blue-50'
-          }`}>
+        <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-10 max-w-md w-full text-center'>
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${iconBg}`}>
             {stage.status === 'complete' ? (
-              <CheckCircle className='w-8 h-8 text-green-600' />
+              <CheckCircle className='w-8 h-8 text-emerald-400' />
             ) : stage.status === 'insufficient' ? (
-              <AlertTriangle className='w-8 h-8 text-amber-500' />
+              <AlertTriangle className='w-8 h-8 text-amber-400' />
             ) : (
-              <Loader2 className='w-8 h-8 text-blue-600 animate-spin' />
+              <Loader2 className='w-8 h-8 text-blue-400 animate-spin' />
             )}
           </div>
-          <h1 className='text-2xl font-bold text-gray-900 mb-2'>Zendesk connected!</h1>
-          <p className='text-gray-500 text-sm mb-8'>{stage.label}</p>
+          <h1 className='text-2xl font-bold text-white mb-2'>Zendesk connected!</h1>
+          <p className='text-white/45 text-sm mb-8'>{stage.label}</p>
 
           {/* Progress bar */}
-          <div className='w-full bg-gray-100 rounded-full h-2 mb-2'>
+          <div className='w-full bg-white/[0.07] rounded-full h-1.5 mb-2'>
             <div
-              className={`h-2 rounded-full transition-all duration-700 ease-out ${
-                stage.status === 'insufficient' ? 'bg-amber-400' :
-                stage.status === 'complete' ? 'bg-green-500' : 'bg-blue-600'
-              }`}
-              style={{ width: `${stage.progress}%` }}
+              className='h-1.5 rounded-full transition-all duration-700 ease-out'
+              style={{ width: `${stage.progress}%`, backgroundColor: accentColor }}
             />
           </div>
-          <p className='text-xs text-gray-400 mb-8 tabular-nums'>{stage.progress}% complete</p>
+          <p className='text-xs text-white/25 mb-8 tabular-nums'>{stage.progress}% complete</p>
 
-          <div className={`rounded-2xl p-6 mb-8 ${
-            stage.status === 'complete' ? 'bg-green-50 border border-green-100' :
-            stage.status === 'insufficient' ? 'bg-amber-50 border border-amber-100' :
-            'bg-blue-50 border border-blue-100'
-          }`}>
-            <p className={`text-4xl font-bold tabular-nums ${
-              stage.status === 'complete' ? 'text-green-700' :
-              stage.status === 'insufficient' ? 'text-amber-700' : 'text-blue-700'
-            }`}>{status.signals_total.toLocaleString()}</p>
-            <p className={`text-sm mt-2 ${
-              stage.status === 'complete' ? 'text-green-500' :
-              stage.status === 'insufficient' ? 'text-amber-500' : 'text-blue-500'
-            }`}>tickets processed so far</p>
+          <div className={`rounded-2xl p-6 mb-8 border ${statBg}`}>
+            <p className={`text-4xl font-bold tabular-nums ${statText}`}>
+              {status.signals_total.toLocaleString()}
+            </p>
+            <p className='text-white/35 text-sm mt-2'>tickets processed so far</p>
           </div>
 
           {stage.status === 'complete' ? (
-            <Link href='/opportunities'
-              className='block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl text-sm text-center transition-colors'>
+            <Link
+              href='/opportunities'
+              className='block w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl text-sm text-center transition-colors'
+            >
               View Opportunities
             </Link>
           ) : stage.status === 'insufficient' ? (
-            <p className='text-gray-500 text-sm leading-relaxed'>
+            <p className='text-white/40 text-sm leading-relaxed'>
               Your Zendesk has too few recent tickets for our AI to find patterns.
               Add more support tickets and reconnect to try again.
             </p>
           ) : (
-            <p className='text-gray-400 text-xs'>This usually takes 30–90 minutes. You can close this page.</p>
+            <p className='text-white/25 text-xs'>This usually takes 30–90 minutes. You can close this page.</p>
           )}
         </div>
       </div>

@@ -342,32 +342,32 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-[#111318]'>
       <DashboardNav />
       <div className='max-w-3xl mx-auto px-6 py-10'>
-        <Link href='/opportunities' className='inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors'>
+        <Link href='/opportunities' className='inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/70 mb-6 transition-colors'>
           <ArrowLeft className='w-4 h-4' /> Back to Opportunities
         </Link>
 
-        <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6'>
+        <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-8 mb-6'>
           <div className='flex items-start justify-between gap-4 mb-6'>
-            <h1 className='text-xl font-bold text-gray-900'>{cluster.label}</h1>
+            <h1 className='text-xl font-bold text-white'>{cluster.label}</h1>
             <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
           </div>
 
-          <div className='flex flex-wrap gap-5 text-sm text-gray-500 mb-6'>
+          <div className='flex flex-wrap gap-5 text-sm text-white/40 mb-6'>
             <span className='flex items-center gap-1.5'>
-              <MessageSquare className='w-4 h-4 text-gray-400' />
+              <MessageSquare className='w-4 h-4 text-white/25' />
               {cluster.signal_count} tickets
             </span>
             {cluster.churn_signal_count > 0 && (
-              <span className='flex items-center gap-1.5 text-red-500'>
+              <span className='flex items-center gap-1.5 text-orange-400'>
                 <AlertTriangle className='w-4 h-4' />
                 {cluster.churn_signal_count} churn signals
               </span>
             )}
             {cluster.recent_signal_count > 0 && (
-              <span className='flex items-center gap-1.5 text-amber-600'>
+              <span className='flex items-center gap-1.5 text-amber-400'>
                 <Clock className='w-4 h-4' />
                 {cluster.recent_signal_count} recent (30d)
               </span>
@@ -376,7 +376,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               <button
                 type='button'
                 onClick={toggleAccounts}
-                className='flex items-center gap-1.5 text-purple-600 hover:text-purple-700 transition-colors'
+                className='flex items-center gap-1.5 text-violet-400 hover:text-violet-300 transition-colors'
               >
                 <Users className='w-4 h-4' />
                 {cluster.unique_orgs} accounts affected
@@ -384,35 +384,35 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               </button>
             )}
             {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
-              <span className='flex items-center gap-1.5 text-emerald-600'>
+              <span className='flex items-center gap-1.5 text-emerald-400'>
                 <DollarSign className='w-4 h-4' />
                 {formatRevenue(cluster.revenue_at_risk_usd)} at risk
-                <span className='text-xs text-gray-400 italic'>
+                <span className='text-xs text-white/30 italic'>
                   {cluster.revenue_source === 'crm' ? 'CRM' : 'AI estimate'}
                 </span>
               </span>
             )}
           </div>
 
-          <div className='flex flex-wrap gap-2 pb-6 border-b border-gray-100'>
+          <div className='flex flex-wrap gap-2 pb-6 border-b border-white/[0.07]'>
             <button
               type='button'
               onClick={() => void handleFeedback('approve')}
-              className='flex items-center gap-1 text-xs text-green-600 hover:bg-green-50 px-3 py-2 rounded-lg font-medium border border-green-100'
+              className='flex items-center gap-1 text-xs text-emerald-400 hover:bg-emerald-500/10 px-3 py-2 rounded-lg font-medium border border-emerald-500/20 transition-colors'
             >
               <ThumbsUp className='w-3.5 h-3.5' /> Approve
             </button>
             <button
               type='button'
               onClick={() => void handleFeedback('skip')}
-              className='flex items-center gap-1 text-xs text-gray-600 hover:bg-gray-50 px-3 py-2 rounded-lg font-medium border border-gray-200'
+              className='flex items-center gap-1 text-xs text-white/50 hover:bg-white/[0.06] px-3 py-2 rounded-lg font-medium border border-white/[0.08] transition-colors'
             >
               <SkipForward className='w-3.5 h-3.5' /> Skip
             </button>
             <button
               type='button'
               onClick={() => void handleFeedback('dismiss')}
-              className='flex items-center gap-1 text-xs text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg font-medium border border-red-100'
+              className='flex items-center gap-1 text-xs text-red-400 hover:bg-red-500/10 px-3 py-2 rounded-lg font-medium border border-red-500/20 transition-colors'
             >
               <X className='w-3.5 h-3.5' /> Dismiss
             </button>
@@ -420,7 +420,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               type='button'
               disabled={shippingBusy || shipped}
               onClick={() => void handleShip()}
-              className='flex items-center gap-1 text-xs text-purple-600 hover:bg-purple-50 px-3 py-2 rounded-lg font-medium border border-purple-100 disabled:opacity-50'
+              className='flex items-center gap-1 text-xs text-violet-400 hover:bg-violet-500/10 px-3 py-2 rounded-lg font-medium border border-violet-500/20 disabled:opacity-50 transition-colors'
             >
               <Package className='w-3.5 h-3.5' />
               {shippingBusy ? 'Marking…' : shipped ? 'Shipped' : 'Mark as shipped'}
@@ -430,35 +430,35 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
 
           {/* Affected accounts drawer */}
           {accountsOpen && (
-            <div className='border-t border-gray-100 pt-5 mt-5'>
-              <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3'>
-                <Building2 className='w-4 h-4 text-purple-500' />
+            <div className='border-t border-white/[0.07] pt-5 mt-5'>
+              <h3 className='text-sm font-semibold text-white flex items-center gap-2 mb-3'>
+                <Building2 className='w-4 h-4 text-violet-400' />
                 Affected accounts
               </h3>
               {accountsLoading ? (
                 <div className='space-y-2'>
                   {[1, 2, 3].map(i => (
-                    <div key={i} className='h-10 bg-gray-100 rounded-xl animate-pulse' />
+                    <div key={i} className='h-10 bg-white/[0.05] rounded-xl animate-pulse' />
                   ))}
                 </div>
               ) : accounts.length === 0 ? (
-                <p className='text-sm text-gray-400'>No account data available.</p>
+                <p className='text-sm text-white/30'>No account data available.</p>
               ) : (
                 <div className='space-y-1'>
                   {accounts.map(acc => (
-                    <div key={acc.organization_id} className='flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50'>
+                    <div key={acc.organization_id} className='flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors'>
                       <div className='min-w-0'>
-                        <p className='text-sm font-medium text-gray-900 truncate'>{acc.name}</p>
+                        <p className='text-sm font-medium text-white/80 truncate'>{acc.name}</p>
                         {acc.domain && (
-                          <p className='text-xs text-gray-400'>{acc.domain}</p>
+                          <p className='text-xs text-white/30'>{acc.domain}</p>
                         )}
                       </div>
                       {acc.arr_usd ? (
                         <div className='shrink-0 flex items-center gap-1.5'>
-                          <span className='text-sm font-semibold text-emerald-600'>
+                          <span className='text-sm font-semibold text-emerald-400'>
                             {formatRevenue(acc.arr_usd)}
                           </span>
-                          <span className='text-[10px] text-gray-400 font-medium bg-gray-100 px-1.5 py-0.5 rounded-full'>
+                          <span className='text-[10px] text-white/30 font-medium bg-white/[0.06] px-1.5 py-0.5 rounded-full'>
                             {acc.revenue_source === 'crm' ? 'CRM' : 'est'}
                           </span>
                         </div>
@@ -470,7 +470,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             </div>
           )}
 
-          <div className='border-t border-gray-100 pt-6 mt-6'>
+          <div className='border-t border-white/[0.07] pt-6 mt-6'>
             <ScoreBreakdownPanel
               cluster={cluster}
               mlModelVersion={cluster.scoring_model?.startsWith('ml_v') ? parseInt(cluster.scoring_model.slice(4)) : 0}
@@ -479,15 +479,15 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           </div>
 
           {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
-            <div className='border-t border-gray-100 pt-5 mt-5'>
+            <div className='border-t border-white/[0.07] pt-5 mt-5'>
               <div className='flex items-center justify-between'>
-                <span className='text-sm text-gray-600 font-medium flex items-center gap-1.5'>
-                  <DollarSign className='w-3.5 h-3.5 text-gray-400' />
+                <span className='text-sm text-white/50 font-medium flex items-center gap-1.5'>
+                  <DollarSign className='w-3.5 h-3.5 text-white/25' />
                   Revenue at risk
                 </span>
                 <div className='flex items-center gap-2'>
-                  <span className='text-lg font-bold text-emerald-600'>{formatRevenue(cluster.revenue_at_risk_usd)}</span>
-                  <span className='text-xs text-gray-400 italic'>
+                  <span className='text-lg font-bold text-emerald-400'>{formatRevenue(cluster.revenue_at_risk_usd)}</span>
+                  <span className='text-xs text-white/30 italic'>
                     {cluster.revenue_source === 'crm' ? 'CRM' : 'AI estimate'}
                   </span>
                 </div>
@@ -496,19 +496,19 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           )}
 
           {/* Scoring transparency panel */}
-          <div className='border-t border-gray-100 pt-5 mt-5 space-y-3'>
+          <div className='border-t border-white/[0.07] pt-5 mt-5 space-y-3'>
             <div className='flex items-center justify-between'>
-              <span className='text-xs text-gray-500 font-medium'>Scoring model</span>
+              <span className='text-xs text-white/40 font-medium'>Scoring model</span>
               <div className='flex items-center gap-2'>
                 {cluster.ml_review_needed && (
-                  <span className='text-xs font-medium text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full'>
+                  <span className='text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full'>
                     Review needed
                   </span>
                 )}
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                   cluster.scoring_model?.startsWith('ml_')
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                    : 'bg-blue-50 text-blue-700 border border-blue-100'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                 }`}>
                   {cluster.scoring_model?.startsWith('ml_v')
                     ? `Personalized ML v${cluster.scoring_model.slice(4)}`
@@ -518,7 +518,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             </div>
             {scoreHistory.length >= 2 && (
               <div>
-                <span className='text-xs text-gray-500 font-medium'>Score trend</span>
+                <span className='text-xs text-white/40 font-medium'>Score trend</span>
                 <div className='mt-1.5'>
                   <ScoreSparkline history={scoreHistory} />
                 </div>
@@ -527,10 +527,10 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           </div>
         </div>
 
-        <div className='bg-white rounded-2xl border border-gray-200 p-8 mb-6'>
+        <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-8 mb-6'>
           <div className='flex items-center justify-between gap-3 mb-4'>
-            <h2 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
-              <Sparkles className='w-4 h-4 text-sky-500' />
+            <h2 className='text-sm font-semibold text-white flex items-center gap-2'>
+              <Sparkles className='w-4 h-4 text-sky-400' />
               Opportunity brief & agent spec
             </h2>
             <div className='flex flex-wrap gap-2'>
@@ -539,7 +539,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                   <button
                     type='button'
                     onClick={handleDownloadPdf}
-                    className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100'
+                    className='inline-flex items-center gap-1.5 text-xs font-medium text-white/60 bg-white/[0.05] px-3 py-2 rounded-lg border border-white/[0.08] hover:bg-white/[0.08] transition-colors'
                   >
                     <FileText className='w-3.5 h-3.5' />
                     PDF
@@ -547,7 +547,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                   <button
                     type='button'
                     onClick={handleDownloadDocx}
-                    className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100'
+                    className='inline-flex items-center gap-1.5 text-xs font-medium text-white/60 bg-white/[0.05] px-3 py-2 rounded-lg border border-white/[0.08] hover:bg-white/[0.08] transition-colors'
                   >
                     <FileDown className='w-3.5 h-3.5' />
                     DOCX
@@ -558,7 +558,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                 <button
                   type='button'
                   onClick={downloadAgentSpec}
-                  className='inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 bg-sky-50 px-3 py-2 rounded-lg border border-sky-100 hover:bg-sky-100'
+                  className='inline-flex items-center gap-1.5 text-xs font-medium text-sky-400 bg-sky-500/10 px-3 py-2 rounded-lg border border-sky-500/20 hover:bg-sky-500/15 transition-colors'
                 >
                   <Download className='w-3.5 h-3.5' />
                   agent_spec.json
@@ -568,7 +568,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                 type='button'
                 disabled={specBusy}
                 onClick={() => void triggerSpecGeneration()}
-                className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-200 disabled:opacity-50'
+                className='inline-flex items-center gap-1.5 text-xs font-medium text-white/60 bg-white/[0.06] px-3 py-2 rounded-lg border border-white/[0.08] hover:bg-white/[0.09] disabled:opacity-50 transition-colors'
               >
                 <Sparkles className='w-3.5 h-3.5' />
                 {specBusy ? 'Generating…' : hasSpec ? 'Regenerate' : 'Generate'}
@@ -576,10 +576,10 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             </div>
           </div>
           {specError && (
-            <p className='text-sm text-red-600 mb-3'>{specError}</p>
+            <p className='text-sm text-red-400 mb-3'>{specError}</p>
           )}
           {specBusy && !cluster.human_brief && (
-            <p className='text-sm text-gray-500 mb-3 animate-pulse'>
+            <p className='text-sm text-white/40 mb-3 animate-pulse'>
               Analysing evidence and drafting specification… this can take 15–45 seconds.
             </p>
           )}
@@ -592,20 +592,20 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                   <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{cluster.human_brief}</ReactMarkdown>
                 </div>
                 {!briefExpanded && (
-                  <div className='absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none' />
+                  <div className='absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#1A1D24] to-transparent pointer-events-none' />
                 )}
               </div>
               <button
                 type='button'
                 onClick={() => setBriefExpanded(!briefExpanded)}
-                className='w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-2 mt-1 transition-colors'
+                className='w-full flex items-center justify-center gap-1 text-xs text-white/40 hover:text-white/70 py-2 mt-1 transition-colors'
               >
                 {briefExpanded ? 'Show less' : 'Show more'}
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${briefExpanded ? 'rotate-180' : ''}`} />
               </button>
             </div>
           ) : (
-            <p className='text-gray-400 text-sm'>
+            <p className='text-white/30 text-sm'>
               No brief yet. Scoring runs spec generation automatically; use Generate if you need to retry.
             </p>
           )}
@@ -617,7 +617,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               href={pushedLinear}
               target='_blank'
               rel='noopener noreferrer'
-              className='flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-green-700 transition-colors'
+              className='flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-emerald-500 transition-colors'
             >
               Pushed to Linear <ExternalLink className='w-4 h-4' />
             </a>
@@ -626,7 +626,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               type='button'
               onClick={() => void handlePushToLinear()}
               disabled={pushingLinear}
-              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
               {pushingLinear ? 'Creating ticket...' : linearConnected === false ? 'Connect Linear' : 'Push to Linear'}
             </button>
@@ -637,7 +637,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               href={pushedJira}
               target='_blank'
               rel='noopener noreferrer'
-              className='flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-green-700 transition-colors'
+              className='flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-emerald-500 transition-colors'
             >
               Pushed to Jira <ExternalLink className='w-4 h-4' />
             </a>
@@ -646,7 +646,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               type='button'
               onClick={() => void handlePushToJira()}
               disabled={pushingJira}
-              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
               {pushingJira ? 'Creating ticket...' : jiraConnected === false ? 'Connect Jira' : 'Push to Jira'}
             </button>
@@ -654,34 +654,34 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
         </div>
 
         {pushError && (
-          <div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-xl'>
-            <p className='text-sm text-red-600'>{pushError}</p>
+          <div className='mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl'>
+            <p className='text-sm text-red-400'>{pushError}</p>
           </div>
         )}
 
-        <div className='bg-white rounded-2xl border border-gray-200 p-8'>
-          <h2 className='text-sm font-semibold text-gray-900 mb-5'>
+        <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-8'>
+          <h2 className='text-sm font-semibold text-white mb-5'>
             Evidence ({signals.length} tickets)
           </h2>
           {signals.length === 0 ? (
-            <p className='text-gray-400 text-sm'>No ticket evidence available yet.</p>
+            <p className='text-white/30 text-sm'>No ticket evidence available yet.</p>
           ) : (
             <div className='space-y-1'>
               {signals.map(signal => (
-                <div key={signal.id} className='rounded-xl p-4 hover:bg-gray-50 transition-colors -mx-2'>
+                <div key={signal.id} className='rounded-xl p-4 hover:bg-white/[0.03] transition-colors -mx-2'>
                   <div className='flex items-center gap-2 mb-2'>
-                    <span className='text-xs text-gray-400 font-medium'>
+                    <span className='text-xs text-white/30 font-medium'>
                       {new Date(signal.created_at).toLocaleDateString('en-US', {
                         month: 'short', day: 'numeric', year: 'numeric',
                       })}
                     </span>
                     {signal.churn_flag && (
-                      <span className='inline-flex items-center gap-1 text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full font-medium'>
+                      <span className='inline-flex items-center gap-1 text-xs text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full font-medium'>
                         <AlertTriangle className='w-3 h-3' /> Churn risk
                       </span>
                     )}
                   </div>
-                  <p className='text-sm text-gray-700 leading-relaxed'>
+                  <p className='text-sm text-white/60 leading-relaxed'>
                     {signal.text.length > 200 ? signal.text.slice(0, 200) + '...' : signal.text}
                   </p>
                 </div>

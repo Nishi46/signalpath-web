@@ -265,10 +265,10 @@ function ConnectContent() {
   if (linearConnected || jiraConnected) {
     const service = linearConnected ? 'Linear' : 'Jira'
     return (
-      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+      <div className='min-h-screen bg-[#111318] flex items-center justify-center'>
         <div className='text-center max-w-sm'>
-          <h1 className='text-xl font-bold text-gray-900 mb-2'>{service} connected</h1>
-          <p className='text-gray-500 text-sm'>You can now push opportunities to {service}.</p>
+          <h1 className='text-xl font-bold text-white mb-2'>{service} connected</h1>
+          <p className='text-white/40 text-sm'>You can now push opportunities to {service}.</p>
         </div>
       </div>
     )

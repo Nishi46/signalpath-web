@@ -88,36 +88,36 @@ export function SavedViews({ currentFilters, onLoadView }: SavedViewsProps) {
       <button
         type='button'
         onClick={() => { setOpen(prev => !prev); setNaming(false) }}
-        className='inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors'
+        className='inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-white/[0.08] bg-white/[0.05] text-white/60 hover:bg-white/[0.08] transition-colors'
         title='Saved views'
       >
         <Bookmark className='w-3.5 h-3.5' />
         Views
         {views.length > 0 && (
-          <span className='text-[10px] font-bold text-gray-500 bg-gray-100 rounded-full px-1.5 py-0.5'>
+          <span className='text-[10px] font-bold text-white/40 bg-white/[0.07] rounded-full px-1.5 py-0.5'>
             {views.length}
           </span>
         )}
-        <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-white/30 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className='absolute right-0 top-full mt-1 z-30 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden'>
+        <div className='absolute right-0 top-full mt-1 z-30 w-64 bg-[#1A1D24] border border-white/[0.07] rounded-xl shadow-xl overflow-hidden'>
           {views.length > 0 && (
-            <ul className='py-1 divide-y divide-gray-50'>
+            <ul className='py-1 divide-y divide-white/[0.05]'>
               {views.map(view => (
-                <li key={view.id} className='flex items-center gap-1 px-2 py-1.5 group hover:bg-gray-50'>
+                <li key={view.id} className='flex items-center gap-1 px-2 py-1.5 group hover:bg-white/[0.04]'>
                   <button
                     type='button'
                     onClick={() => handleLoad(view)}
-                    className='flex-1 text-left text-sm text-gray-700 font-medium truncate px-2 py-0.5 rounded hover:text-blue-700'
+                    className='flex-1 text-left text-sm text-white/70 font-medium truncate px-2 py-0.5 rounded hover:text-blue-400 transition-colors'
                   >
                     {view.name}
                   </button>
                   <button
                     type='button'
                     onClick={() => handleDelete(view.id)}
-                    className='shrink-0 p-1 text-gray-300 hover:text-red-400 rounded opacity-0 group-hover:opacity-100 transition-opacity'
+                    className='shrink-0 p-1 text-white/20 hover:text-red-400 rounded opacity-0 group-hover:opacity-100 transition-opacity'
                     title='Delete view'
                   >
                     <Trash2 className='w-3 h-3' />
@@ -127,7 +127,7 @@ export function SavedViews({ currentFilters, onLoadView }: SavedViewsProps) {
             </ul>
           )}
 
-          <div className='border-t border-gray-100 p-2'>
+          <div className='border-t border-white/[0.07] p-2'>
             {naming ? (
               <div className='flex items-center gap-1.5'>
                 <input
@@ -140,20 +140,20 @@ export function SavedViews({ currentFilters, onLoadView }: SavedViewsProps) {
                     if (e.key === 'Enter') handleSave()
                     if (e.key === 'Escape') { setNaming(false); setName('') }
                   }}
-                  className='flex-1 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300'
+                  className='flex-1 text-xs border border-white/[0.08] rounded-lg px-2.5 py-1.5 bg-white/[0.06] text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50'
                 />
                 <button
                   type='button'
                   onClick={handleSave}
                   disabled={!name.trim()}
-                  className='text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-300 px-1'
+                  className='text-xs font-medium text-blue-400 hover:text-blue-300 disabled:text-white/20 px-1 transition-colors'
                 >
                   Save
                 </button>
                 <button
                   type='button'
                   onClick={() => { setNaming(false); setName('') }}
-                  className='text-gray-400 hover:text-gray-600'
+                  className='text-white/30 hover:text-white/60 transition-colors'
                 >
                   <X className='w-3.5 h-3.5' />
                 </button>
@@ -162,7 +162,7 @@ export function SavedViews({ currentFilters, onLoadView }: SavedViewsProps) {
               <button
                 type='button'
                 onClick={() => setNaming(true)}
-                className='w-full flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-blue-700 px-2 py-1.5 rounded-lg hover:bg-blue-50 transition-colors'
+                className='w-full flex items-center gap-1.5 text-xs font-medium text-white/40 hover:text-blue-400 px-2 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors'
               >
                 <Plus className='w-3.5 h-3.5' />
                 Save current filters as view

@@ -24,6 +24,9 @@ interface ConnectViewProps {
   connectingSlack?: boolean
 }
 
+const inputClass = 'w-full bg-white/[0.06] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 transition-all'
+const labelClass = 'block text-xs font-medium text-white/50 mb-1.5'
+
 export function ConnectView({
   subdomain,
   setSubdomain,
@@ -48,60 +51,57 @@ export function ConnectView({
   const canConnect = subdomain.trim() && email.trim() && apiToken.trim() && !connecting
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-[#111318]'>
       <DashboardNav />
-      <div className='max-w-lg mx-auto px-6 py-10 space-y-6'>
+      <div className='max-w-lg mx-auto px-6 py-10 space-y-4'>
 
         {/* ── Zendesk (required) ──────────────────────────────────────────── */}
-        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-8'>
-          <div className='w-14 h-14 bg-blue-50 rounded-2xl mx-auto mb-6 flex items-center justify-center'>
-            <Link2 className='w-6 h-6 text-blue-600' />
+        <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-8'>
+          <div className='w-14 h-14 bg-blue-500/10 rounded-2xl mx-auto mb-6 flex items-center justify-center'>
+            <Link2 className='w-6 h-6 text-blue-400' />
           </div>
-          <h1 className='text-2xl font-bold text-gray-900 mb-2 text-center'>Connect your Zendesk</h1>
-          <p className='text-gray-500 text-sm mb-8 leading-relaxed text-center'>
+          <h1 className='text-2xl font-bold text-white mb-2 text-center'>Connect your Zendesk</h1>
+          <p className='text-white/40 text-sm mb-8 leading-relaxed text-center'>
             SignalPath reads your support tickets and surfaces the product
             opportunities most likely to reduce churn. Setup takes 60 seconds.
           </p>
 
           <div className='space-y-3'>
-            {/* Subdomain */}
             <div>
-              <label className='block text-xs font-medium text-gray-600 mb-1.5'>Zendesk subdomain</label>
-              <div className='flex rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all'>
+              <label className={labelClass}>Zendesk subdomain</label>
+              <div className='flex rounded-xl border border-white/[0.08] overflow-hidden focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/30 transition-all'>
                 <input
                   type='text'
                   value={subdomain}
                   onChange={e => setSubdomain(e.target.value)}
                   placeholder='yourcompany'
-                  className='flex-1 px-4 py-3 text-sm outline-none bg-gray-50 focus:bg-white transition-colors'
+                  className='flex-1 px-4 py-3 text-sm outline-none bg-white/[0.06] text-white placeholder-white/20'
                 />
-                <span className='px-4 py-3 bg-gray-50 text-gray-400 text-sm border-l border-gray-200 flex items-center select-none'>
+                <span className='px-4 py-3 bg-white/[0.04] text-white/30 text-sm border-l border-white/[0.08] flex items-center select-none'>
                   .zendesk.com
                 </span>
               </div>
             </div>
 
-            {/* Email */}
             <div>
-              <label className='block text-xs font-medium text-gray-600 mb-1.5'>Zendesk admin email</label>
+              <label className={labelClass}>Zendesk admin email</label>
               <input
                 type='email'
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder='you@yourcompany.com'
-                className='w-full px-4 py-3 text-sm rounded-xl border border-gray-200 outline-none bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all'
+                className={inputClass}
               />
             </div>
 
-            {/* API token */}
             <div>
               <div className='flex items-center justify-between mb-1.5'>
-                <label className='text-xs font-medium text-gray-600'>API token</label>
+                <label className={labelClass.replace(' mb-1.5', '')}>API token</label>
                 <a
                   href={`https://${subdomain || 'yourcompany'}.zendesk.com/admin/apps-integrations/apis/zendesk-api/settings`}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1'
+                  className='text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors'
                 >
                   Get token in Zendesk <ExternalLink className='w-3 h-3' />
                 </a>
@@ -112,175 +112,159 @@ export function ConnectView({
                 onChange={e => setApiToken(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && canConnect && onConnect()}
                 placeholder='Paste your API token'
-                className='w-full px-4 py-3 text-sm rounded-xl border border-gray-200 outline-none bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono'
+                className={`${inputClass} font-mono`}
               />
             </div>
           </div>
 
-          {/* How to get a token */}
-          <div className='mt-4 p-3 bg-blue-50 rounded-xl text-xs text-blue-700 leading-relaxed'>
-            <strong>How to get your API token:</strong> In Zendesk, go to{' '}
-            <strong>Admin Center → Apps and Integrations → APIs → Zendesk API</strong>,
-            then click <strong>Add API token</strong>, copy it, and paste it above.
+          <div className='mt-4 p-3 bg-blue-500/8 border border-blue-500/15 rounded-xl text-xs text-blue-300/80 leading-relaxed'>
+            <strong className='text-blue-300'>How to get your API token:</strong> In Zendesk, go to{' '}
+            <strong className='text-blue-300'>Admin Center → Apps and Integrations → APIs → Zendesk API</strong>,
+            then click <strong className='text-blue-300'>Add API token</strong>, copy it, and paste it above.
           </div>
 
           <button
             onClick={onConnect}
             disabled={!canConnect}
-            className='w-full mt-5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
+            className='w-full mt-5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium py-3 rounded-xl text-sm transition-colors cursor-pointer disabled:cursor-not-allowed'
           >
             {connecting ? 'Verifying and connecting…' : 'Connect Zendesk'}
           </button>
         </div>
 
-        {/* ── Support signals — Intercom (optional) ───────────────────────── */}
-        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
-          <div className='flex items-center gap-3 mb-5'>
-            <div className='w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center'>
-              <MessageSquare className='w-5 h-5 text-blue-600' />
-            </div>
-            <div>
-              <h2 className='text-sm font-semibold text-gray-900'>Support signals <span className='ml-1 text-xs font-normal text-gray-400'>(optional)</span></h2>
-              <p className='text-xs text-gray-500'>Add more signal sources to improve opportunity detection.</p>
-            </div>
-          </div>
+        {/* ── Support signals — Intercom (optional) ── */}
+        <OptionalSection
+          icon={<MessageSquare className='w-5 h-5 text-blue-400' />}
+          iconBg='bg-blue-500/10'
+          title='Support signals'
+          description='Add more signal sources to improve opportunity detection.'
+        >
+          <IntegrationRow
+            abbr='IC' color='#1F8DED'
+            label='Intercom'
+            desc='Imports user conversations as product signals'
+            connected={intercomConnected}
+            connecting={connectingIntercom}
+            onConnect={onConnectIntercom}
+          />
+        </OptionalSection>
 
-          <div className='flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50'>
-            <div className='flex items-center gap-3'>
-              <div className='w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center'>
-                <span className='text-blue-600 font-bold text-xs'>IC</span>
-              </div>
-              <div>
-                <p className='text-sm font-medium text-gray-800'>Intercom</p>
-                <p className='text-xs text-gray-400'>Imports user conversations as product signals</p>
-              </div>
-            </div>
-            {intercomConnected ? (
-              <div className='flex items-center gap-1.5 text-emerald-600 text-xs font-medium'>
-                <CheckCircle2 className='w-4 h-4' />
-                Connected
-              </div>
-            ) : (
-              <button
-                onClick={onConnectIntercom}
-                disabled={connectingIntercom}
-                className='text-xs font-medium px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors'
-              >
-                {connectingIntercom ? 'Redirecting…' : 'Connect'}
-              </button>
-            )}
-          </div>
-        </div>
+        {/* ── Notifications — Slack (optional) ── */}
+        <OptionalSection
+          icon={<Bell className='w-5 h-5 text-violet-400' />}
+          iconBg='bg-violet-500/10'
+          title='Notifications'
+          description='Get notified when high-priority opportunities surface.'
+        >
+          <IntegrationRow
+            abbr='SL' color='#4A154B'
+            label='Slack'
+            desc='Weekly digest + instant alerts for scores ≥ 8.0'
+            connected={slackConnected}
+            connecting={connectingSlack}
+            onConnect={onConnectSlack}
+            btnBg='#4A154B'
+            btnHover='#611f69'
+          />
+        </OptionalSection>
 
-        {/* ── Notifications — Slack (optional) ────────────────────────────── */}
-        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
-          <div className='flex items-center gap-3 mb-5'>
-            <div className='w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center'>
-              <Bell className='w-5 h-5 text-violet-600' />
-            </div>
-            <div>
-              <h2 className='text-sm font-semibold text-gray-900'>Notifications <span className='ml-1 text-xs font-normal text-gray-400'>(optional)</span></h2>
-              <p className='text-xs text-gray-500'>Get notified when high-priority opportunities surface.</p>
-            </div>
-          </div>
-
-          <div className='flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50'>
-            <div className='flex items-center gap-3'>
-              <div className='w-8 h-8 rounded-lg bg-[#4A154B] flex items-center justify-center'>
-                <span className='text-white font-bold text-xs'>SL</span>
-              </div>
-              <div>
-                <p className='text-sm font-medium text-gray-800'>Slack</p>
-                <p className='text-xs text-gray-400'>Weekly digest + instant alerts for scores ≥ 8.0</p>
-              </div>
-            </div>
-            {slackConnected ? (
-              <div className='flex items-center gap-1.5 text-emerald-600 text-xs font-medium'>
-                <CheckCircle2 className='w-4 h-4' />
-                Connected
-              </div>
-            ) : (
-              <button
-                onClick={onConnectSlack}
-                disabled={connectingSlack}
-                className='text-xs font-medium px-3 py-1.5 rounded-lg bg-[#4A154B] text-white hover:bg-[#611f69] disabled:opacity-50 transition-colors'
-              >
-                {connectingSlack ? 'Redirecting…' : 'Connect'}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* ── Revenue data — CRM (optional) ───────────────────────────────── */}
-        <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
-          <div className='flex items-center gap-3 mb-5'>
-            <div className='w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center'>
-              <DollarSign className='w-5 h-5 text-emerald-600' />
-            </div>
-            <div>
-              <h2 className='text-sm font-semibold text-gray-900'>Revenue data <span className='ml-1 text-xs font-normal text-gray-400'>(optional)</span></h2>
-              <p className='text-xs text-gray-500'>Connect your CRM to replace AI-estimated ARR with real deal values.</p>
-            </div>
-          </div>
-
+        {/* ── Revenue data — CRM (optional) ── */}
+        <OptionalSection
+          icon={<DollarSign className='w-5 h-5 text-emerald-400' />}
+          iconBg='bg-emerald-500/10'
+          title='Revenue data'
+          description='Connect your CRM to replace AI-estimated ARR with real deal values.'
+        >
           <div className='space-y-3'>
-            {/* HubSpot */}
-            <div className='flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50'>
-              <div className='flex items-center gap-3'>
-                <div className='w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center'>
-                  <span className='text-orange-600 font-bold text-xs'>HS</span>
-                </div>
-                <div>
-                  <p className='text-sm font-medium text-gray-800'>HubSpot</p>
-                  <p className='text-xs text-gray-400'>Syncs company ARR from CRM deals</p>
-                </div>
-              </div>
-              {hubspotConnected ? (
-                <div className='flex items-center gap-1.5 text-emerald-600 text-xs font-medium'>
-                  <CheckCircle2 className='w-4 h-4' />
-                  Connected
-                </div>
-              ) : (
-                <button
-                  onClick={onConnectHubspot}
-                  disabled={connectingCrm === 'hubspot'}
-                  className='text-xs font-medium px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors'
-                >
-                  {connectingCrm === 'hubspot' ? 'Redirecting…' : 'Connect'}
-                </button>
-              )}
-            </div>
-
-            {/* Salesforce */}
-            <div className='flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50'>
-              <div className='flex items-center gap-3'>
-                <div className='w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center'>
-                  <span className='text-sky-600 font-bold text-xs'>SF</span>
-                </div>
-                <div>
-                  <p className='text-sm font-medium text-gray-800'>Salesforce</p>
-                  <p className='text-xs text-gray-400'>Syncs Account ARR via SOQL</p>
-                </div>
-              </div>
-              {salesforceConnected ? (
-                <div className='flex items-center gap-1.5 text-emerald-600 text-xs font-medium'>
-                  <CheckCircle2 className='w-4 h-4' />
-                  Connected
-                </div>
-              ) : (
-                <button
-                  onClick={onConnectSalesforce}
-                  disabled={connectingCrm === 'salesforce'}
-                  className='text-xs font-medium px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors'
-                >
-                  {connectingCrm === 'salesforce' ? 'Redirecting…' : 'Connect'}
-                </button>
-              )}
-            </div>
+            <IntegrationRow
+              abbr='HS' color='#FF7A59'
+              label='HubSpot'
+              desc='Syncs company ARR from CRM deals'
+              connected={hubspotConnected}
+              connecting={connectingCrm === 'hubspot'}
+              onConnect={onConnectHubspot}
+            />
+            <IntegrationRow
+              abbr='SF' color='#00A1E0'
+              label='Salesforce'
+              desc='Syncs Account ARR via SOQL'
+              connected={salesforceConnected}
+              connecting={connectingCrm === 'salesforce'}
+              onConnect={onConnectSalesforce}
+            />
           </div>
-        </div>
-
+        </OptionalSection>
       </div>
+    </div>
+  )
+}
+
+function OptionalSection({
+  icon, iconBg, title, description, children,
+}: {
+  icon: React.ReactNode
+  iconBg: string
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-6'>
+      <div className='flex items-center gap-3 mb-5'>
+        <div className={`w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center`}>
+          {icon}
+        </div>
+        <div>
+          <h2 className='text-sm font-semibold text-white'>
+            {title} <span className='ml-1 text-xs font-normal text-white/25'>(optional)</span>
+          </h2>
+          <p className='text-xs text-white/35'>{description}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function IntegrationRow({
+  abbr, color, label, desc, connected, connecting, onConnect, btnBg, btnHover,
+}: {
+  abbr: string
+  color: string
+  label: string
+  desc: string
+  connected: boolean
+  connecting: boolean
+  onConnect?: () => void
+  btnBg?: string
+  btnHover?: string
+}) {
+  return (
+    <div className='flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]'>
+      <div className='flex items-center gap-3'>
+        <div className='w-8 h-8 rounded-lg flex items-center justify-center shrink-0' style={{ backgroundColor: color }}>
+          <span className='text-white font-bold text-xs'>{abbr}</span>
+        </div>
+        <div>
+          <p className='text-sm font-medium text-white/85'>{label}</p>
+          <p className='text-xs text-white/35'>{desc}</p>
+        </div>
+      </div>
+      {connected ? (
+        <div className='flex items-center gap-1.5 text-emerald-400 text-xs font-medium'>
+          <CheckCircle2 className='w-4 h-4' />
+          Connected
+        </div>
+      ) : (
+        <button
+          onClick={onConnect}
+          disabled={connecting}
+          className='text-xs font-medium px-3 py-1.5 rounded-lg text-white disabled:opacity-50 transition-colors'
+          style={{ backgroundColor: btnBg ?? '#3B82F6' }}
+        >
+          {connecting ? 'Redirecting…' : 'Connect'}
+        </button>
+      )}
     </div>
   )
 }

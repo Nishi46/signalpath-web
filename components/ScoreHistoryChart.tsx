@@ -40,12 +40,12 @@ export function ScoreHistoryChart({ clusterId }: ScoreHistoryChartProps) {
   }, [clusterId])
 
   if (loading) {
-    return <div className='h-16 bg-gray-50 rounded-xl animate-pulse' />
+    return <div className='h-16 bg-white/[0.04] rounded-xl animate-pulse' />
   }
 
   if (history.length < 2) {
     return (
-      <p className='text-xs text-gray-400'>
+      <p className='text-xs text-white/30'>
         Score history will appear after the next pipeline run.
       </p>
     )
@@ -82,29 +82,29 @@ export function ScoreHistoryChart({ clusterId }: ScoreHistoryChartProps) {
   return (
     <div>
       <div className='flex items-center justify-between mb-2'>
-        <span className='text-xs text-gray-500 font-medium flex items-center gap-1.5'>
-          <TrendingUp className='w-3.5 h-3.5 text-gray-400' />
+        <span className='text-xs text-white/40 font-medium flex items-center gap-1.5'>
+          <TrendingUp className='w-3.5 h-3.5 text-white/25' />
           Score history ({history.length} runs)
         </span>
         <div className='flex items-center gap-1.5'>
           <span
             className='inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full'
             style={{
-              backgroundColor: last.scoring_model.startsWith('ml_') ? '#d1fae5' : '#dbeafe',
-              color: last.scoring_model.startsWith('ml_') ? '#065f46' : '#1e40af',
+              backgroundColor: last.scoring_model.startsWith('ml_') ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.12)',
+              color: last.scoring_model.startsWith('ml_') ? '#34d399' : '#60a5fa',
             }}
           >
             {modelLabel(last.scoring_model)}
           </span>
           {last.revenue_source === 'crm' && (
-            <span className='text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium'>
+            <span className='text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium'>
               CRM revenue
             </span>
           )}
         </div>
       </div>
 
-      <div className='relative bg-gray-50 rounded-xl p-2 overflow-hidden'>
+      <div className='relative bg-white/[0.04] rounded-xl p-2 overflow-hidden'>
         <svg width='100%' viewBox={`0 0 ${W} ${H}`} preserveAspectRatio='none'>
           {/* Model transition vertical lines */}
           {transitions.slice(1).map((t, i) => (
@@ -145,10 +145,10 @@ export function ScoreHistoryChart({ clusterId }: ScoreHistoryChartProps) {
 
         {/* Min/max labels */}
         <div className='flex justify-between mt-1 px-1'>
-          <span className='text-[10px] text-gray-400'>
+          <span className='text-[10px] text-white/30'>
             {new Date(history[0].scored_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
-          <span className='text-[10px] text-gray-400'>
+          <span className='text-[10px] text-white/30'>
             {new Date(last.scored_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
         </div>
@@ -158,7 +158,7 @@ export function ScoreHistoryChart({ clusterId }: ScoreHistoryChartProps) {
       {transitions.length > 1 && (
         <div className='flex flex-wrap gap-3 mt-2'>
           {transitions.map((t, i) => (
-            <span key={i} className='flex items-center gap-1 text-[10px] text-gray-500'>
+            <span key={i} className='flex items-center gap-1 text-[10px] text-white/35'>
               <span
                 className='inline-block w-2 h-2 rounded-full'
                 style={{ backgroundColor: modelColor(t.model) }}

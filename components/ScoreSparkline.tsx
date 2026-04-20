@@ -49,14 +49,14 @@ export function ScoreSparkline({ history }: ScoreSparklineProps) {
       </svg>
       {showDelta ? (
         <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-          delta > 0.5 ? 'bg-green-100 text-green-700' :
-          delta < -0.5 ? 'bg-red-100 text-red-700' :
-          'bg-gray-100 text-gray-500'
+          delta > 0.5 ? 'bg-emerald-500/10 text-emerald-400' :
+          delta < -0.5 ? 'bg-red-500/10 text-red-400' :
+          'bg-white/[0.07] text-white/40'
         }`}>
           {delta >= 0 ? '+' : ''}{delta.toFixed(1)}
         </span>
       ) : (
-        <span className='text-[10px] text-gray-400'>Stable</span>
+        <span className='text-[10px] text-white/30'>Stable</span>
       )}
     </div>
   )

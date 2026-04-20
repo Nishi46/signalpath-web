@@ -19,14 +19,14 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className='min-h-screen flex items-center justify-center bg-gray-50'>
-          <div className='bg-white border border-red-200 rounded-2xl p-10 max-w-md text-center'>
-            <div className='text-red-500 text-4xl mb-4'>!</div>
-            <h2 className='font-bold text-gray-900 mb-2'>Something went wrong</h2>
-            <p className='text-gray-500 text-sm mb-6'>An unexpected error occurred. Please try again or contact support if the problem persists.</p>
+        <div className='min-h-screen flex items-center justify-center bg-[#111318]'>
+          <div className='bg-[#1A1D24] border border-red-500/20 rounded-2xl p-10 max-w-md text-center'>
+            <div className='text-red-400 text-4xl mb-4'>!</div>
+            <h2 className='font-bold text-white mb-2'>Something went wrong</h2>
+            <p className='text-white/40 text-sm mb-6'>An unexpected error occurred. Please try again or contact support if the problem persists.</p>
             <button
               onClick={() => this.setState({ hasError: false, message: '' })}
-              className='bg-blue-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-700'
+              className='bg-blue-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-500 transition-colors'
             >
               Try again
             </button>

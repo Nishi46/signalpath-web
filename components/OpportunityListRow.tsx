@@ -64,55 +64,52 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
   return (
     <div
       className={`flex items-center gap-3 px-4 py-4 transition-colors group ${
-        isDismissed || isShipped ? 'opacity-50 grayscale' : 'hover:bg-gray-50'
+        isDismissed || isShipped ? 'opacity-40 grayscale' : 'hover:bg-white/[0.03]'
       }`}
     >
-      {/* Checkbox (bulk select) */}
       {showCheckbox && (
         <input
           type='checkbox'
           checked={selected ?? false}
           onChange={e => onSelect?.(cluster.id, e.target.checked)}
           onClick={e => e.stopPropagation()}
-          className='shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500/20'
+          className='shrink-0 rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/20'
         />
       )}
 
-      {/* Score */}
       <div className='shrink-0'>
         <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
       </div>
 
-      {/* Main content */}
       <Link href={`/opportunities/${cluster.id}`} className='flex-1 min-w-0'>
-        <h3 className='text-sm font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors'>
+        <h3 className='text-sm font-semibold text-white/90 truncate group-hover:text-white transition-colors'>
           {cluster.label}
         </h3>
-        <div className='flex items-center gap-4 mt-1 text-xs text-gray-500'>
+        <div className='flex items-center gap-4 mt-1 text-xs text-white/35'>
           <span className='flex items-center gap-1'>
-            <MessageSquare className='w-3 h-3 text-gray-400' />
+            <MessageSquare className='w-3 h-3' />
             {cluster.signal_count} tickets
           </span>
           {cluster.churn_signal_count > 0 && (
-            <span className='flex items-center gap-1 text-red-500'>
+            <span className='flex items-center gap-1 text-orange-400/80'>
               <AlertTriangle className='w-3 h-3' />
               {cluster.churn_signal_count} churn
             </span>
           )}
           {(cluster.unique_orgs ?? 0) > 0 && (
-            <span className='flex items-center gap-1 text-purple-600'>
+            <span className='flex items-center gap-1 text-violet-400/80'>
               <Users className='w-3 h-3' />
               {cluster.unique_orgs} accounts
             </span>
           )}
           {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
-            <span className='flex items-center gap-1 text-emerald-600'>
+            <span className='flex items-center gap-1 text-emerald-400/80'>
               <DollarSign className='w-3 h-3' />
               {formatRevenue(cluster.revenue_at_risk_usd)}
             </span>
           )}
           {cluster.spec_generated_at && (
-            <span className='flex items-center gap-1 text-sky-600'>
+            <span className='flex items-center gap-1 text-blue-400/80'>
               <Sparkles className='w-3 h-3' />
               PRD
             </span>
@@ -120,10 +117,9 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
         </div>
       </Link>
 
-      {/* Actions / Status badge */}
       {isShipped ? (
         <div className='shrink-0'>
-          <span className='inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-purple-50 text-purple-700'>
+          <span className='inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-400'>
             <Package className='w-3 h-3' />
             Shipped
           </span>
@@ -132,8 +128,8 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
         <div className='shrink-0'>
           <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
             status === 'approve'
-              ? 'bg-green-50 text-green-700'
-              : 'bg-gray-100 text-gray-600'
+              ? 'bg-emerald-500/10 text-emerald-400'
+              : 'bg-white/[0.06] text-white/35'
           }`}>
             {status === 'approve' ? <Check className='w-3 h-3' /> : <SkipForward className='w-3 h-3' />}
             {status === 'approve' ? 'Approved' : 'Skipped'}
@@ -144,7 +140,7 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
           <button
             type='button'
             onClick={() => void handleFeedback('approve')}
-            className='p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors'
+            className='p-1.5 text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-colors'
             title='Approve'
           >
             <ThumbsUp className='w-3.5 h-3.5' />
@@ -152,7 +148,7 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
           <button
             type='button'
             onClick={() => void handleFeedback('skip')}
-            className='p-1.5 text-gray-400 hover:bg-gray-100 rounded-md transition-colors'
+            className='p-1.5 text-white/35 hover:bg-white/[0.06] rounded-md transition-colors'
             title='Skip'
           >
             <SkipForward className='w-3.5 h-3.5' />
@@ -160,7 +156,7 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
           <button
             type='button'
             onClick={() => void handleFeedback('dismiss')}
-            className='p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors'
+            className='p-1.5 text-red-400 hover:bg-red-500/10 rounded-md transition-colors'
             title='Dismiss'
           >
             <X className='w-3.5 h-3.5' />
