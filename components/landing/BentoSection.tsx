@@ -58,7 +58,7 @@ function SignalCounterTile() {
     <div ref={tileRef} className='bento-tile flex flex-col justify-between h-full'>
       <div>
         <TileLabel icon={<Zap className='w-3.5 h-3.5' />} label='Signal Ingestion' index='01' />
-        <p className='font-mono text-5xl font-black text-gray-900 dark:text-white mt-4 mb-1 tabular-nums leading-none'>
+        <p className='font-display text-5xl font-bold text-gray-900 dark:text-white mt-4 mb-1 tabular-nums leading-none'>
           {count.toLocaleString()}
         </p>
         <p className='text-xs text-gray-400 dark:text-white/30 font-mono'>signals processed</p>
@@ -300,7 +300,7 @@ function ScoringSliderTile() {
             >
               <span className='font-mono text-[10px] text-gray-400 dark:text-white/25 w-4 text-center'>{rank + 1}</span>
               <span className='text-[11px] text-gray-600 dark:text-white/65 flex-1 truncate'>{item.label}</span>
-              <span className='font-mono text-[10px] font-bold flex-shrink-0' style={{ color }}>
+              <span className='font-display text-[11px] font-bold flex-shrink-0' style={{ color }}>
                 {score.toFixed(1)}
               </span>
             </div>
@@ -361,22 +361,22 @@ function HandoffTile() {
 
       <div className='flex-1 flex gap-3 min-h-0 overflow-hidden'>
         {/* Human brief */}
-        <div className='flex-1 space-y-2 overflow-y-auto'>
+        <div className='flex-[5] space-y-1.5 overflow-y-auto'>
           {BRIEF_SECTIONS.map(s => (
             <div
               key={s.id}
               onMouseEnter={() => setHovered(s.id)}
               onMouseLeave={() => setHovered(null)}
-              className={`rounded-lg p-2.5 border cursor-default transition-all duration-150 ${
+              className={`rounded-lg p-2 border cursor-default transition-all duration-150 ${
                 hovered === s.id
-                  ? 'border-blue-500/40 bg-blue-500/8'
+                  ? 'border-blue-500/40 bg-blue-500/10'
                   : 'border-gray-200 dark:border-white/[0.06] bg-gray-50 dark:bg-white/[0.03]'
               }`}
             >
               <p className={`text-[10px] font-semibold mb-0.5 transition-colors ${hovered === s.id ? 'text-blue-400' : 'text-gray-500 dark:text-white/40'}`}>
                 {s.title}
               </p>
-              <p className='text-[10px] text-gray-500 dark:text-white/50 leading-relaxed'>{s.body}</p>
+              <p className='text-[10px] text-gray-500 dark:text-white/50 leading-snug'>{s.body}</p>
             </div>
           ))}
         </div>
@@ -385,8 +385,8 @@ function HandoffTile() {
         <div className='w-px bg-gray-200 dark:bg-white/[0.06] flex-shrink-0' />
 
         {/* JSON */}
-        <div className='flex-1 overflow-y-auto'>
-          <pre className='font-mono text-[10px] leading-relaxed whitespace-pre-wrap'>
+        <div className='flex-[6] overflow-y-auto'>
+          <pre className='font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all'>
             {JSON_SEGMENTS.map((seg, i) => (
               <span
                 key={i}
@@ -431,7 +431,7 @@ function TileLabel({ icon, label, index }: { icon: React.ReactNode; label: strin
   return (
     <div className='flex items-center gap-2'>
       <span className='text-blue-400/70'>{icon}</span>
-      <span className='text-[10px] font-semibold text-gray-500 dark:text-white/40 uppercase tracking-widest'>{label}</span>
+      <span className='font-display text-[10px] font-semibold text-gray-500 dark:text-white/40 uppercase tracking-widest'>{label}</span>
       <span className='ml-auto font-mono text-[10px] text-gray-300 dark:text-white/15'>{index}</span>
     </div>
   )
@@ -448,7 +448,7 @@ export function BentoSection() {
           <p className='font-mono text-[10px] font-semibold text-blue-400/60 uppercase tracking-[0.2em] mb-3'>
             Under the hood
           </p>
-          <h2 className='text-3xl font-bold text-gray-900 dark:text-white tracking-tight'>
+          <h2 className='font-display text-3xl font-bold text-gray-900 dark:text-white tracking-tight'>
             Four layers. Zero noise.
           </h2>
           <p className='text-gray-500 dark:text-white/35 text-sm mt-2 max-w-lg'>
@@ -456,25 +456,26 @@ export function BentoSection() {
           </p>
         </div>
 
-        {/* Bento grid */}
-        <div className='grid grid-cols-3 grid-rows-2 gap-4' style={{ height: '620px' }}>
+        {/* Bento grid — 5 cols: Signal Counter takes col 1 (row-span-2), Problem Graph spans cols 2–5,
+            Scoring and Handoff each span cols 2–3 and 4–5 respectively in row 2 */}
+        <div className='grid grid-cols-5 grid-rows-2 gap-4' style={{ height: '640px' }}>
           {/* Tile 1 — Signal Counter: col 1, rows 1-2 */}
           <div className='row-span-2'>
             <SignalCounterTile />
           </div>
 
-          {/* Tile 2 — Problem Graph: col 2-3, row 1 */}
-          <div className='col-span-2'>
+          {/* Tile 2 — Problem Graph: cols 2-5, row 1 */}
+          <div className='col-span-4'>
             <ProblemGraphTile />
           </div>
 
-          {/* Tile 3 — Scoring Slider: col 2, row 2 */}
-          <div>
+          {/* Tile 3 — Scoring Slider: cols 2-3, row 2 */}
+          <div className='col-span-2'>
             <ScoringSliderTile />
           </div>
 
-          {/* Tile 4 — Handoff: col 3, row 2 */}
-          <div>
+          {/* Tile 4 — Handoff: cols 4-5, row 2 */}
+          <div className='col-span-2'>
             <HandoffTile />
           </div>
         </div>

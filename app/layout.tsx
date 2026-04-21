@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Inter, JetBrains_Mono, Syne } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '@/lib/toast-context'
 import { ThemeProvider } from '@/components/ThemeProvider'
@@ -14,9 +14,15 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
 })
 
+const syne = Syne({
+  variable: '--font-syne',
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+})
+
 export const metadata: Metadata = {
   title: 'SignalPath — Turn support tickets into product decisions',
-  description: 'Connect your Zendesk. See ranked product opportunities in 48 hours. Push to Linear or Jira in one click.',
+  description: 'See ranked product opportunities in 48 hours. Push to Linear or Jira in one click.',
 }
 
 export default function RootLayout({
@@ -30,7 +36,7 @@ export default function RootLayout({
         {/* Prevent flash of wrong theme on load */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('sp_theme');if(t==='light'){document.documentElement.classList.remove('dark')}else{document.documentElement.classList.add('dark')}})()` }} />
       </head>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} ${syne.variable} font-sans antialiased`}>
         <ThemeProvider>
           <ToastProvider>
             {children}

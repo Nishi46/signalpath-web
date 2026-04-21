@@ -24,7 +24,7 @@ export function DashboardNav() {
             <div className='w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center shadow-sm shadow-blue-600/30'>
               <span className='text-white font-bold text-xs'>S</span>
             </div>
-            <span className='font-bold text-gray-900 dark:text-white'>SignalPath</span>
+            <span className='font-display font-bold text-gray-900 dark:text-white'>SignalPath</span>
           </Link>
           <div className='flex items-center gap-1'>
             {links.map(({ href, label, icon: Icon }) => {

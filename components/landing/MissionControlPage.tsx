@@ -246,7 +246,7 @@ function FeedCard({
           >
             {opp.title}
           </span>
-          <span className={`flex-shrink-0 font-mono font-bold rounded-md px-1.5 py-0.5 tabular-nums ${compact ? 'text-[10px]' : 'text-xs'} ${badge}`}>
+          <span className={`flex-shrink-0 font-display font-bold rounded-md px-1.5 py-0.5 tabular-nums ${compact ? 'text-[10px]' : 'text-xs'} ${badge}`}>
             {opp.score.toFixed(1)}
           </span>
         </div>
@@ -314,7 +314,7 @@ function DetailPanel({
 
       {/* Score hero */}
       <div className='flex items-end gap-3 mb-5'>
-        <span className='font-mono text-4xl font-black leading-none' style={{ color: text }}>
+        <span className='font-display text-4xl font-bold leading-none' style={{ color: text }}>
           {opp.score.toFixed(1)}
         </span>
         <div className='text-[10px] text-gray-400 dark:text-white/35 pb-1 space-y-0.5'>
@@ -610,7 +610,7 @@ export function MissionControlPage() {
           <div className='w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center shadow-sm shadow-blue-600/30'>
             <span className='text-white font-bold text-xs'>S</span>
           </div>
-          <span className='font-bold text-gray-900 dark:text-white'>SignalPath</span>
+          <span className='font-display font-bold text-gray-900 dark:text-white'>SignalPath</span>
         </div>
         <div className='flex items-center gap-3'>
           <button
@@ -657,13 +657,13 @@ export function MissionControlPage() {
             Now in early access
           </div>
 
-          <h1 className='text-5xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.05] mb-5'>
+          <h1 className='font-display text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-[1.05] mb-5'>
             Turn support tickets into<br />
             <span className='text-blue-500'>product decisions</span>
           </h1>
 
           <p className='text-lg text-gray-500 dark:text-white/45 max-w-xl mx-auto mb-10 leading-relaxed'>
-            Connect your Zendesk. Get ranked product opportunities in 48 hours.
+            Get ranked product opportunities in 48 hours.
             Push to Linear or Jira in one click.
           </p>
 
@@ -690,7 +690,7 @@ export function MissionControlPage() {
             <p className='font-mono text-[10px] font-semibold text-blue-400/70 uppercase tracking-[0.2em] mb-2'>
               Live demo · Synthetic data
             </p>
-            <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-2'>
+            <h2 className='font-display text-2xl font-bold text-gray-900 dark:text-white mb-2'>
               See what your support queue is really saying
             </h2>
             <p className='text-sm text-gray-500 dark:text-white/40'>
@@ -752,7 +752,7 @@ export function MissionControlPage() {
           </div>
 
           <p className='text-center text-xs text-gray-400 dark:text-white/25 mt-4'>
-            This demo uses synthetic data. Connect your real Zendesk to see your actual opportunities.
+            This demo uses synthetic data. Connect your real tickets to see your actual opportunities.
           </p>
         </div>
       </section>
@@ -767,7 +767,7 @@ export function MissionControlPage() {
             <p className='font-mono text-[10px] font-semibold text-blue-400/60 uppercase tracking-[0.2em] mb-3'>
               FAQ
             </p>
-            <h2 className='text-2xl font-bold text-gray-900 dark:text-white'>
+            <h2 className='font-display text-2xl font-bold text-gray-900 dark:text-white'>
               Common questions
             </h2>
           </div>
