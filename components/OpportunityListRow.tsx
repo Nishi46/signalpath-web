@@ -64,7 +64,7 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
   return (
     <div
       className={`flex items-center gap-3 px-4 py-4 transition-colors group ${
-        isDismissed || isShipped ? 'opacity-40 grayscale' : 'hover:bg-white/[0.03]'
+        isDismissed || isShipped ? 'opacity-40 grayscale' : 'hover:bg-gray-50 dark:bg-white/[0.03]'
       }`}
     >
       {showCheckbox && (
@@ -73,7 +73,7 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
           checked={selected ?? false}
           onChange={e => onSelect?.(cluster.id, e.target.checked)}
           onClick={e => e.stopPropagation()}
-          className='shrink-0 rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/20'
+          className='shrink-0 rounded border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/10 text-blue-500 focus:ring-blue-500/20'
         />
       )}
 
@@ -82,10 +82,10 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
       </div>
 
       <Link href={`/opportunities/${cluster.id}`} className='flex-1 min-w-0'>
-        <h3 className='text-sm font-semibold text-white/90 truncate group-hover:text-white transition-colors'>
+        <h3 className='text-sm font-semibold text-gray-900 dark:text-white/90 truncate group-hover:text-white transition-colors'>
           {cluster.label}
         </h3>
-        <div className='flex items-center gap-4 mt-1 text-xs text-white/35'>
+        <div className='flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-white/35'>
           <span className='flex items-center gap-1'>
             <MessageSquare className='w-3 h-3' />
             {cluster.signal_count} tickets
@@ -129,7 +129,7 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
           <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
             status === 'approve'
               ? 'bg-emerald-500/10 text-emerald-400'
-              : 'bg-white/[0.06] text-white/35'
+              : 'bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-white/35'
           }`}>
             {status === 'approve' ? <Check className='w-3 h-3' /> : <SkipForward className='w-3 h-3' />}
             {status === 'approve' ? 'Approved' : 'Skipped'}
@@ -148,7 +148,7 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
           <button
             type='button'
             onClick={() => void handleFeedback('skip')}
-            className='p-1.5 text-white/35 hover:bg-white/[0.06] rounded-md transition-colors'
+            className='p-1.5 text-gray-500 dark:text-white/35 hover:bg-gray-100 dark:bg-white/[0.06] rounded-md transition-colors'
             title='Skip'
           >
             <SkipForward className='w-3.5 h-3.5' />

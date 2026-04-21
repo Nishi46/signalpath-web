@@ -22,8 +22,8 @@ interface TriageModalProps {
 }
 
 const ACTIONS = [
-  { key: 'approve', label: 'Approve', shortcut: 'A', icon: ThumbsUp, color: 'bg-emerald-600 hover:bg-emerald-500 text-white' },
-  { key: 'skip',    label: 'Skip',    shortcut: 'S', icon: SkipForward, color: 'bg-white/[0.08] hover:bg-white/[0.12] text-white/70' },
+  { key: 'approve', label: 'Approve', shortcut: 'A', icon: ThumbsUp, color: 'bg-emerald-600 hover:bg-emerald-500 text-gray-900 dark:text-white' },
+  { key: 'skip',    label: 'Skip',    shortcut: 'S', icon: SkipForward, color: 'bg-gray-100 dark:bg-white/[0.08] hover:bg-gray-200 dark:bg-white/[0.12] text-gray-600 dark:text-white/70' },
   { key: 'dismiss', label: 'Dismiss', shortcut: 'D', icon: X, color: 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20' },
 ] as const
 
@@ -82,36 +82,36 @@ export function TriageModal({ clusters, labeledCount, mlThreshold, onClose, onFe
 
   return (
     <div className='fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4'>
-      <div className='bg-[#1A1D24] border border-white/[0.07] rounded-2xl shadow-2xl w-full max-w-lg flex flex-col'>
+      <div className='bg-white dark:bg-[#1A1D24] border border-gray-100 dark:border-white/[0.07] rounded-2xl shadow-2xl w-full max-w-lg flex flex-col'>
         {/* Header */}
-        <div className='flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.07]'>
+        <div className='flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 dark:border-white/[0.07]'>
           <div>
-            <h2 className='text-sm font-semibold text-white'>Quick-rate opportunities</h2>
-            <p className='text-xs text-white/40 mt-0.5'>
+            <h2 className='text-sm font-semibold text-gray-900 dark:text-white'>Quick-rate opportunities</h2>
+            <p className='text-xs text-gray-500 dark:text-white/40 mt-0.5'>
               {done || index >= clusters.length
                 ? 'All done for now!'
                 : `${index + 1} of ${clusters.length}`}
             </p>
           </div>
-          <button onClick={onClose} className='p-1.5 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-white/60 transition-colors'>
+          <button onClick={onClose} className='p-1.5 rounded-lg hover:bg-gray-100 dark:bg-white/[0.06] text-gray-400 dark:text-white/30 hover:text-gray-500 dark:text-white/60 transition-colors'>
             <X className='w-4 h-4' />
           </button>
         </div>
 
         {/* ML progress bar */}
-        <div className='px-6 py-3 bg-white/[0.02] border-b border-white/[0.07]'>
-          <div className='flex items-center justify-between text-xs text-white/40 mb-1.5'>
+        <div className='px-6 py-3 bg-gray-50 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/[0.07]'>
+          <div className='flex items-center justify-between text-xs text-gray-500 dark:text-white/40 mb-1.5'>
             <span>Ratings toward personalized model</span>
-            <span className='font-medium text-white/60'>{localCount} / {mlThreshold}</span>
+            <span className='font-medium text-gray-500 dark:text-white/60'>{localCount} / {mlThreshold}</span>
           </div>
-          <div className='w-full bg-white/[0.07] rounded-full h-1.5'>
+          <div className='w-full bg-gray-100 dark:bg-white/[0.07] rounded-full h-1.5'>
             <div
               className='bg-blue-500 h-1.5 rounded-full transition-all duration-300'
               style={{ width: `${progress}%` }}
             />
           </div>
           {remaining > 0 && (
-            <p className='text-[10px] text-white/25 mt-1'>{remaining} ratings to unlock your personalized model</p>
+            <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1'>{remaining} ratings to unlock your personalized model</p>
           )}
         </div>
 
@@ -122,16 +122,16 @@ export function TriageModal({ clusters, labeledCount, mlThreshold, onClose, onFe
               <div className='w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-3'>
                 <ThumbsUp className='w-6 h-6 text-emerald-400' />
               </div>
-              <p className='text-sm font-semibold text-white mb-1'>You&apos;re all caught up!</p>
-              <p className='text-xs text-white/40'>Come back after the next pipeline run for new opportunities to rate.</p>
+              <p className='text-sm font-semibold text-gray-900 dark:text-white mb-1'>You&apos;re all caught up!</p>
+              <p className='text-xs text-gray-500 dark:text-white/40'>Come back after the next pipeline run for new opportunities to rate.</p>
             </div>
           ) : (
             <>
               <div className='flex items-start justify-between gap-3 mb-4'>
-                <h3 className='text-base font-semibold text-white leading-snug'>{current.label}</h3>
+                <h3 className='text-base font-semibold text-gray-900 dark:text-white leading-snug'>{current.label}</h3>
                 <ScoreBadge score={current.opportunity_score} confidence={current.confidence} />
               </div>
-              <div className='flex items-center gap-4 text-xs text-white/40 mb-4'>
+              <div className='flex items-center gap-4 text-xs text-gray-500 dark:text-white/40 mb-4'>
                 <span>{current.signal_count} tickets</span>
                 {current.churn_signal_count > 0 && (
                   <span className='text-orange-400'>{current.churn_signal_count} churn signals</span>
@@ -160,7 +160,7 @@ export function TriageModal({ clusters, labeledCount, mlThreshold, onClose, onFe
             </div>
             <button
               onClick={advance}
-              className='w-full mt-2 flex items-center justify-center gap-1 text-xs text-white/30 hover:text-white/60 py-1.5 transition-colors'
+              className='w-full mt-2 flex items-center justify-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-gray-500 dark:text-white/60 py-1.5 transition-colors'
             >
               Skip without rating <ChevronRight className='w-3.5 h-3.5' /> [→]
             </button>
@@ -171,7 +171,7 @@ export function TriageModal({ clusters, labeledCount, mlThreshold, onClose, onFe
           <div className='px-6 pb-5'>
             <button
               onClick={onClose}
-              className='w-full py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-white text-sm font-medium transition-colors'
+              className='w-full py-2.5 rounded-xl bg-gray-100 dark:bg-white/[0.08] hover:bg-gray-200 dark:bg-white/[0.12] text-gray-900 dark:text-white text-sm font-medium transition-colors'
             >
               Close
             </button>

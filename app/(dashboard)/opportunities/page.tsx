@@ -60,10 +60,10 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
 ]
 
 const SECTIONS: { key: FeedbackAction | 'new'; label: string; color: string }[] = [
-  { key: 'new', label: 'New', color: 'text-white' },
+  { key: 'new', label: 'New', color: 'text-gray-900 dark:text-white' },
   { key: 'approve', label: 'Approved', color: 'text-emerald-400' },
-  { key: 'skip', label: 'Skipped', color: 'text-white/40' },
-  { key: 'dismiss', label: 'Dismissed', color: 'text-white/25' },
+  { key: 'skip', label: 'Skipped', color: 'text-gray-500 dark:text-white/40' },
+  { key: 'dismiss', label: 'Dismissed', color: 'text-gray-400 dark:text-white/25' },
 ]
 
 export default function OpportunitiesPage() {
@@ -351,28 +351,28 @@ export default function OpportunitiesPage() {
 
   if (loading || wsLoading || !workspaceId) {
     return (
-      <div className='min-h-screen bg-[#111318]'>
+      <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
         <DashboardNav />
         <div className='max-w-6xl mx-auto px-6 py-10'>
           <div className='mb-8'>
-            <div className='h-7 bg-white/[0.08] rounded w-48 animate-pulse' />
-            <div className='h-4 bg-white/[0.05] rounded w-80 mt-2 animate-pulse' />
+            <div className='h-7 bg-gray-100 dark:bg-white/[0.08] rounded w-48 animate-pulse' />
+            <div className='h-4 bg-gray-100 dark:bg-white/[0.05] rounded w-80 mt-2 animate-pulse' />
           </div>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-6 animate-pulse'>
+              <div key={i} className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-6 animate-pulse'>
                 <div className='flex items-start justify-between gap-3 mb-3'>
-                  <div className='h-4 bg-white/[0.08] rounded w-2/3' />
-                  <div className='h-6 w-12 bg-white/[0.06] rounded-full' />
+                  <div className='h-4 bg-gray-100 dark:bg-white/[0.08] rounded w-2/3' />
+                  <div className='h-6 w-12 bg-gray-100 dark:bg-white/[0.06] rounded-full' />
                 </div>
                 <div className='flex gap-4 mt-4'>
-                  <div className='h-3 bg-white/[0.05] rounded w-16' />
-                  <div className='h-3 bg-white/[0.05] rounded w-24' />
+                  <div className='h-3 bg-gray-100 dark:bg-white/[0.05] rounded w-16' />
+                  <div className='h-3 bg-gray-100 dark:bg-white/[0.05] rounded w-24' />
                 </div>
-                <div className='flex gap-2 pt-3 mt-4 border-t border-white/[0.05]'>
-                  <div className='h-7 bg-white/[0.05] rounded-lg w-16' />
-                  <div className='h-7 bg-white/[0.05] rounded-lg w-12' />
-                  <div className='h-7 bg-white/[0.05] rounded-lg w-16' />
+                <div className='flex gap-2 pt-3 mt-4 border-t border-gray-100 dark:border-white/[0.05]'>
+                  <div className='h-7 bg-gray-100 dark:bg-white/[0.05] rounded-lg w-16' />
+                  <div className='h-7 bg-gray-100 dark:bg-white/[0.05] rounded-lg w-12' />
+                  <div className='h-7 bg-gray-100 dark:bg-white/[0.05] rounded-lg w-16' />
                 </div>
               </div>
             ))}
@@ -384,7 +384,7 @@ export default function OpportunitiesPage() {
 
   return (
     <ErrorBoundary>
-      <div className='min-h-screen bg-[#111318]'>
+      <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
         <DashboardNav />
         <div className='max-w-6xl mx-auto px-6 py-10'>
           {/* Onboarding checklist */}
@@ -405,8 +405,8 @@ export default function OpportunitiesPage() {
           {/* Header */}
           <div className='flex items-end justify-between mb-4'>
             <div>
-              <h1 className='text-2xl font-bold text-white'>Opportunities</h1>
-              <p className='text-white/40 text-sm mt-1'>
+              <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>Opportunities</h1>
+              <p className='text-gray-500 dark:text-white/40 text-sm mt-1'>
                 {totalVisible} opportunit{totalVisible === 1 ? 'y' : 'ies'}
                 {activeFilterCount > 0 && ` (filtered from ${clusters.length})`}
               </p>
@@ -418,7 +418,7 @@ export default function OpportunitiesPage() {
                 <button
                   type='button'
                   onClick={() => setShowTriage(true)}
-                  className='inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors'
+                  className='inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-blue-600 text-gray-900 dark:text-white hover:bg-blue-700 transition-colors'
                 >
                   <Zap className='w-3.5 h-3.5' />
                   Rate quickly
@@ -427,7 +427,7 @@ export default function OpportunitiesPage() {
 
               {/* Search */}
               <div className='relative'>
-                <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none' />
+                <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-white/30 pointer-events-none' />
                 <input
                   ref={searchInputRef}
                   type='text'
@@ -435,7 +435,7 @@ export default function OpportunitiesPage() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Escape') { setSearch(''); (e.target as HTMLInputElement).blur() } }}
-                  className='pl-8 pr-3 py-2 text-xs border border-white/[0.08] rounded-lg bg-white/[0.06] text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 w-40'
+                  className='pl-8 pr-3 py-2 text-xs border border-gray-200 dark:border-white/[0.08] rounded-lg bg-gray-100 dark:bg-white/[0.06] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 w-40'
                 />
               </div>
 
@@ -443,7 +443,7 @@ export default function OpportunitiesPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as SortField)}
-                className='text-xs border border-white/[0.08] rounded-lg px-3 py-2 bg-white/[0.06] text-white/70 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50'
+                className='text-xs border border-gray-200 dark:border-white/[0.08] rounded-lg px-3 py-2 bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-white/70 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50'
               >
                 {SORT_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>Sort: {o.label}</option>
@@ -460,24 +460,24 @@ export default function OpportunitiesPage() {
                 className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border transition-colors ${
                   showFilters || activeFilterCount > 0
                     ? 'bg-blue-600/15 text-blue-400 border-blue-500/20'
-                    : 'bg-white/[0.05] text-white/60 border-white/[0.08] hover:bg-white/[0.08]'
+                    : 'bg-gray-100 dark:bg-white/[0.05] text-gray-500 dark:text-white/60 border-gray-200 dark:border-white/[0.08] hover:bg-gray-100 dark:bg-white/[0.08]'
                 }`}
               >
                 <SlidersHorizontal className='w-3.5 h-3.5' />
                 Filters
                 {activeFilterCount > 0 && (
-                  <span className='bg-blue-600 text-white text-[10px] font-bold w-4 h-4 rounded-full inline-flex items-center justify-center'>
+                  <span className='bg-blue-600 text-gray-900 dark:text-white text-[10px] font-bold w-4 h-4 rounded-full inline-flex items-center justify-center'>
                     {activeFilterCount}
                   </span>
                 )}
               </button>
 
               {/* View toggle */}
-              <div className='flex items-center border border-white/[0.08] rounded-lg overflow-hidden'>
+              <div className='flex items-center border border-gray-200 dark:border-white/[0.08] rounded-lg overflow-hidden'>
                 <button
                   type='button'
                   onClick={() => setView('grid')}
-                  className={`p-2 transition-colors ${view === 'grid' ? 'bg-white/[0.08] text-white' : 'bg-transparent text-white/30 hover:text-white/60'}`}
+                  className={`p-2 transition-colors ${view === 'grid' ? 'bg-gray-100 dark:bg-white/[0.08] text-white' : 'bg-transparent text-gray-400 dark:text-white/30 hover:text-gray-500 dark:text-white/60'}`}
                   title='Grid view'
                 >
                   <LayoutGrid className='w-4 h-4' />
@@ -485,7 +485,7 @@ export default function OpportunitiesPage() {
                 <button
                   type='button'
                   onClick={() => setView('list')}
-                  className={`p-2 transition-colors ${view === 'list' ? 'bg-white/[0.08] text-white' : 'bg-transparent text-white/30 hover:text-white/60'}`}
+                  className={`p-2 transition-colors ${view === 'list' ? 'bg-gray-100 dark:bg-white/[0.08] text-white' : 'bg-transparent text-gray-400 dark:text-white/30 hover:text-gray-500 dark:text-white/60'}`}
                   title='List view'
                 >
                   <List className='w-4 h-4' />
@@ -496,12 +496,12 @@ export default function OpportunitiesPage() {
 
           {/* Filter bar */}
           {showFilters && (
-            <div className='bg-[#1A1D24] rounded-xl border border-white/[0.07] p-4 mb-6 space-y-3'>
+            <div className='bg-white dark:bg-[#1A1D24] rounded-xl border border-gray-100 dark:border-white/[0.07] p-4 mb-6 space-y-3'>
               <div className='flex flex-wrap items-center gap-x-6 gap-y-3'>
 
                 {/* Source */}
                 <div className='flex items-center gap-2'>
-                  <span className='text-xs text-white/40 font-medium w-16 shrink-0'>Source</span>
+                  <span className='text-xs text-gray-500 dark:text-white/40 font-medium w-16 shrink-0'>Source</span>
                   <div className='flex items-center gap-1'>
                     {([
                       { value: 'all', label: 'All' },
@@ -515,7 +515,7 @@ export default function OpportunitiesPage() {
                         className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
                           sourceFilter === value
                             ? 'bg-blue-500/15 text-blue-400'
-                            : 'text-white/40 hover:bg-white/[0.06]'
+                            : 'text-gray-500 dark:text-white/40 hover:bg-gray-100 dark:bg-white/[0.06]'
                         }`}
                       >
                         {label}
@@ -526,7 +526,7 @@ export default function OpportunitiesPage() {
 
                 {/* Confidence */}
                 <div className='flex items-center gap-2'>
-                  <span className='text-xs text-white/40 font-medium w-16 shrink-0'>Confidence</span>
+                  <span className='text-xs text-gray-500 dark:text-white/40 font-medium w-16 shrink-0'>Confidence</span>
                   <div className='flex items-center gap-1'>
                     {(['all', 'High', 'Medium', 'Low'] as const).map(c => (
                       <button
@@ -536,7 +536,7 @@ export default function OpportunitiesPage() {
                         className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
                           confidenceFilter === c
                             ? 'bg-blue-500/15 text-blue-400'
-                            : 'text-white/40 hover:bg-white/[0.06]'
+                            : 'text-gray-500 dark:text-white/40 hover:bg-gray-100 dark:bg-white/[0.06]'
                         }`}
                       >
                         {c === 'all' ? 'All' : c}
@@ -552,18 +552,18 @@ export default function OpportunitiesPage() {
                       type='checkbox'
                       checked={churnOnly}
                       onChange={e => setChurnOnly(e.target.checked)}
-                      className='rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/20'
+                      className='rounded border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/10 text-blue-500 focus:ring-blue-500/20'
                     />
-                    <span className='text-xs text-white/60 font-medium'>Churn signals</span>
+                    <span className='text-xs text-gray-500 dark:text-white/60 font-medium'>Churn signals</span>
                   </label>
                   <label className='flex items-center gap-1.5 cursor-pointer'>
                     <input
                       type='checkbox'
                       checked={hasSpecOnly}
                       onChange={e => setHasSpecOnly(e.target.checked)}
-                      className='rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/20'
+                      className='rounded border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/10 text-blue-500 focus:ring-blue-500/20'
                     />
-                    <span className='text-xs text-white/60 font-medium'>Has PRD</span>
+                    <span className='text-xs text-gray-500 dark:text-white/60 font-medium'>Has PRD</span>
                   </label>
                 </div>
 
@@ -571,7 +571,7 @@ export default function OpportunitiesPage() {
                   <button
                     type='button'
                     onClick={clearFilters}
-                    className='ml-auto text-xs text-white/40 hover:text-white/70 flex items-center gap-1 transition-colors'
+                    className='ml-auto text-xs text-gray-500 dark:text-white/40 hover:text-gray-600 dark:text-white/70 flex items-center gap-1 transition-colors'
                   >
                     <X className='w-3 h-3' /> Clear all
                   </button>
@@ -579,11 +579,11 @@ export default function OpportunitiesPage() {
               </div>
 
               {/* Score + Revenue sliders — second row */}
-              <div className='flex flex-wrap items-center gap-x-6 gap-y-3 pt-3 border-t border-white/[0.05]'>
+              <div className='flex flex-wrap items-center gap-x-6 gap-y-3 pt-3 border-t border-gray-100 dark:border-white/[0.05]'>
 
                 {/* Min score */}
                 <div className='flex items-center gap-2'>
-                  <span className='text-xs text-white/40 font-medium w-16 shrink-0'>Min score</span>
+                  <span className='text-xs text-gray-500 dark:text-white/40 font-medium w-16 shrink-0'>Min score</span>
                   <input
                     type='range'
                     min={0}
@@ -593,14 +593,14 @@ export default function OpportunitiesPage() {
                     onChange={e => setMinScore(Number(e.target.value))}
                     className='w-28 accent-blue-500'
                   />
-                  <span className='text-xs font-semibold text-white/70 tabular-nums w-4'>{minScore}</span>
+                  <span className='text-xs font-semibold text-gray-600 dark:text-white/70 tabular-nums w-4'>{minScore}</span>
                 </div>
 
                 {/* Revenue range */}
                 <div className='flex items-center gap-2'>
-                  <span className='text-xs text-white/40 font-medium w-16 shrink-0'>Revenue</span>
+                  <span className='text-xs text-gray-500 dark:text-white/40 font-medium w-16 shrink-0'>Revenue</span>
                   <div className='flex items-center gap-1.5'>
-                    <span className='text-xs text-white/30'>Min</span>
+                    <span className='text-xs text-gray-400 dark:text-white/30'>Min</span>
                     <input
                       type='range'
                       min={0}
@@ -614,10 +614,10 @@ export default function OpportunitiesPage() {
                       }}
                       className='w-24 accent-blue-500'
                     />
-                    <span className='text-xs font-semibold text-white/70 tabular-nums w-14'>
+                    <span className='text-xs font-semibold text-gray-600 dark:text-white/70 tabular-nums w-14'>
                       {minRevenue === 0 ? 'Any' : `$${(minRevenue / 1000).toFixed(0)}K`}
                     </span>
-                    <span className='text-xs text-white/30'>Max</span>
+                    <span className='text-xs text-gray-400 dark:text-white/30'>Max</span>
                     <input
                       type='range'
                       min={0}
@@ -631,7 +631,7 @@ export default function OpportunitiesPage() {
                       }}
                       className='w-24 accent-blue-500'
                     />
-                    <span className='text-xs font-semibold text-white/70 tabular-nums w-14'>
+                    <span className='text-xs font-semibold text-gray-600 dark:text-white/70 tabular-nums w-14'>
                       {maxRevenue >= MAX_REVENUE_SLIDER ? 'Any' : `$${(maxRevenue / 1000).toFixed(0)}K`}
                     </span>
                   </div>
@@ -649,7 +649,7 @@ export default function OpportunitiesPage() {
             />
           ) : sections.length === 0 && !shippedSection ? (
             <div className='text-center py-16'>
-              <p className='text-white/40 text-sm'>No opportunities match your filters.</p>
+              <p className='text-gray-500 dark:text-white/40 text-sm'>No opportunities match your filters.</p>
               <button
                 type='button'
                 onClick={clearFilters}
@@ -673,23 +673,23 @@ export default function OpportunitiesPage() {
                           type='checkbox'
                           checked={allSelected}
                           onChange={e => handleSelectAll(sectionIds, e.target.checked)}
-                          className='rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/20'
+                          className='rounded border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/10 text-blue-500 focus:ring-blue-500/20'
                           title='Select all in section'
                         />
                       )}
                       <h2 className={`text-sm font-semibold ${section.color}`}>
                         {section.label}
                       </h2>
-                      <span className='text-xs text-white/30'>
+                      <span className='text-xs text-gray-400 dark:text-white/30'>
                         {section.clusters.length}
                         {section.clusters.length !== section.totalUnfiltered && ` of ${section.totalUnfiltered}`}
                       </span>
-                      <div className='flex-1 border-t border-white/[0.07]' />
+                      <div className='flex-1 border-t border-gray-100 dark:border-white/[0.07]' />
                     </div>
 
                     {/* Section content */}
                     {section.clusters.length === 0 ? (
-                      <p className='text-xs text-white/30 pl-1'>No matches for current filters.</p>
+                      <p className='text-xs text-gray-400 dark:text-white/30 pl-1'>No matches for current filters.</p>
                     ) : view === 'grid' ? (
                       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
                         {section.clusters.map(cluster => (
@@ -702,7 +702,7 @@ export default function OpportunitiesPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className='bg-[#1A1D24] rounded-xl border border-white/[0.07] divide-y divide-white/[0.05]'>
+                      <div className='bg-white dark:bg-[#1A1D24] rounded-xl border border-gray-100 dark:border-white/[0.07] divide-y divide-gray-100 dark:divide-white/[0.05]'>
                         {section.clusters.map(cluster => (
                           <OpportunityListRow
                             key={cluster.id}
@@ -724,12 +724,12 @@ export default function OpportunitiesPage() {
                 <div>
                   <div className='flex items-center gap-3 mb-4'>
                     <h2 className='text-sm font-semibold text-violet-400'>Shipped</h2>
-                    <span className='text-xs text-white/30'>
+                    <span className='text-xs text-gray-400 dark:text-white/30'>
                       {shippedSection.clusters.length}
                       {shippedSection.clusters.length !== shippedSection.totalUnfiltered
                         && ` of ${shippedSection.totalUnfiltered}`}
                     </span>
-                    <div className='flex-1 border-t border-white/[0.07]' />
+                    <div className='flex-1 border-t border-gray-100 dark:border-white/[0.07]' />
                   </div>
                   {view === 'grid' ? (
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 opacity-60'>
@@ -743,7 +743,7 @@ export default function OpportunitiesPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className='bg-[#1A1D24] rounded-xl border border-white/[0.07] divide-y divide-white/[0.05]'>
+                    <div className='bg-white dark:bg-[#1A1D24] rounded-xl border border-gray-100 dark:border-white/[0.07] divide-y divide-gray-100 dark:divide-white/[0.05]'>
                       {shippedSection.clusters.map(cluster => (
                         <OpportunityListRow
                           key={cluster.id}
@@ -777,11 +777,11 @@ export default function OpportunitiesPage() {
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-40'>
-          <div className='bg-gray-900 text-white rounded-2xl shadow-xl px-5 py-3 flex items-center gap-4'>
+          <div className='bg-gray-900 text-gray-900 dark:text-white rounded-2xl shadow-xl px-5 py-3 flex items-center gap-4'>
             <span className='text-sm font-medium'>
               {selectedIds.size} selected
             </span>
-            <div className='w-px h-5 bg-white/20' />
+            <div className='w-px h-5 bg-gray-200 dark:bg-white/20' />
             <button
               type='button'
               disabled={bulkLoading}
@@ -795,7 +795,7 @@ export default function OpportunitiesPage() {
               type='button'
               disabled={bulkLoading}
               onClick={() => void handleBulkAction('skip')}
-              className='inline-flex items-center gap-1.5 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50 transition-colors'
+              className='inline-flex items-center gap-1.5 text-sm font-medium text-gray-300 hover:text-gray-900 dark:text-white disabled:opacity-50 transition-colors'
             >
               <SkipForward className='w-4 h-4' />
               Skip ({selectedIds.size})
@@ -809,11 +809,11 @@ export default function OpportunitiesPage() {
               <X className='w-4 h-4' />
               Dismiss ({selectedIds.size})
             </button>
-            <div className='w-px h-5 bg-white/20' />
+            <div className='w-px h-5 bg-gray-200 dark:bg-white/20' />
             <button
               type='button'
               onClick={() => setSelectedIds(new Set())}
-              className='text-sm text-gray-400 hover:text-white transition-colors'
+              className='text-sm text-gray-400 hover:text-gray-900 dark:text-white transition-colors'
             >
               Cancel
             </button>

@@ -342,22 +342,22 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   }
 
   return (
-    <div className='min-h-screen bg-[#111318]'>
+    <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
       <DashboardNav />
       <div className='max-w-3xl mx-auto px-6 py-10'>
-        <Link href='/opportunities' className='inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/70 mb-6 transition-colors'>
+        <Link href='/opportunities' className='inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-white/40 hover:text-gray-600 dark:text-white/70 mb-6 transition-colors'>
           <ArrowLeft className='w-4 h-4' /> Back to Opportunities
         </Link>
 
-        <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-8 mb-6'>
+        <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-8 mb-6'>
           <div className='flex items-start justify-between gap-4 mb-6'>
-            <h1 className='text-xl font-bold text-white'>{cluster.label}</h1>
+            <h1 className='text-xl font-bold text-gray-900 dark:text-white'>{cluster.label}</h1>
             <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
           </div>
 
-          <div className='flex flex-wrap gap-5 text-sm text-white/40 mb-6'>
+          <div className='flex flex-wrap gap-5 text-sm text-gray-500 dark:text-white/40 mb-6'>
             <span className='flex items-center gap-1.5'>
-              <MessageSquare className='w-4 h-4 text-white/25' />
+              <MessageSquare className='w-4 h-4 text-gray-400 dark:text-white/25' />
               {cluster.signal_count} tickets
             </span>
             {cluster.churn_signal_count > 0 && (
@@ -387,14 +387,14 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               <span className='flex items-center gap-1.5 text-emerald-400'>
                 <DollarSign className='w-4 h-4' />
                 {formatRevenue(cluster.revenue_at_risk_usd)} at risk
-                <span className='text-xs text-white/30 italic'>
+                <span className='text-xs text-gray-400 dark:text-white/30 italic'>
                   {cluster.revenue_source === 'crm' ? 'CRM' : 'AI estimate'}
                 </span>
               </span>
             )}
           </div>
 
-          <div className='flex flex-wrap gap-2 pb-6 border-b border-white/[0.07]'>
+          <div className='flex flex-wrap gap-2 pb-6 border-b border-gray-100 dark:border-white/[0.07]'>
             <button
               type='button'
               onClick={() => void handleFeedback('approve')}
@@ -405,7 +405,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             <button
               type='button'
               onClick={() => void handleFeedback('skip')}
-              className='flex items-center gap-1 text-xs text-white/50 hover:bg-white/[0.06] px-3 py-2 rounded-lg font-medium border border-white/[0.08] transition-colors'
+              className='flex items-center gap-1 text-xs text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:bg-white/[0.06] px-3 py-2 rounded-lg font-medium border border-gray-200 dark:border-white/[0.08] transition-colors'
             >
               <SkipForward className='w-3.5 h-3.5' /> Skip
             </button>
@@ -430,27 +430,27 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
 
           {/* Affected accounts drawer */}
           {accountsOpen && (
-            <div className='border-t border-white/[0.07] pt-5 mt-5'>
-              <h3 className='text-sm font-semibold text-white flex items-center gap-2 mb-3'>
+            <div className='border-t border-gray-100 dark:border-white/[0.07] pt-5 mt-5'>
+              <h3 className='text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-3'>
                 <Building2 className='w-4 h-4 text-violet-400' />
                 Affected accounts
               </h3>
               {accountsLoading ? (
                 <div className='space-y-2'>
                   {[1, 2, 3].map(i => (
-                    <div key={i} className='h-10 bg-white/[0.05] rounded-xl animate-pulse' />
+                    <div key={i} className='h-10 bg-gray-100 dark:bg-white/[0.05] rounded-xl animate-pulse' />
                   ))}
                 </div>
               ) : accounts.length === 0 ? (
-                <p className='text-sm text-white/30'>No account data available.</p>
+                <p className='text-sm text-gray-400 dark:text-white/30'>No account data available.</p>
               ) : (
                 <div className='space-y-1'>
                   {accounts.map(acc => (
-                    <div key={acc.organization_id} className='flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors'>
+                    <div key={acc.organization_id} className='flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:bg-white/[0.04] transition-colors'>
                       <div className='min-w-0'>
-                        <p className='text-sm font-medium text-white/80 truncate'>{acc.name}</p>
+                        <p className='text-sm font-medium text-gray-700 dark:text-white/80 truncate'>{acc.name}</p>
                         {acc.domain && (
-                          <p className='text-xs text-white/30'>{acc.domain}</p>
+                          <p className='text-xs text-gray-400 dark:text-white/30'>{acc.domain}</p>
                         )}
                       </div>
                       {acc.arr_usd ? (
@@ -458,7 +458,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                           <span className='text-sm font-semibold text-emerald-400'>
                             {formatRevenue(acc.arr_usd)}
                           </span>
-                          <span className='text-[10px] text-white/30 font-medium bg-white/[0.06] px-1.5 py-0.5 rounded-full'>
+                          <span className='text-[10px] text-gray-400 dark:text-white/30 font-medium bg-gray-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-full'>
                             {acc.revenue_source === 'crm' ? 'CRM' : 'est'}
                           </span>
                         </div>
@@ -470,7 +470,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             </div>
           )}
 
-          <div className='border-t border-white/[0.07] pt-6 mt-6'>
+          <div className='border-t border-gray-100 dark:border-white/[0.07] pt-6 mt-6'>
             <ScoreBreakdownPanel
               cluster={cluster}
               mlModelVersion={cluster.scoring_model?.startsWith('ml_v') ? parseInt(cluster.scoring_model.slice(4)) : 0}
@@ -479,15 +479,15 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           </div>
 
           {(cluster.revenue_at_risk_usd ?? 0) > 0 && (
-            <div className='border-t border-white/[0.07] pt-5 mt-5'>
+            <div className='border-t border-gray-100 dark:border-white/[0.07] pt-5 mt-5'>
               <div className='flex items-center justify-between'>
-                <span className='text-sm text-white/50 font-medium flex items-center gap-1.5'>
-                  <DollarSign className='w-3.5 h-3.5 text-white/25' />
+                <span className='text-sm text-gray-500 dark:text-white/50 font-medium flex items-center gap-1.5'>
+                  <DollarSign className='w-3.5 h-3.5 text-gray-400 dark:text-white/25' />
                   Revenue at risk
                 </span>
                 <div className='flex items-center gap-2'>
                   <span className='text-lg font-bold text-emerald-400'>{formatRevenue(cluster.revenue_at_risk_usd)}</span>
-                  <span className='text-xs text-white/30 italic'>
+                  <span className='text-xs text-gray-400 dark:text-white/30 italic'>
                     {cluster.revenue_source === 'crm' ? 'CRM' : 'AI estimate'}
                   </span>
                 </div>
@@ -496,9 +496,9 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           )}
 
           {/* Scoring transparency panel */}
-          <div className='border-t border-white/[0.07] pt-5 mt-5 space-y-3'>
+          <div className='border-t border-gray-100 dark:border-white/[0.07] pt-5 mt-5 space-y-3'>
             <div className='flex items-center justify-between'>
-              <span className='text-xs text-white/40 font-medium'>Scoring model</span>
+              <span className='text-xs text-gray-500 dark:text-white/40 font-medium'>Scoring model</span>
               <div className='flex items-center gap-2'>
                 {cluster.ml_review_needed && (
                   <span className='text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full'>
@@ -518,7 +518,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             </div>
             {scoreHistory.length >= 2 && (
               <div>
-                <span className='text-xs text-white/40 font-medium'>Score trend</span>
+                <span className='text-xs text-gray-500 dark:text-white/40 font-medium'>Score trend</span>
                 <div className='mt-1.5'>
                   <ScoreSparkline history={scoreHistory} />
                 </div>
@@ -527,9 +527,9 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           </div>
         </div>
 
-        <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-8 mb-6'>
+        <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-8 mb-6'>
           <div className='flex items-center justify-between gap-3 mb-4'>
-            <h2 className='text-sm font-semibold text-white flex items-center gap-2'>
+            <h2 className='text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
               <Sparkles className='w-4 h-4 text-sky-400' />
               Opportunity brief & agent spec
             </h2>
@@ -539,7 +539,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                   <button
                     type='button'
                     onClick={handleDownloadPdf}
-                    className='inline-flex items-center gap-1.5 text-xs font-medium text-white/60 bg-white/[0.05] px-3 py-2 rounded-lg border border-white/[0.08] hover:bg-white/[0.08] transition-colors'
+                    className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-white/60 bg-gray-100 dark:bg-white/[0.05] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.08] hover:bg-gray-100 dark:bg-white/[0.08] transition-colors'
                   >
                     <FileText className='w-3.5 h-3.5' />
                     PDF
@@ -547,7 +547,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                   <button
                     type='button'
                     onClick={handleDownloadDocx}
-                    className='inline-flex items-center gap-1.5 text-xs font-medium text-white/60 bg-white/[0.05] px-3 py-2 rounded-lg border border-white/[0.08] hover:bg-white/[0.08] transition-colors'
+                    className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-white/60 bg-gray-100 dark:bg-white/[0.05] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.08] hover:bg-gray-100 dark:bg-white/[0.08] transition-colors'
                   >
                     <FileDown className='w-3.5 h-3.5' />
                     DOCX
@@ -568,7 +568,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                 type='button'
                 disabled={specBusy}
                 onClick={() => void triggerSpecGeneration()}
-                className='inline-flex items-center gap-1.5 text-xs font-medium text-white/60 bg-white/[0.06] px-3 py-2 rounded-lg border border-white/[0.08] hover:bg-white/[0.09] disabled:opacity-50 transition-colors'
+                className='inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-white/60 bg-gray-100 dark:bg-white/[0.06] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.08] hover:bg-gray-100 dark:bg-white/[0.09] disabled:opacity-50 transition-colors'
               >
                 <Sparkles className='w-3.5 h-3.5' />
                 {specBusy ? 'Generating…' : hasSpec ? 'Regenerate' : 'Generate'}
@@ -579,7 +579,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             <p className='text-sm text-red-400 mb-3'>{specError}</p>
           )}
           {specBusy && !cluster.human_brief && (
-            <p className='text-sm text-white/40 mb-3 animate-pulse'>
+            <p className='text-sm text-gray-500 dark:text-white/40 mb-3 animate-pulse'>
               Analysing evidence and drafting specification… this can take 15–45 seconds.
             </p>
           )}
@@ -592,20 +592,20 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                   <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{cluster.human_brief}</ReactMarkdown>
                 </div>
                 {!briefExpanded && (
-                  <div className='absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#1A1D24] to-transparent pointer-events-none' />
+                  <div className='absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-[#1A1D24] to-transparent pointer-events-none' />
                 )}
               </div>
               <button
                 type='button'
                 onClick={() => setBriefExpanded(!briefExpanded)}
-                className='w-full flex items-center justify-center gap-1 text-xs text-white/40 hover:text-white/70 py-2 mt-1 transition-colors'
+                className='w-full flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-white/40 hover:text-gray-600 dark:text-white/70 py-2 mt-1 transition-colors'
               >
                 {briefExpanded ? 'Show less' : 'Show more'}
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${briefExpanded ? 'rotate-180' : ''}`} />
               </button>
             </div>
           ) : (
-            <p className='text-white/30 text-sm'>
+            <p className='text-gray-400 dark:text-white/30 text-sm'>
               No brief yet. Scoring runs spec generation automatically; use Generate if you need to retry.
             </p>
           )}
@@ -617,7 +617,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               href={pushedLinear}
               target='_blank'
               rel='noopener noreferrer'
-              className='flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-emerald-500 transition-colors'
+              className='flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 text-gray-900 dark:text-white font-medium py-3 rounded-xl text-sm hover:bg-emerald-500 transition-colors'
             >
               Pushed to Linear <ExternalLink className='w-4 h-4' />
             </a>
@@ -626,7 +626,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               type='button'
               onClick={() => void handlePushToLinear()}
               disabled={pushingLinear}
-              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+              className='flex-1 bg-blue-600 text-gray-900 dark:text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
               {pushingLinear ? 'Creating ticket...' : linearConnected === false ? 'Connect Linear' : 'Push to Linear'}
             </button>
@@ -637,7 +637,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               href={pushedJira}
               target='_blank'
               rel='noopener noreferrer'
-              className='flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-emerald-500 transition-colors'
+              className='flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 text-gray-900 dark:text-white font-medium py-3 rounded-xl text-sm hover:bg-emerald-500 transition-colors'
             >
               Pushed to Jira <ExternalLink className='w-4 h-4' />
             </a>
@@ -646,7 +646,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               type='button'
               onClick={() => void handlePushToJira()}
               disabled={pushingJira}
-              className='flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+              className='flex-1 bg-blue-600 text-gray-900 dark:text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             >
               {pushingJira ? 'Creating ticket...' : jiraConnected === false ? 'Connect Jira' : 'Push to Jira'}
             </button>
@@ -659,18 +659,18 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           </div>
         )}
 
-        <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-8'>
-          <h2 className='text-sm font-semibold text-white mb-5'>
+        <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-8'>
+          <h2 className='text-sm font-semibold text-gray-900 dark:text-white mb-5'>
             Evidence ({signals.length} tickets)
           </h2>
           {signals.length === 0 ? (
-            <p className='text-white/30 text-sm'>No ticket evidence available yet.</p>
+            <p className='text-gray-400 dark:text-white/30 text-sm'>No ticket evidence available yet.</p>
           ) : (
             <div className='space-y-1'>
               {signals.map(signal => (
-                <div key={signal.id} className='rounded-xl p-4 hover:bg-white/[0.03] transition-colors -mx-2'>
+                <div key={signal.id} className='rounded-xl p-4 hover:bg-gray-50 dark:bg-white/[0.03] transition-colors -mx-2'>
                   <div className='flex items-center gap-2 mb-2'>
-                    <span className='text-xs text-white/30 font-medium'>
+                    <span className='text-xs text-gray-400 dark:text-white/30 font-medium'>
                       {new Date(signal.created_at).toLocaleDateString('en-US', {
                         month: 'short', day: 'numeric', year: 'numeric',
                       })}
@@ -681,7 +681,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                       </span>
                     )}
                   </div>
-                  <p className='text-sm text-white/60 leading-relaxed'>
+                  <p className='text-sm text-gray-500 dark:text-white/60 leading-relaxed'>
                     {signal.text.length > 200 ? signal.text.slice(0, 200) + '...' : signal.text}
                   </p>
                 </div>

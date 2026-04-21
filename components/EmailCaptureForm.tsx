@@ -54,7 +54,7 @@ export function EmailCaptureForm() {
         <button
           type='submit'
           disabled={loading}
-          className='bg-blue-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer disabled:cursor-not-allowed'
+          className='bg-blue-600 text-gray-900 dark:text-white px-6 py-3 rounded-xl font-medium text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer disabled:cursor-not-allowed'
         >
           {loading ? 'Saving...' : 'Request early access'}
         </button>

@@ -74,7 +74,7 @@ export function ScoreBreakdownPanel({ cluster, mlModelVersion, scoreHistory = []
   return (
     <div>
       <div className='flex items-center justify-between mb-4'>
-        <h2 className='text-sm font-semibold text-white'>Score dimensions (0–10)</h2>
+        <h2 className='text-sm font-semibold text-gray-900 dark:text-white'>Score dimensions (0–10)</h2>
         {isML && (
           <span className='text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full'>
             ML weights active
@@ -95,18 +95,18 @@ export function ScoreBreakdownPanel({ cluster, mlModelVersion, scoreHistory = []
         return (
           <div key={key} className='mb-4 last:mb-0'>
             <div className='flex justify-between text-sm mb-2'>
-              <span className='text-white/60 font-medium flex items-center gap-1.5'>
-                <Icon className='w-3.5 h-3.5 text-white/30' />
+              <span className='text-gray-500 dark:text-white/60 font-medium flex items-center gap-1.5'>
+                <Icon className='w-3.5 h-3.5 text-gray-400 dark:text-white/30' />
                 {label}
               </span>
               <div className='flex items-center gap-2'>
-                <span className='text-white font-semibold tabular-nums'>{v.toFixed(1)} / 10</span>
-                <span className='text-[10px] text-white/30'>
+                <span className='text-gray-900 dark:text-white font-semibold tabular-nums'>{v.toFixed(1)} / 10</span>
+                <span className='text-[10px] text-gray-400 dark:text-white/30'>
                   {isML ? 'ML' : `${Math.round(formulaWeight * 100)}%`}
                 </span>
               </div>
             </div>
-            <div className='w-full bg-white/[0.07] rounded-full h-2'>
+            <div className='w-full bg-gray-100 dark:bg-white/[0.07] rounded-full h-2'>
               <div className={`h-2 rounded-full transition-all duration-500 ${color}`} style={{ width: `${pct}%` }} />
             </div>
           </div>

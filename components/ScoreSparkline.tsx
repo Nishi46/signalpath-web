@@ -51,12 +51,12 @@ export function ScoreSparkline({ history }: ScoreSparklineProps) {
         <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
           delta > 0.5 ? 'bg-emerald-500/10 text-emerald-400' :
           delta < -0.5 ? 'bg-red-500/10 text-red-400' :
-          'bg-white/[0.07] text-white/40'
+          'bg-gray-100 dark:bg-white/[0.07] text-gray-500 dark:text-white/40'
         }`}>
           {delta >= 0 ? '+' : ''}{delta.toFixed(1)}
         </span>
       ) : (
-        <span className='text-[10px] text-white/30'>Stable</span>
+        <span className='text-[10px] text-gray-400 dark:text-white/30'>Stable</span>
       )}
     </div>
   )

@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode — .dark on <html> activates dark: variants */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F4F5F8;
+  --foreground: #111827;
+}
+
+.dark {
+  --background: #111318;
+  --foreground: #ffffff;
 }
 
 @theme inline {
@@ -101,7 +109,7 @@ button {
    ---------------------------------------------------------------- */
 
 .prd-document {
-  color: rgba(255,255,255,0.75);
+  color: #374151;
   font-size: 0.9375rem;
   line-height: 1.75;
 }
@@ -110,24 +118,24 @@ button {
 .prd-document h1 {
   font-size: 1.5rem;
   font-weight: 800;
-  color: rgba(255,255,255,0.95);
+  color: #111827;
   letter-spacing: -0.01em;
   margin-top: 0;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid rgba(255,255,255,0.08);
+  border-bottom: 2px solid rgba(0,0,0,0.10);
 }
 
 /* H2 — section headings */
 .prd-document h2 {
   font-size: 1.125rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.90);
+  color: #1f2937;
   letter-spacing: -0.005em;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
 /* First heading has no top margin */
@@ -139,7 +147,7 @@ button {
 .prd-document h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.80);
+  color: #374151;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
@@ -153,7 +161,7 @@ button {
 /* Bold text */
 .prd-document strong {
   font-weight: 700;
-  color: rgba(255,255,255,0.90);
+  color: #111827;
 }
 
 /* Blockquotes — customer verbatims */
@@ -164,7 +172,7 @@ button {
   background: rgba(14,165,233,0.08);
   border-radius: 0 0.5rem 0.5rem 0;
   font-style: italic;
-  color: rgba(255,255,255,0.60);
+  color: #4b5563;
 }
 
 .prd-document blockquote p {
@@ -186,11 +194,11 @@ button {
 .prd-document li {
   margin: 0.375rem 0;
   padding-left: 0.25rem;
-  color: rgba(255,255,255,0.65);
+  color: #4b5563;
 }
 
 .prd-document li::marker {
-  color: rgba(255,255,255,0.25);
+  color: #9ca3af;
 }
 
 /* Ordered lists */
@@ -203,8 +211,8 @@ button {
 /* Inline code */
 .prd-document code {
   font-size: 0.8125rem;
-  background: rgba(255,255,255,0.08);
-  color: #93c5fd;
+  background: rgba(0,0,0,0.06);
+  color: #2563eb;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-weight: 500;
@@ -214,7 +222,7 @@ button {
 .prd-document hr {
   margin: 2rem 0;
   border: none;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
 
 /* Tables (if generated) */
@@ -228,15 +236,70 @@ button {
 .prd-document th {
   text-align: left;
   font-weight: 600;
-  color: rgba(255,255,255,0.70);
+  color: #374151;
   padding: 0.5rem 0.75rem;
-  border-bottom: 2px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border-bottom: 2px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.03);
 }
 
 .prd-document td {
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  color: #4b5563;
+}
+
+/* Dark mode overrides */
+.dark .prd-document {
+  color: rgba(255,255,255,0.75);
+}
+
+.dark .prd-document h1 {
+  color: rgba(255,255,255,0.95);
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+
+.dark .prd-document h2 {
+  color: rgba(255,255,255,0.90);
+  border-bottom-color: rgba(255,255,255,0.07);
+}
+
+.dark .prd-document h3 {
+  color: rgba(255,255,255,0.80);
+}
+
+.dark .prd-document strong {
+  color: rgba(255,255,255,0.90);
+}
+
+.dark .prd-document blockquote {
+  color: rgba(255,255,255,0.60);
+}
+
+.dark .prd-document li {
+  color: rgba(255,255,255,0.65);
+}
+
+.dark .prd-document li::marker {
+  color: rgba(255,255,255,0.25);
+}
+
+.dark .prd-document code {
+  background: rgba(255,255,255,0.08);
+  color: #93c5fd;
+}
+
+.dark .prd-document hr {
+  border-top-color: rgba(255,255,255,0.08);
+}
+
+.dark .prd-document th {
+  color: rgba(255,255,255,0.70);
+  border-bottom-color: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+
+.dark .prd-document td {
+  border-bottom-color: rgba(255,255,255,0.06);
   color: rgba(255,255,255,0.55);
 }
 

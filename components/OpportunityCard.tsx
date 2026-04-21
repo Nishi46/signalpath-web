@@ -60,22 +60,22 @@ export function OpportunityCard({ cluster, status, onFeedback }: OpportunityCard
   const barColor = getBarColor(cluster.opportunity_score)
 
   return (
-    <div className={`relative bg-[#1A1D24] rounded-2xl border overflow-hidden transition-all duration-200 group ${
+    <div className={`relative bg-white dark:bg-[#1A1D24] rounded-2xl border overflow-hidden transition-all duration-200 group ${
       isDismissed
-        ? 'opacity-40 grayscale border-white/[0.04]'
-        : 'border-white/[0.07] hover:border-white/[0.14] hover:bg-[#1E2129]'
+        ? 'opacity-40 grayscale border-gray-100 dark:border-white/[0.04]'
+        : 'border-gray-100 dark:border-white/[0.07] hover:border-white/[0.14] hover:bg-[#1E2129]'
     }`}>
       {/* Score accent bar */}
       <div className='absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl' style={{ backgroundColor: barColor }} />
 
       <Link href={`/opportunities/${cluster.id}`} className='block p-5 pl-6'>
         <div className='flex items-start justify-between gap-3 mb-3'>
-          <h3 className='text-sm font-semibold text-white/90 leading-snug group-hover:text-white transition-colors'>
+          <h3 className='text-sm font-semibold text-gray-900 dark:text-white/90 leading-snug group-hover:text-white transition-colors'>
             {cluster.label}
           </h3>
           <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
         </div>
-        <div className='flex items-center gap-4 text-xs text-white/35'>
+        <div className='flex items-center gap-4 text-xs text-gray-500 dark:text-white/35'>
           <span className='flex items-center gap-1.5'>
             <MessageSquare className='w-3.5 h-3.5' />
             {cluster.signal_count} tickets
@@ -96,18 +96,18 @@ export function OpportunityCard({ cluster, status, onFeedback }: OpportunityCard
       </Link>
 
       {hasStatus ? (
-        <div className='flex items-center gap-1.5 px-5 pl-6 pb-4 border-t border-white/[0.05] pt-3'>
+        <div className='flex items-center gap-1.5 px-5 pl-6 pb-4 border-t border-gray-100 dark:border-white/[0.05] pt-3'>
           <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
             status === 'approve'
               ? 'bg-emerald-500/10 text-emerald-400'
-              : 'bg-white/[0.06] text-white/40'
+              : 'bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-white/40'
           }`}>
             {status === 'approve' ? <Check className='w-3 h-3' /> : <SkipForward className='w-3 h-3' />}
             {status === 'approve' ? 'Approved' : 'Skipped'}
           </span>
         </div>
       ) : !isDismissed ? (
-        <div className='flex items-center gap-1 px-5 pl-6 pb-4 border-t border-white/[0.05] pt-3'>
+        <div className='flex items-center gap-1 px-5 pl-6 pb-4 border-t border-gray-100 dark:border-white/[0.05] pt-3'>
           <button
             onClick={() => handleFeedback('approve')}
             className='flex items-center gap-1 text-xs text-emerald-400 hover:bg-emerald-500/10 px-3 py-1.5 rounded-lg transition-colors font-medium'
@@ -116,7 +116,7 @@ export function OpportunityCard({ cluster, status, onFeedback }: OpportunityCard
           </button>
           <button
             onClick={() => handleFeedback('skip')}
-            className='flex items-center gap-1 text-xs text-white/35 hover:bg-white/[0.06] px-3 py-1.5 rounded-lg transition-colors font-medium'
+            className='flex items-center gap-1 text-xs text-gray-500 dark:text-white/35 hover:bg-gray-100 dark:bg-white/[0.06] px-3 py-1.5 rounded-lg transition-colors font-medium'
           >
             <SkipForward className='w-3.5 h-3.5' /> Skip
           </button>

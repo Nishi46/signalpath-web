@@ -50,7 +50,7 @@ function formatRevenue(amount: number): string {
 function scoreColor(score: number): { bg: string; text: string; ring: string } {
   if (score >= 7) return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', ring: 'ring-emerald-500/20' }
   if (score >= 4) return { bg: 'bg-amber-500/10', text: 'text-amber-400', ring: 'ring-amber-500/20' }
-  return { bg: 'bg-white/[0.06]', text: 'text-white/40', ring: 'ring-white/10' }
+  return { bg: 'bg-gray-100 dark:bg-white/[0.06]', text: 'text-gray-500 dark:text-white/40', ring: 'ring-white/10' }
 }
 
 function StatCard({
@@ -71,7 +71,7 @@ function StatCard({
   trend?: React.ReactNode
 }) {
   return (
-    <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-5 flex flex-col gap-3'>
+    <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-5 flex flex-col gap-3'>
       <div className='flex items-center justify-between'>
         <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center`}>
           <Icon className={`w-4 h-4 ${iconColor}`} />
@@ -79,10 +79,10 @@ function StatCard({
         {trend}
       </div>
       <div>
-        <p className='text-2xl font-bold text-white tabular-nums leading-none'>{value}</p>
-        <p className='text-xs font-medium text-white/40 mt-1.5'>{label}</p>
+        <p className='text-2xl font-bold text-gray-900 dark:text-white tabular-nums leading-none'>{value}</p>
+        <p className='text-xs font-medium text-gray-500 dark:text-white/40 mt-1.5'>{label}</p>
       </div>
-      {sub && <div className='border-t border-white/[0.05] pt-2.5'>{sub}</div>}
+      {sub && <div className='border-t border-gray-100 dark:border-white/[0.05] pt-2.5'>{sub}</div>}
     </div>
   )
 }
@@ -91,7 +91,7 @@ function WeekBadge({ current, previous }: { current: number; previous: number })
   if (previous === 0 && current === 0) return null
   const delta = current - previous
   if (delta === 0) return (
-    <span className='flex items-center gap-0.5 text-[11px] font-medium text-white/35 bg-white/[0.06] px-2 py-0.5 rounded-full'>
+    <span className='flex items-center gap-0.5 text-[11px] font-medium text-gray-500 dark:text-white/35 bg-gray-100 dark:bg-white/[0.06] px-2 py-0.5 rounded-full'>
       <Minus className='w-3 h-3' /> Same
     </span>
   )
@@ -109,23 +109,23 @@ function WeekBadge({ current, previous }: { current: number; previous: number })
 
 function LoadingSkeleton() {
   return (
-    <div className='min-h-screen bg-[#111318]'>
+    <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
       <DashboardNav />
       <div className='max-w-5xl mx-auto px-6 py-10'>
-        <div className='h-7 bg-white/[0.08] rounded-lg w-36 animate-pulse mb-1' />
-        <div className='h-4 bg-white/[0.05] rounded w-48 animate-pulse mb-8' />
+        <div className='h-7 bg-gray-100 dark:bg-white/[0.08] rounded-lg w-36 animate-pulse mb-1' />
+        <div className='h-4 bg-gray-100 dark:bg-white/[0.05] rounded w-48 animate-pulse mb-8' />
         <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-5 animate-pulse'>
-              <div className='w-8 h-8 bg-white/[0.08] rounded-xl mb-4' />
-              <div className='h-7 bg-white/[0.06] rounded w-16 mb-2' />
-              <div className='h-3 bg-white/[0.04] rounded w-24' />
+            <div key={i} className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-5 animate-pulse'>
+              <div className='w-8 h-8 bg-gray-100 dark:bg-white/[0.08] rounded-xl mb-4' />
+              <div className='h-7 bg-gray-100 dark:bg-white/[0.06] rounded w-16 mb-2' />
+              <div className='h-3 bg-gray-50 dark:bg-white/[0.04] rounded w-24' />
             </div>
           ))}
         </div>
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-5'>
-          <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-6 animate-pulse h-52' />
-          <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-6 animate-pulse h-52' />
+          <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-6 animate-pulse h-52' />
+          <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-6 animate-pulse h-52' />
         </div>
       </div>
     </div>
@@ -134,24 +134,24 @@ function LoadingSkeleton() {
 
 function EmptyDashboard() {
   return (
-    <div className='min-h-screen bg-[#111318]'>
+    <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
       <DashboardNav />
       <div className='max-w-5xl mx-auto px-6 py-10'>
         <div className='mb-8'>
-          <h1 className='text-2xl font-bold text-white'>Dashboard</h1>
-          <p className='text-sm text-white/40 mt-1'>Your workspace overview</p>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>Dashboard</h1>
+          <p className='text-sm text-gray-500 dark:text-white/40 mt-1'>Your workspace overview</p>
         </div>
-        <div className='bg-[#1A1D24] border border-white/[0.07] rounded-2xl p-10 flex flex-col items-center text-center max-w-sm mx-auto'>
+        <div className='bg-white dark:bg-[#1A1D24] border border-gray-100 dark:border-white/[0.07] rounded-2xl p-10 flex flex-col items-center text-center max-w-sm mx-auto'>
           <div className='w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-4'>
             <PlugZap className='w-7 h-7 text-blue-400' />
           </div>
-          <h2 className='text-base font-semibold text-white mb-2'>No data yet</h2>
-          <p className='text-sm text-white/40 mb-6 leading-relaxed'>
+          <h2 className='text-base font-semibold text-gray-900 dark:text-white mb-2'>No data yet</h2>
+          <p className='text-sm text-gray-500 dark:text-white/40 mb-6 leading-relaxed'>
             Connect Zendesk or Intercom to start surfacing product opportunities from your support conversations.
           </p>
           <Link
             href='/connect'
-            className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors'
+            className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-gray-900 dark:text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors'
           >
             Connect a data source <ArrowRight className='w-4 h-4' />
           </Link>
@@ -182,14 +182,14 @@ export default function DashboardPage() {
   const isModelActive = ml.ml_model_version > 0
 
   return (
-    <div className='min-h-screen bg-[#111318]'>
+    <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
       <DashboardNav />
       <div className='max-w-5xl mx-auto px-6 py-10'>
 
         {/* Header */}
         <div className='mb-7'>
-          <h1 className='text-2xl font-bold text-white'>Dashboard</h1>
-          <p className='text-sm text-white/40 mt-1'>Your workspace overview</p>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>Dashboard</h1>
+          <p className='text-sm text-gray-500 dark:text-white/40 mt-1'>Your workspace overview</p>
         </div>
 
         {/* Stat cards */}
@@ -202,8 +202,8 @@ export default function DashboardPage() {
             value={stats.total_opportunities}
             trend={<WeekBadge current={stats.new_this_week} previous={stats.new_last_week} />}
             sub={
-              <p className='text-xs text-white/30'>
-                <span className='font-medium text-white/55'>{stats.new_this_week}</span> new this week
+              <p className='text-xs text-gray-400 dark:text-white/30'>
+                <span className='font-medium text-gray-500 dark:text-white/55'>{stats.new_this_week}</span> new this week
               </p>
             }
           />
@@ -214,7 +214,7 @@ export default function DashboardPage() {
             iconColor='text-emerald-400'
             label='Revenue at risk'
             value={formatRevenue(stats.total_revenue_at_risk)}
-            sub={<p className='text-xs text-white/30'>across all clusters</p>}
+            sub={<p className='text-xs text-gray-400 dark:text-white/30'>across all clusters</p>}
           />
 
           <StatCard
@@ -232,7 +232,7 @@ export default function DashboardPage() {
                   Review now <ArrowRight className='w-3 h-3' />
                 </Link>
               ) : (
-                <p className='text-xs text-white/30'>No churn signals</p>
+                <p className='text-xs text-gray-400 dark:text-white/30'>No churn signals</p>
               )
             }
           />
@@ -245,13 +245,13 @@ export default function DashboardPage() {
             value={stats.rated_count}
             sub={
               <div className='flex items-center gap-2'>
-                <div className='flex-1 bg-white/[0.07] rounded-full h-1.5'>
+                <div className='flex-1 bg-gray-100 dark:bg-white/[0.07] rounded-full h-1.5'>
                   <div
                     className='bg-violet-500 h-1.5 rounded-full transition-all duration-500'
                     style={{ width: `${Math.min((stats.rated_count / Math.max(stats.total_opportunities, 1)) * 100, 100)}%` }}
                   />
                 </div>
-                <span className='text-[11px] text-white/30 shrink-0 tabular-nums'>
+                <span className='text-[11px] text-gray-400 dark:text-white/30 shrink-0 tabular-nums'>
                   {unrated} left
                 </span>
               </div>
@@ -263,9 +263,9 @@ export default function DashboardPage() {
         <div className='grid grid-cols-1 lg:grid-cols-5 gap-5'>
 
           {/* Top opportunities — wider */}
-          <div className='lg:col-span-3 bg-[#1A1D24] rounded-2xl border border-white/[0.07] overflow-hidden'>
-            <div className='flex items-center justify-between px-5 py-4 border-b border-white/[0.05]'>
-              <h2 className='text-sm font-semibold text-white flex items-center gap-2'>
+          <div className='lg:col-span-3 bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] overflow-hidden'>
+            <div className='flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.05]'>
+              <h2 className='text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
                 <TrendingUp className='w-4 h-4 text-blue-400' />
                 Top unrated
               </h2>
@@ -279,7 +279,7 @@ export default function DashboardPage() {
 
             {stats.top_opportunities.length === 0 ? (
               <div className='px-5 py-8 text-center'>
-                <p className='text-sm text-white/40'>All opportunities have been rated.</p>
+                <p className='text-sm text-gray-500 dark:text-white/40'>All opportunities have been rated.</p>
                 <Link href='/opportunities' className='text-xs text-blue-400 mt-1 inline-block'>
                   View them →
                 </Link>
@@ -292,13 +292,13 @@ export default function DashboardPage() {
                     <Link
                       key={opp.id}
                       href={`/opportunities/${opp.id}`}
-                      className='flex items-center gap-3.5 px-5 py-3.5 hover:bg-white/[0.03] transition-colors group'
+                      className='flex items-center gap-3.5 px-5 py-3.5 hover:bg-gray-50 dark:bg-white/[0.03] transition-colors group'
                     >
-                      <span className='text-xs font-bold text-white/20 w-4 shrink-0 tabular-nums'>
+                      <span className='text-xs font-bold text-gray-300 dark:text-white/20 w-4 shrink-0 tabular-nums'>
                         {idx + 1}
                       </span>
                       <div className='flex-1 min-w-0'>
-                        <p className='text-sm font-medium text-white/85 truncate group-hover:text-white transition-colors'>
+                        <p className='text-sm font-medium text-gray-800 dark:text-white/85 truncate group-hover:text-white transition-colors'>
                           {opp.label}
                         </p>
                         <div className='flex items-center gap-2.5 mt-0.5'>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
                             </span>
                           )}
                           {opp.confidence && (
-                            <span className='text-[11px] text-white/25'>{opp.confidence} confidence</span>
+                            <span className='text-[11px] text-gray-400 dark:text-white/25'>{opp.confidence} confidence</span>
                           )}
                         </div>
                       </div>
@@ -334,9 +334,9 @@ export default function DashboardPage() {
           <div className='lg:col-span-2 flex flex-col gap-5'>
 
             {/* ML Model */}
-            <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] overflow-hidden'>
-              <div className='flex items-center justify-between px-5 py-4 border-b border-white/[0.05]'>
-                <h2 className='text-sm font-semibold text-white flex items-center gap-2'>
+            <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] overflow-hidden'>
+              <div className='flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.05]'>
+                <h2 className='text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
                   <Brain className='w-4 h-4 text-violet-400' />
                   Scoring model
                 </h2>
@@ -349,7 +349,7 @@ export default function DashboardPage() {
                     Training
                   </span>
                 ) : (
-                  <span className='text-[11px] font-medium text-white/35 bg-white/[0.06] px-2 py-0.5 rounded-full'>
+                  <span className='text-[11px] font-medium text-gray-500 dark:text-white/35 bg-gray-100 dark:bg-white/[0.06] px-2 py-0.5 rounded-full'>
                     Learning
                   </span>
                 )}
@@ -357,34 +357,34 @@ export default function DashboardPage() {
               <div className='px-5 py-4'>
                 {isModelActive ? (
                   <div className='space-y-3'>
-                    <p className='text-xs text-white/40 leading-relaxed'>
+                    <p className='text-xs text-gray-500 dark:text-white/40 leading-relaxed'>
                       Opportunities are scored using your team&apos;s rating history. Retrains every 10 new ratings.
                     </p>
-                    <div className='flex items-center justify-between py-2 px-3 bg-white/[0.04] rounded-xl text-xs'>
-                      <span className='text-white/40'>Ratings used</span>
-                      <span className='font-semibold text-white/70 tabular-nums'>{ml.labeled_cluster_count}</span>
+                    <div className='flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl text-xs'>
+                      <span className='text-gray-500 dark:text-white/40'>Ratings used</span>
+                      <span className='font-semibold text-gray-600 dark:text-white/70 tabular-nums'>{ml.labeled_cluster_count}</span>
                     </div>
-                    <div className='flex items-center justify-between py-2 px-3 bg-white/[0.04] rounded-xl text-xs'>
-                      <span className='text-white/40'>Model version</span>
-                      <span className='font-semibold text-white/70'>v{ml.ml_model_version}</span>
+                    <div className='flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl text-xs'>
+                      <span className='text-gray-500 dark:text-white/40'>Model version</span>
+                      <span className='font-semibold text-gray-600 dark:text-white/70'>v{ml.ml_model_version}</span>
                     </div>
                   </div>
                 ) : (
                   <div className='space-y-3'>
                     <div className='flex items-end justify-between'>
-                      <span className='text-2xl font-bold text-white tabular-nums'>
+                      <span className='text-2xl font-bold text-gray-900 dark:text-white tabular-nums'>
                         {ml.labeled_cluster_count}
-                        <span className='text-sm font-normal text-white/30 ml-1'>/ 50</span>
+                        <span className='text-sm font-normal text-gray-400 dark:text-white/30 ml-1'>/ 50</span>
                       </span>
-                      <span className='text-xs text-white/30 mb-1'>{ml.labels_needed} to go</span>
+                      <span className='text-xs text-gray-400 dark:text-white/30 mb-1'>{ml.labels_needed} to go</span>
                     </div>
-                    <div className='w-full bg-white/[0.07] rounded-full h-1.5'>
+                    <div className='w-full bg-gray-100 dark:bg-white/[0.07] rounded-full h-1.5'>
                       <div
                         className='bg-violet-500 h-1.5 rounded-full transition-all duration-700'
                         style={{ width: `${mlProgress}%` }}
                       />
                     </div>
-                    <p className='text-xs text-white/35 leading-relaxed'>
+                    <p className='text-xs text-gray-500 dark:text-white/35 leading-relaxed'>
                       Rate opportunities to unlock personalized scoring tailored to your team.
                     </p>
                     <Link
@@ -399,26 +399,26 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick stats summary */}
-            <div className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-5'>
-              <h2 className='text-sm font-semibold text-white mb-3'>This week</h2>
+            <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-5'>
+              <h2 className='text-sm font-semibold text-gray-900 dark:text-white mb-3'>This week</h2>
               <div className='space-y-2.5'>
                 <div className='flex items-center justify-between text-xs'>
-                  <span className='text-white/40'>New opportunities</span>
-                  <span className='font-semibold text-white/70 tabular-nums'>{stats.new_this_week}</span>
+                  <span className='text-gray-500 dark:text-white/40'>New opportunities</span>
+                  <span className='font-semibold text-gray-600 dark:text-white/70 tabular-nums'>{stats.new_this_week}</span>
                 </div>
                 <div className='flex items-center justify-between text-xs'>
-                  <span className='text-white/40'>Last week</span>
-                  <span className='font-semibold text-white/70 tabular-nums'>{stats.new_last_week}</span>
+                  <span className='text-gray-500 dark:text-white/40'>Last week</span>
+                  <span className='font-semibold text-gray-600 dark:text-white/70 tabular-nums'>{stats.new_last_week}</span>
                 </div>
                 <div className='flex items-center justify-between text-xs'>
-                  <span className='text-white/40'>Churn risks</span>
-                  <span className={`font-semibold tabular-nums ${stats.churn_risk_count > 0 ? 'text-red-400' : 'text-white/70'}`}>
+                  <span className='text-gray-500 dark:text-white/40'>Churn risks</span>
+                  <span className={`font-semibold tabular-nums ${stats.churn_risk_count > 0 ? 'text-red-400' : 'text-gray-600 dark:text-white/70'}`}>
                     {stats.churn_risk_count}
                   </span>
                 </div>
-                <div className='pt-1 border-t border-white/[0.05] flex items-center justify-between text-xs'>
-                  <span className='text-white/40'>Rated so far</span>
-                  <span className='font-semibold text-white/70 tabular-nums'>
+                <div className='pt-1 border-t border-gray-100 dark:border-white/[0.05] flex items-center justify-between text-xs'>
+                  <span className='text-gray-500 dark:text-white/40'>Rated so far</span>
+                  <span className='font-semibold text-gray-600 dark:text-white/70 tabular-nums'>
                     {stats.rated_count} / {stats.total_opportunities}
                   </span>
                 </div>
