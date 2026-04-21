@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Sun,
   Moon,
+  ChevronDown,
 } from 'lucide-react'
 import { BentoSection } from './BentoSection'
 import { useTheme } from '../ThemeProvider'
@@ -422,7 +423,6 @@ function SpecPanel({ specText, onClose }: { specText: string; onClose: () => voi
 // ─── JSON Syntax Highlight ────────────────────────────────────────────────────
 
 function JsonHighlight({ text }: { text: string }) {
-  // Minimal tokenizer: keys, strings, numbers, booleans, punctuation
   const tokens = text.split(/("(?:[^"\\]|\\.)*"|\b\d+(?:\.\d+)?\b|[{}\[\],:])/g)
   return (
     <>
@@ -446,9 +446,64 @@ function JsonHighlight({ text }: { text: string }) {
   )
 }
 
-// ─── Conversion Banner ───────────────────────────────────────────────────────
+// ─── FAQ ──────────────────────────────────────────────────────────────────────
 
-function ConversionBanner({ onDismiss }: { onDismiss: () => void }) {
+const FAQS = [
+  {
+    q: 'How does SignalPath work?',
+    a: 'Connect your help desk (Zendesk, Intercom, or Freshdesk) and SignalPath analyzes your support conversations with ML to cluster related tickets, score them by business impact, and surface ranked product opportunities.',
+  },
+  {
+    q: 'How long until I see results?',
+    a: "You'll see your first ranked opportunities within 48 hours of connecting your help desk — usually sooner. The scoring model improves continuously as your team rates opportunities.",
+  },
+  {
+    q: 'What integrations do you support?',
+    a: 'We ingest from Zendesk, Intercom, and Freshdesk today. For output, you can push opportunities directly to Linear, Jira, or GitHub Issues with a single click.',
+  },
+  {
+    q: 'How are opportunities scored?',
+    a: 'Each cluster is scored across six dimensions: churn risk, account breadth, severity, frequency, recency, and revenue at risk. Scores are weighted by your team\'s rating history as you use the product.',
+  },
+  {
+    q: 'Is my customer data secure?',
+    a: 'Yes. All data is encrypted in transit and at rest. We never share your data with third parties or use it to train shared models.',
+  },
+  {
+    q: 'How much does it cost?',
+    a: "We're currently in early access with a limited number of design partners. Pricing will be usage-based on volume of support conversations analyzed. Drop us a note to discuss.",
+  },
+]
+
+function FAQ() {
+  const [open, setOpen] = useState<number | null>(null)
+  return (
+    <div className='max-w-2xl mx-auto divide-y divide-gray-200 dark:divide-white/[0.07]'>
+      {FAQS.map((faq, i) => (
+        <div key={i}>
+          <button
+            onClick={() => setOpen(open === i ? null : i)}
+            className='w-full flex items-center justify-between gap-4 py-5 text-left'
+          >
+            <span className='text-sm font-semibold text-gray-900 dark:text-white'>{faq.q}</span>
+            <ChevronDown
+              className={`w-4 h-4 text-gray-400 dark:text-white/30 flex-shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`}
+            />
+          </button>
+          {open === i && (
+            <p className='text-sm text-gray-500 dark:text-white/50 leading-relaxed pb-5'>
+              {faq.a}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Hero Email Capture ───────────────────────────────────────────────────────
+
+function HeroEmailCapture() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
@@ -470,53 +525,33 @@ function ConversionBanner({ onDismiss }: { onDismiss: () => void }) {
     }
   }
 
-  return (
-    <div className='fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-up'>
-      <div className='max-w-xl mx-auto bg-white dark:bg-[#1A1D24] border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/20 dark:shadow-black/60'>
-        <button
-          onClick={onDismiss}
-          className='absolute top-3 right-3 text-gray-400 dark:text-white/25 hover:text-gray-600 dark:hover:text-white/55 transition-colors'
-          aria-label='Dismiss'
-        >
-          <X className='w-4 h-4' />
-        </button>
-
-        {done ? (
-          <div className='flex items-center gap-3 text-sm'>
-            <CheckCircle className='w-5 h-5 text-emerald-400 flex-shrink-0' />
-            <span className='text-gray-600 dark:text-white/70'>
-              You&rsquo;re on the list. We&rsquo;ll be in touch within 24 hours.
-            </span>
-          </div>
-        ) : (
-          <>
-            <p className='text-gray-800 dark:text-white/80 text-sm font-semibold mb-0.5'>
-              This demo uses synthetic data.
-            </p>
-            <p className='text-gray-500 dark:text-white/35 text-xs mb-4'>
-              Connect your real Zendesk and see your actual opportunities in 24 hours.
-            </p>
-            <form onSubmit={handleSubmit} className='flex gap-2'>
-              <input
-                type='email'
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder='you@company.com'
-                className='flex-1 bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:border-blue-500/50 transition-colors'
-              />
-              <button
-                type='submit'
-                disabled={loading}
-                className='bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors whitespace-nowrap'
-              >
-                {loading ? 'Saving…' : 'Get access'}
-              </button>
-            </form>
-          </>
-        )}
+  if (done) {
+    return (
+      <div className='flex items-center gap-2.5 justify-center text-sm text-gray-600 dark:text-white/60'>
+        <CheckCircle className='w-5 h-5 text-emerald-500 flex-shrink-0' />
+        You&rsquo;re on the list — we&rsquo;ll be in touch within 24 hours.
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className='flex gap-2 max-w-sm mx-auto'>
+      <input
+        type='email'
+        required
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        placeholder='you@company.com'
+        className='flex-1 bg-white dark:bg-white/[0.06] border border-gray-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/25 focus:outline-none focus:border-blue-500/70 transition-colors shadow-sm'
+      />
+      <button
+        type='submit'
+        disabled={loading}
+        className='bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors whitespace-nowrap shadow-lg shadow-blue-600/20'
+      >
+        {loading ? 'Saving…' : 'Get access'}
+      </button>
+    </form>
   )
 }
 
@@ -527,21 +562,10 @@ export function MissionControlPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showSpec, setShowSpec] = useState(false)
   const [specText, setSpecText] = useState('')
-  const [showBanner, setShowBanner] = useState(false)
-  const [bannerDismissed, setBannerDismissed] = useState(false)
   const specIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const specIndexRef = useRef(0)
-  const engagedRef = useRef(false)
 
   const selected = OPPS.find(o => o.id === selectedId) ?? null
-
-  // Banner after 30 s of page load, or sooner after first interaction
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (!bannerDismissed) setShowBanner(true)
-    }, 30_000)
-    return () => clearTimeout(t)
-  }, [bannerDismissed])
 
   // Start typewriter for spec JSON
   const startSpec = useCallback(() => {
@@ -550,7 +574,7 @@ export function MissionControlPage() {
     specIndexRef.current = 0
     if (specIntervalRef.current) clearInterval(specIntervalRef.current)
     specIntervalRef.current = setInterval(() => {
-      specIndexRef.current += 2 // 2 chars per tick for snappy feel
+      specIndexRef.current += 2
       setSpecText(SPEC_JSON.slice(0, specIndexRef.current))
       if (specIndexRef.current >= SPEC_JSON.length) {
         clearInterval(specIntervalRef.current!)
@@ -575,20 +599,45 @@ export function MissionControlPage() {
       setShowSpec(false)
       setSpecText('')
     }
-    // After first interaction, show banner after 25 s
-    if (!engagedRef.current) {
-      engagedRef.current = true
-      setTimeout(() => {
-        if (!bannerDismissed) setShowBanner(true)
-      }, 25_000)
-    }
   }
 
   return (
-    <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318] text-gray-900 dark:text-white overflow-x-hidden'>
+    <div className='bg-[#F4F5F8] dark:bg-[#111318] text-gray-900 dark:text-white overflow-x-hidden'>
+
+      {/* ══════════════════ NAV ══════════════════ */}
+      <nav className='sticky top-0 z-50 bg-white/80 dark:bg-[#111318]/80 backdrop-blur border-b border-gray-200/60 dark:border-white/[0.06] flex justify-between items-center px-8 py-4'>
+        <div className='flex items-center gap-2.5'>
+          <div className='w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center shadow-sm shadow-blue-600/30'>
+            <span className='text-white font-bold text-xs'>S</span>
+          </div>
+          <span className='font-bold text-gray-900 dark:text-white'>SignalPath</span>
+        </div>
+        <div className='flex items-center gap-3'>
+          <button
+            onClick={toggle}
+            className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors'
+            aria-label='Toggle theme'
+          >
+            {theme === 'dark' ? <Sun className='w-4 h-4' /> : <Moon className='w-4 h-4' />}
+          </button>
+          <Link
+            href='/signin'
+            className='text-sm text-gray-500 dark:text-white/45 hover:text-gray-800 dark:hover:text-white/80 px-3 py-1.5 transition-colors'
+          >
+            Sign in
+          </Link>
+          <Link
+            href='/signup'
+            className='text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-500 font-medium transition-colors'
+          >
+            Get early access
+          </Link>
+        </div>
+      </nav>
+
       {/* ══════════════════ HERO ══════════════════ */}
-      <section className='relative flex flex-col' style={{ minHeight: '100svh' }}>
-        {/* Subtle grid background */}
+      <section className='relative flex flex-col items-center justify-center px-8 py-28 text-center overflow-hidden'>
+        {/* Grid background */}
         <div
           className='absolute inset-0 pointer-events-none'
           style={{
@@ -598,103 +647,112 @@ export function MissionControlPage() {
             backgroundSize: '48px 48px',
           }}
         />
+        {/* Glow blob */}
+        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none' />
 
-        {/* Nav */}
-        <nav className='relative z-10 flex justify-between items-center px-8 py-5'>
-          <div className='flex items-center gap-2.5'>
-            <div className='w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/30'>
-              <span className='text-white font-bold text-sm'>S</span>
-            </div>
-            <span className='font-bold text-lg text-gray-900 dark:text-white'>SignalPath</span>
+        <div className='relative z-10 max-w-3xl mx-auto animate-slide-up'>
+          {/* Badge */}
+          <div className='inline-flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-full mb-6'>
+            <span className='w-1.5 h-1.5 rounded-full bg-blue-500 animate-dot-pulse' />
+            Now in early access
           </div>
-          <div className='flex items-center gap-3'>
-            <button
-              onClick={toggle}
-              className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 hover:bg-gray-200 dark:hover:bg-white/[0.06] transition-colors'
-              aria-label='Toggle theme'
-            >
-              {theme === 'dark' ? <Sun className='w-4 h-4' /> : <Moon className='w-4 h-4' />}
-            </button>
-            <Link
-              href='/signin'
-              className='text-sm text-gray-500 dark:text-white/45 hover:text-gray-800 dark:hover:text-white/80 px-3 py-2 transition-colors'
-            >
-              Sign in
-            </Link>
-            <Link
-              href='/signup'
-              className='text-sm bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-500 font-medium transition-colors shadow-lg shadow-blue-600/25'
-            >
-              Get early access
-            </Link>
-          </div>
-        </nav>
 
-        {/* Content */}
-        <div className='relative z-10 flex-1 flex items-center px-8 py-6 overflow-hidden'>
-          <div className='flex gap-5 w-full max-w-6xl mx-auto' style={{ minHeight: 0 }}>
+          <h1 className='text-5xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.05] mb-5'>
+            Turn support tickets into<br />
+            <span className='text-blue-500'>product decisions</span>
+          </h1>
 
-            {/* ── Feed column ── */}
-            <div
-              className='flex-shrink-0 transition-all duration-400'
-              style={{ width: selected ? '280px' : '100%', maxWidth: selected ? '280px' : '480px', margin: selected ? undefined : '0 auto' }}
-            >
-              {!selected && (
-                <div className='text-center mb-6 animate-fade-in'>
-                  <p className='font-mono text-[10px] font-semibold text-gray-400 dark:text-white/25 uppercase tracking-[0.2em] mb-1'>
-                    Live Opportunity Feed
-                  </p>
-                  <p className='text-gray-400 dark:text-white/20 text-xs'>Click any opportunity to explore the detail view</p>
-                </div>
-              )}
-              <div className='space-y-2'>
-                {OPPS.map((opp, i) => (
-                  <FeedCard
-                    key={opp.id}
-                    opp={opp}
-                    isSelected={selectedId === opp.id}
-                    isTop={i === 0}
-                    compact={!!selected}
-                    onClick={() => handleCardClick(opp.id)}
-                  />
-                ))}
-              </div>
-            </div>
+          <p className='text-lg text-gray-500 dark:text-white/45 max-w-xl mx-auto mb-10 leading-relaxed'>
+            Connect your Zendesk. Get ranked product opportunities in 48 hours.
+            Push to Linear or Jira in one click.
+          </p>
 
-            {/* ── Detail / Spec column ── */}
-            {selected && (
-              <div className='flex-1 flex gap-4 animate-slide-in-right overflow-hidden' style={{ minHeight: 0 }}>
-                {/* Detail panel */}
-                <div
-                  className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-200 dark:border-white/[0.07] p-5 flex flex-col overflow-hidden flex-shrink-0 transition-all duration-300'
-                  style={{ width: showSpec ? '320px' : '100%' }}
-                >
-                  <DetailPanel
-                    opp={selected}
-                    onClose={() => {
-                      setSelectedId(null)
-                      setShowSpec(false)
-                      setSpecText('')
-                    }}
-                    onGenerateSpec={startSpec}
-                  />
-                </div>
-
-                {/* Spec JSON panel */}
-                {showSpec && (
-                  <div className='flex-1 overflow-hidden' style={{ minWidth: 0 }}>
-                    <SpecPanel specText={specText} onClose={() => { setShowSpec(false); setSpecText('') }} />
-                  </div>
-                )}
-              </div>
-            )}
+          <div className='flex flex-col items-center gap-4'>
+            <HeroEmailCapture />
+            <p className='text-xs text-gray-400 dark:text-white/25'>
+              No credit card required · Setup in under 5 minutes
+            </p>
           </div>
         </div>
 
-        {/* Tagline bar */}
-        <div className='relative z-10 border-t border-gray-200 dark:border-white/[0.05] py-3 px-8'>
-          <p className='text-center font-mono text-[11px] text-gray-400 dark:text-white/25 tracking-wide'>
-            &ldquo;This is what your Zendesk tickets are trying to tell you.&rdquo;
+        {/* Scroll hint */}
+        <div className='absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-gray-400 dark:text-white/20'>
+          <p className='text-[10px] font-mono uppercase tracking-widest'>Explore the demo</p>
+          <ChevronDown className='w-4 h-4 animate-bounce' />
+        </div>
+      </section>
+
+      {/* ══════════════════ INTERACTIVE DEMO ══════════════════ */}
+      <section className='px-8 py-16'>
+        <div className='max-w-6xl mx-auto'>
+          {/* Section header */}
+          <div className='text-center mb-8'>
+            <p className='font-mono text-[10px] font-semibold text-blue-400/70 uppercase tracking-[0.2em] mb-2'>
+              Live demo · Synthetic data
+            </p>
+            <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-2'>
+              See what your support queue is really saying
+            </h2>
+            <p className='text-sm text-gray-500 dark:text-white/40'>
+              Click any opportunity to explore the scoring breakdown and generate a spec
+            </p>
+          </div>
+
+          {/* Demo container */}
+          <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-200 dark:border-white/[0.07] p-6 shadow-sm dark:shadow-none'>
+            <div className='flex gap-5' style={{ minHeight: '480px' }}>
+
+              {/* Feed column */}
+              <div
+                className='flex-shrink-0 transition-all duration-300'
+                style={{ width: selected ? '260px' : '100%', maxWidth: selected ? '260px' : '460px', margin: selected ? undefined : '0 auto' }}
+              >
+                <div className='space-y-2'>
+                  {OPPS.map((opp, i) => (
+                    <FeedCard
+                      key={opp.id}
+                      opp={opp}
+                      isSelected={selectedId === opp.id}
+                      isTop={i === 0}
+                      compact={!!selected}
+                      onClick={() => handleCardClick(opp.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Detail / Spec column */}
+              {selected && (
+                <div className='flex-1 flex gap-4 animate-slide-in-right overflow-hidden' style={{ minHeight: 0 }}>
+                  {/* Detail panel */}
+                  <div
+                    className='bg-gray-50 dark:bg-[#111318] rounded-xl border border-gray-200 dark:border-white/[0.06] p-5 flex flex-col overflow-hidden flex-shrink-0 transition-all duration-300'
+                    style={{ width: showSpec ? '300px' : '100%' }}
+                  >
+                    <DetailPanel
+                      opp={selected}
+                      onClose={() => {
+                        setSelectedId(null)
+                        setShowSpec(false)
+                        setSpecText('')
+                      }}
+                      onGenerateSpec={startSpec}
+                    />
+                  </div>
+
+                  {/* Spec JSON panel */}
+                  {showSpec && (
+                    <div className='flex-1 overflow-hidden' style={{ minWidth: 0 }}>
+                      <SpecPanel specText={specText} onClose={() => { setShowSpec(false); setSpecText('') }} />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <p className='text-center text-xs text-gray-400 dark:text-white/25 mt-4'>
+            This demo uses synthetic data. Connect your real Zendesk to see your actual opportunities.
           </p>
         </div>
       </section>
@@ -702,17 +760,27 @@ export function MissionControlPage() {
       {/* ══════════════════ BENTO ══════════════════ */}
       <BentoSection />
 
+      {/* ══════════════════ FAQ ══════════════════ */}
+      <section className='px-8 py-20'>
+        <div className='max-w-2xl mx-auto'>
+          <div className='text-center mb-12'>
+            <p className='font-mono text-[10px] font-semibold text-blue-400/60 uppercase tracking-[0.2em] mb-3'>
+              FAQ
+            </p>
+            <h2 className='text-2xl font-bold text-gray-900 dark:text-white'>
+              Common questions
+            </h2>
+          </div>
+          <FAQ />
+        </div>
+      </section>
+
       {/* ══════════════════ FOOTER ══════════════════ */}
       <footer className='border-t border-gray-200 dark:border-white/[0.05] py-8 text-center'>
         <p className='text-xs text-gray-400 dark:text-white/20'>
           &copy; {new Date().getFullYear()} SignalPath. All rights reserved.
         </p>
       </footer>
-
-      {/* ══════════════════ CONVERSION BANNER ══════════════════ */}
-      {showBanner && !bannerDismissed && (
-        <ConversionBanner onDismiss={() => setBannerDismissed(true)} />
-      )}
     </div>
   )
 }
