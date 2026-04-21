@@ -10,8 +10,11 @@ import {
   X,
   CheckCircle,
   ChevronRight,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import { BentoSection } from './BentoSection'
+import { useTheme } from '../ThemeProvider'
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -227,8 +230,8 @@ function FeedCard({
       className={[
         'relative w-full text-left rounded-xl overflow-hidden transition-all duration-200 border group',
         isSelected
-          ? 'border-blue-500/40 bg-[#1A1D24]'
-          : 'border-white/[0.07] bg-[#1A1D24] hover:border-white/[0.14] hover:bg-[#1E2129]',
+          ? 'border-blue-500/40 bg-white dark:bg-[#1A1D24]'
+          : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#1A1D24] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-[#1E2129]',
         isTop && !isSelected ? 'animate-glow-pulse' : '',
       ].join(' ')}
     >
@@ -238,7 +241,7 @@ function FeedCard({
       <div className={`pl-4 pr-3 ${compact ? 'py-2.5' : 'py-3'}`}>
         <div className='flex items-start justify-between gap-2 mb-1.5'>
           <span
-            className={`font-semibold text-white/90 leading-snug flex-1 ${compact ? 'text-[11px] line-clamp-2' : 'text-xs line-clamp-2'} group-hover:text-white transition-colors`}
+            className={`font-semibold text-gray-800 dark:text-white/90 leading-snug flex-1 ${compact ? 'text-[11px] line-clamp-2' : 'text-xs line-clamp-2'} group-hover:text-gray-900 dark:group-hover:text-white transition-colors`}
           >
             {opp.title}
           </span>
@@ -247,7 +250,7 @@ function FeedCard({
           </span>
         </div>
         {!compact && (
-          <div className='flex items-center gap-3 text-[10px] text-white/35'>
+          <div className='flex items-center gap-3 text-[10px] text-gray-400 dark:text-white/35'>
             <span className='flex items-center gap-1'>
               <MessageSquare className='w-3 h-3' />
               {opp.tickets}
@@ -298,10 +301,10 @@ function DetailPanel({
     <div className='h-full flex flex-col overflow-hidden'>
       {/* Header */}
       <div className='flex items-start gap-3 mb-4'>
-        <h2 className='text-sm font-bold text-white leading-snug flex-1'>{opp.title}</h2>
+        <h2 className='text-sm font-bold text-gray-900 dark:text-white leading-snug flex-1'>{opp.title}</h2>
         <button
           onClick={onClose}
-          className='text-white/25 hover:text-white/60 transition-colors flex-shrink-0 mt-0.5'
+          className='text-gray-400 dark:text-white/25 hover:text-gray-600 dark:hover:text-white/60 transition-colors flex-shrink-0 mt-0.5'
           aria-label='Close'
         >
           <X className='w-4 h-4' />
@@ -313,7 +316,7 @@ function DetailPanel({
         <span className='font-mono text-4xl font-black leading-none' style={{ color: text }}>
           {opp.score.toFixed(1)}
         </span>
-        <div className='text-[10px] text-white/35 pb-1 space-y-0.5'>
+        <div className='text-[10px] text-gray-400 dark:text-white/35 pb-1 space-y-0.5'>
           <div>{opp.tickets} tickets · {opp.churn} churn signals</div>
           <div className='text-emerald-400/70'>{fmt(opp.revenue)} revenue at risk</div>
         </div>
@@ -321,14 +324,14 @@ function DetailPanel({
 
       {/* Score dimensions */}
       <div className='mb-5'>
-        <p className='text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-2.5'>
+        <p className='text-[10px] font-semibold text-gray-400 dark:text-white/25 uppercase tracking-widest mb-2.5'>
           Score Breakdown
         </p>
         <div className='space-y-2'>
           {Object.entries(opp.dims).map(([dim, val]) => (
             <div key={dim} className='flex items-center gap-2.5'>
-              <span className='text-[10px] text-white/45 w-28 flex-shrink-0'>{dim}</span>
-              <div className='flex-1 bg-white/[0.06] rounded-full h-1 overflow-hidden'>
+              <span className='text-[10px] text-gray-500 dark:text-white/45 w-28 flex-shrink-0'>{dim}</span>
+              <div className='flex-1 bg-gray-200 dark:bg-white/[0.06] rounded-full h-1 overflow-hidden'>
                 <div
                   className='h-full rounded-full'
                   style={{
@@ -338,7 +341,7 @@ function DetailPanel({
                   }}
                 />
               </div>
-              <span className='font-mono text-[10px] text-white/35 w-6 text-right'>{val.toFixed(1)}</span>
+              <span className='font-mono text-[10px] text-gray-400 dark:text-white/35 w-6 text-right'>{val.toFixed(1)}</span>
             </div>
           ))}
         </div>
@@ -346,16 +349,16 @@ function DetailPanel({
 
       {/* Verbatims */}
       <div className='flex-1 overflow-y-auto min-h-0 mb-4'>
-        <p className='text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-2.5'>
+        <p className='text-[10px] font-semibold text-gray-400 dark:text-white/25 uppercase tracking-widest mb-2.5'>
           Representative Signals
         </p>
         <div className='space-y-2'>
           {opp.verbatims.map((v, i) => (
-            <div key={i} className='bg-white/[0.03] rounded-lg p-3 border border-white/[0.06]'>
-              <p className='text-[11px] text-white/65 leading-relaxed italic mb-1.5'>
+            <div key={i} className='bg-gray-50 dark:bg-white/[0.03] rounded-lg p-3 border border-gray-200 dark:border-white/[0.06]'>
+              <p className='text-[11px] text-gray-600 dark:text-white/65 leading-relaxed italic mb-1.5'>
                 &ldquo;{v.text}&rdquo;
               </p>
-              <p className='text-[10px] text-white/25'>{v.from}</p>
+              <p className='text-[10px] text-gray-400 dark:text-white/25'>{v.from}</p>
             </div>
           ))}
         </div>
@@ -393,7 +396,7 @@ function SpecPanel({ specText, onClose }: { specText: string; onClose: () => voi
             <span className='w-2.5 h-2.5 rounded-full bg-yellow-500/50' />
             <span className='w-2.5 h-2.5 rounded-full bg-green-500/50' />
           </div>
-          <span className='font-mono text-[10px] text-white/25'>agent_spec.json</span>
+          <span className='font-mono text-[10px] text-white/50'>agent_spec.json</span>
         </div>
         <button
           onClick={onClose}
@@ -469,10 +472,10 @@ function ConversionBanner({ onDismiss }: { onDismiss: () => void }) {
 
   return (
     <div className='fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-up'>
-      <div className='max-w-xl mx-auto bg-[#1A1D24] border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/60'>
+      <div className='max-w-xl mx-auto bg-white dark:bg-[#1A1D24] border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/20 dark:shadow-black/60'>
         <button
           onClick={onDismiss}
-          className='absolute top-3 right-3 text-white/25 hover:text-white/55 transition-colors'
+          className='absolute top-3 right-3 text-gray-400 dark:text-white/25 hover:text-gray-600 dark:hover:text-white/55 transition-colors'
           aria-label='Dismiss'
         >
           <X className='w-4 h-4' />
@@ -481,16 +484,16 @@ function ConversionBanner({ onDismiss }: { onDismiss: () => void }) {
         {done ? (
           <div className='flex items-center gap-3 text-sm'>
             <CheckCircle className='w-5 h-5 text-emerald-400 flex-shrink-0' />
-            <span className='text-white/70'>
+            <span className='text-gray-600 dark:text-white/70'>
               You&rsquo;re on the list. We&rsquo;ll be in touch within 24 hours.
             </span>
           </div>
         ) : (
           <>
-            <p className='text-white/80 text-sm font-semibold mb-0.5'>
+            <p className='text-gray-800 dark:text-white/80 text-sm font-semibold mb-0.5'>
               This demo uses synthetic data.
             </p>
-            <p className='text-white/35 text-xs mb-4'>
+            <p className='text-gray-500 dark:text-white/35 text-xs mb-4'>
               Connect your real Zendesk and see your actual opportunities in 24 hours.
             </p>
             <form onSubmit={handleSubmit} className='flex gap-2'>
@@ -500,7 +503,7 @@ function ConversionBanner({ onDismiss }: { onDismiss: () => void }) {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder='you@company.com'
-                className='flex-1 bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 transition-colors'
+                className='flex-1 bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:border-blue-500/50 transition-colors'
               />
               <button
                 type='submit'
@@ -520,6 +523,7 @@ function ConversionBanner({ onDismiss }: { onDismiss: () => void }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function MissionControlPage() {
+  const { theme, toggle } = useTheme()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showSpec, setShowSpec] = useState(false)
   const [specText, setSpecText] = useState('')
@@ -581,15 +585,16 @@ export function MissionControlPage() {
   }
 
   return (
-    <div className='min-h-screen bg-[#111318] text-white overflow-x-hidden'>
+    <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318] text-gray-900 dark:text-white overflow-x-hidden'>
       {/* ══════════════════ HERO ══════════════════ */}
       <section className='relative flex flex-col' style={{ minHeight: '100svh' }}>
         {/* Subtle grid background */}
         <div
           className='absolute inset-0 pointer-events-none'
           style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
+            backgroundImage: theme === 'dark'
+              ? 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)'
+              : 'linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)',
             backgroundSize: '48px 48px',
           }}
         />
@@ -600,12 +605,19 @@ export function MissionControlPage() {
             <div className='w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/30'>
               <span className='text-white font-bold text-sm'>S</span>
             </div>
-            <span className='font-bold text-lg text-white'>SignalPath</span>
+            <span className='font-bold text-lg text-gray-900 dark:text-white'>SignalPath</span>
           </div>
           <div className='flex items-center gap-3'>
+            <button
+              onClick={toggle}
+              className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 hover:bg-gray-200 dark:hover:bg-white/[0.06] transition-colors'
+              aria-label='Toggle theme'
+            >
+              {theme === 'dark' ? <Sun className='w-4 h-4' /> : <Moon className='w-4 h-4' />}
+            </button>
             <Link
               href='/signin'
-              className='text-sm text-white/45 hover:text-white/80 px-3 py-2 transition-colors'
+              className='text-sm text-gray-500 dark:text-white/45 hover:text-gray-800 dark:hover:text-white/80 px-3 py-2 transition-colors'
             >
               Sign in
             </Link>
@@ -629,10 +641,10 @@ export function MissionControlPage() {
             >
               {!selected && (
                 <div className='text-center mb-6 animate-fade-in'>
-                  <p className='font-mono text-[10px] font-semibold text-white/25 uppercase tracking-[0.2em] mb-1'>
+                  <p className='font-mono text-[10px] font-semibold text-gray-400 dark:text-white/25 uppercase tracking-[0.2em] mb-1'>
                     Live Opportunity Feed
                   </p>
-                  <p className='text-white/20 text-xs'>Click any opportunity to explore the detail view</p>
+                  <p className='text-gray-400 dark:text-white/20 text-xs'>Click any opportunity to explore the detail view</p>
                 </div>
               )}
               <div className='space-y-2'>
@@ -654,7 +666,7 @@ export function MissionControlPage() {
               <div className='flex-1 flex gap-4 animate-slide-in-right overflow-hidden' style={{ minHeight: 0 }}>
                 {/* Detail panel */}
                 <div
-                  className='bg-[#1A1D24] rounded-2xl border border-white/[0.07] p-5 flex flex-col overflow-hidden flex-shrink-0 transition-all duration-300'
+                  className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-200 dark:border-white/[0.07] p-5 flex flex-col overflow-hidden flex-shrink-0 transition-all duration-300'
                   style={{ width: showSpec ? '320px' : '100%' }}
                 >
                   <DetailPanel
@@ -680,8 +692,8 @@ export function MissionControlPage() {
         </div>
 
         {/* Tagline bar */}
-        <div className='relative z-10 border-t border-white/[0.05] py-3 px-8'>
-          <p className='text-center font-mono text-[11px] text-white/25 tracking-wide'>
+        <div className='relative z-10 border-t border-gray-200 dark:border-white/[0.05] py-3 px-8'>
+          <p className='text-center font-mono text-[11px] text-gray-400 dark:text-white/25 tracking-wide'>
             &ldquo;This is what your Zendesk tickets are trying to tell you.&rdquo;
           </p>
         </div>
@@ -691,8 +703,8 @@ export function MissionControlPage() {
       <BentoSection />
 
       {/* ══════════════════ FOOTER ══════════════════ */}
-      <footer className='border-t border-white/[0.05] py-8 text-center'>
-        <p className='text-xs text-white/20'>
+      <footer className='border-t border-gray-200 dark:border-white/[0.05] py-8 text-center'>
+        <p className='text-xs text-gray-400 dark:text-white/20'>
           &copy; {new Date().getFullYear()} SignalPath. All rights reserved.
         </p>
       </footer>

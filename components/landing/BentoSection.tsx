@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Zap, GitMerge, Sliders, Send } from 'lucide-react'
+import { useTheme } from '../ThemeProvider'
 
 // ─── Tile 1: Signal Counter ────────────────────────────────────────────────────
 
@@ -57,18 +58,18 @@ function SignalCounterTile() {
     <div ref={tileRef} className='bento-tile flex flex-col justify-between h-full'>
       <div>
         <TileLabel icon={<Zap className='w-3.5 h-3.5' />} label='Signal Ingestion' index='01' />
-        <p className='font-mono text-5xl font-black text-white mt-4 mb-1 tabular-nums leading-none'>
+        <p className='font-mono text-5xl font-black text-gray-900 dark:text-white mt-4 mb-1 tabular-nums leading-none'>
           {count.toLocaleString()}
         </p>
-        <p className='text-xs text-white/30 font-mono'>signals processed</p>
+        <p className='text-xs text-gray-400 dark:text-white/30 font-mono'>signals processed</p>
       </div>
 
       <div className='mt-5 space-y-2'>
         {SOURCES.map(s => (
           <div key={s.name} className='flex items-center gap-2.5'>
             <span className='w-2 h-2 rounded-full flex-shrink-0' style={{ backgroundColor: s.dot }} />
-            <span className='text-xs text-white/50'>{s.name}</span>
-            <div className='flex-1 bg-white/[0.05] rounded-full h-0.5 overflow-hidden'>
+            <span className='text-xs text-gray-500 dark:text-white/50'>{s.name}</span>
+            <div className='flex-1 bg-gray-200 dark:bg-white/[0.05] rounded-full h-0.5 overflow-hidden'>
               <div
                 className='h-full rounded-full'
                 style={{
@@ -81,7 +82,7 @@ function SignalCounterTile() {
           </div>
         ))}
       </div>
-      <p className='text-[10px] text-white/20 mt-4'>
+      <p className='text-[10px] text-gray-400 dark:text-white/20 mt-4'>
         Real-time ingestion across all connected help-desk sources.
       </p>
     </div>
@@ -128,6 +129,7 @@ const EDGES: GraphEdge[] = [
 ]
 
 function ProblemGraphTile() {
+  const { theme } = useTheme()
   const [nodes, setNodes] = useState<GraphNode[]>(INIT_NODES)
   const svgRef = useRef<SVGSVGElement>(null)
   const draggingRef = useRef<{ id: string; ox: number; oy: number } | null>(null)
@@ -169,7 +171,7 @@ function ProblemGraphTile() {
   return (
     <div className='bento-tile flex flex-col h-full'>
       <TileLabel icon={<GitMerge className='w-3.5 h-3.5' />} label='Problem Graph' index='02' />
-      <p className='text-[10px] text-white/25 mt-1 mb-3'>Drag nodes to explore cluster relationships.</p>
+      <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-3'>Drag nodes to explore cluster relationships.</p>
       <div className='flex-1 min-h-0'>
         <svg
           ref={svgRef}
@@ -186,7 +188,7 @@ function ProblemGraphTile() {
               <line
                 key={`${from}-${to}`}
                 x1={f.x} y1={f.y} x2={t.x} y2={t.y}
-                stroke='rgba(255,255,255,0.07)'
+                stroke={theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.1)'}
                 strokeWidth='1.5'
               />
             )
@@ -237,6 +239,7 @@ const SLIDER_ITEMS = [
 const ITEM_H = 46
 
 function ScoringSliderTile() {
+  const { theme } = useTheme()
   const [weight, setWeight] = useState(0.5) // 0 = recency, 1 = revenue
 
   const ranked = useMemo(
@@ -259,7 +262,7 @@ function ScoringSliderTile() {
 
       {/* Slider */}
       <div className='mt-3 mb-4'>
-        <div className='flex justify-between text-[10px] text-white/30 mb-2'>
+        <div className='flex justify-between text-[10px] text-gray-400 dark:text-white/30 mb-2'>
           <span>← Recency</span>
           <span>Revenue Impact →</span>
         </div>
@@ -271,10 +274,10 @@ function ScoringSliderTile() {
           onChange={e => setWeight(Number(e.target.value) / 100)}
           className='w-full h-1 rounded-full accent-blue-500 cursor-pointer'
           style={{
-            background: `linear-gradient(to right, #3B82F6 ${weight * 100}%, rgba(255,255,255,0.1) ${weight * 100}%)`,
+            background: `linear-gradient(to right, #3B82F6 ${weight * 100}%, ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} ${weight * 100}%)`,
           }}
         />
-        <p className='text-center font-mono text-[10px] text-white/25 mt-1.5'>
+        <p className='text-center font-mono text-[10px] text-gray-400 dark:text-white/25 mt-1.5'>
           {weight === 0 ? 'Recency only' : weight === 1 ? 'Revenue only' : `${Math.round((1 - weight) * 100)}% recency · ${Math.round(weight * 100)}% revenue`}
         </p>
       </div>
@@ -288,15 +291,15 @@ function ScoringSliderTile() {
           return (
             <div
               key={item.id}
-              className='absolute left-0 right-0 flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06]'
+              className='absolute left-0 right-0 flex items-center gap-2.5 px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.06]'
               style={{
                 top: rank * ITEM_H,
                 transition: 'top 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 height: ITEM_H - 4,
               }}
             >
-              <span className='font-mono text-[10px] text-white/25 w-4 text-center'>{rank + 1}</span>
-              <span className='text-[11px] text-white/65 flex-1 truncate'>{item.label}</span>
+              <span className='font-mono text-[10px] text-gray-400 dark:text-white/25 w-4 text-center'>{rank + 1}</span>
+              <span className='text-[11px] text-gray-600 dark:text-white/65 flex-1 truncate'>{item.label}</span>
               <span className='font-mono text-[10px] font-bold flex-shrink-0' style={{ color }}>
                 {score.toFixed(1)}
               </span>
@@ -354,7 +357,7 @@ function HandoffTile() {
   return (
     <div className='bento-tile flex flex-col h-full'>
       <TileLabel icon={<Send className='w-3.5 h-3.5' />} label='Spec & Agent Handoff' index='04' />
-      <p className='text-[10px] text-white/25 mt-1 mb-3'>Hover a section to see the JSON mapping.</p>
+      <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-3'>Hover a section to see the JSON mapping.</p>
 
       <div className='flex-1 flex gap-3 min-h-0 overflow-hidden'>
         {/* Human brief */}
@@ -367,19 +370,19 @@ function HandoffTile() {
               className={`rounded-lg p-2.5 border cursor-default transition-all duration-150 ${
                 hovered === s.id
                   ? 'border-blue-500/40 bg-blue-500/8'
-                  : 'border-white/[0.06] bg-white/[0.03]'
+                  : 'border-gray-200 dark:border-white/[0.06] bg-gray-50 dark:bg-white/[0.03]'
               }`}
             >
-              <p className={`text-[10px] font-semibold mb-0.5 transition-colors ${hovered === s.id ? 'text-blue-400' : 'text-white/40'}`}>
+              <p className={`text-[10px] font-semibold mb-0.5 transition-colors ${hovered === s.id ? 'text-blue-400' : 'text-gray-500 dark:text-white/40'}`}>
                 {s.title}
               </p>
-              <p className='text-[10px] text-white/50 leading-relaxed'>{s.body}</p>
+              <p className='text-[10px] text-gray-500 dark:text-white/50 leading-relaxed'>{s.body}</p>
             </div>
           ))}
         </div>
 
         {/* Divider */}
-        <div className='w-px bg-white/[0.06] flex-shrink-0' />
+        <div className='w-px bg-gray-200 dark:bg-white/[0.06] flex-shrink-0' />
 
         {/* JSON */}
         <div className='flex-1 overflow-y-auto'>
@@ -415,8 +418,8 @@ function JsonTokens({ text, highlighted }: { text: string; highlighted: boolean 
         }
         if (/^\d/.test(tok)) return <span key={i} className={highlighted ? 'text-orange-300' : 'text-orange-400/60'}>{tok}</span>
         if (['{', '}', '[', ']', ',', ':'].includes(tok))
-          return <span key={i} className='text-white/20'>{tok}</span>
-        return <span key={i} className='text-white/35'>{tok}</span>
+          return <span key={i} className='text-gray-400 dark:text-white/20'>{tok}</span>
+        return <span key={i} className='text-gray-500 dark:text-white/35'>{tok}</span>
       })}
     </>
   )
@@ -428,8 +431,8 @@ function TileLabel({ icon, label, index }: { icon: React.ReactNode; label: strin
   return (
     <div className='flex items-center gap-2'>
       <span className='text-blue-400/70'>{icon}</span>
-      <span className='text-[10px] font-semibold text-white/40 uppercase tracking-widest'>{label}</span>
-      <span className='ml-auto font-mono text-[10px] text-white/15'>{index}</span>
+      <span className='text-[10px] font-semibold text-gray-500 dark:text-white/40 uppercase tracking-widest'>{label}</span>
+      <span className='ml-auto font-mono text-[10px] text-gray-300 dark:text-white/15'>{index}</span>
     </div>
   )
 }
@@ -438,17 +441,17 @@ function TileLabel({ icon, label, index }: { icon: React.ReactNode; label: strin
 
 export function BentoSection() {
   return (
-    <section className='bg-[#111318] px-8 py-20'>
+    <section className='bg-[#F4F5F8] dark:bg-[#111318] px-8 py-20'>
       <div className='max-w-6xl mx-auto'>
         {/* Header */}
         <div className='mb-10'>
           <p className='font-mono text-[10px] font-semibold text-blue-400/60 uppercase tracking-[0.2em] mb-3'>
             Under the hood
           </p>
-          <h2 className='text-3xl font-bold text-white tracking-tight'>
+          <h2 className='text-3xl font-bold text-gray-900 dark:text-white tracking-tight'>
             Four layers. Zero noise.
           </h2>
-          <p className='text-white/35 text-sm mt-2 max-w-lg'>
+          <p className='text-gray-500 dark:text-white/35 text-sm mt-2 max-w-lg'>
             Each layer in the SignalPath engine is interactive. Explore how raw tickets become ranked decisions.
           </p>
         </div>
