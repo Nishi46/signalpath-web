@@ -55,19 +55,17 @@ function SignalCounterTile() {
   }, [])
 
   return (
-    <div ref={tileRef} className='bento-tile flex flex-col justify-between h-full'>
-      <div>
-        <TileLabel icon={<Zap className='w-3.5 h-3.5' />} label='Signal Ingestion' index='01' />
-        <p className='font-display text-5xl font-bold text-gray-900 dark:text-white mt-4 mb-1 tabular-nums leading-none'>
-          {count.toLocaleString()}
-        </p>
-        <p className='text-xs text-gray-400 dark:text-white/30 font-mono'>signals processed</p>
-      </div>
+    <div ref={tileRef} className='bento-tile flex flex-col h-full'>
+      <TileLabel icon={<Zap className='w-3.5 h-3.5' />} label='Signal Ingestion' index='01' />
+      <p className='font-display text-4xl font-bold text-gray-900 dark:text-white mt-3 mb-0.5 tabular-nums leading-none'>
+        {count.toLocaleString()}
+      </p>
+      <p className='text-xs text-gray-400 dark:text-white/30 font-mono mb-4'>signals processed</p>
 
-      <div className='mt-5 space-y-2'>
+      <div className='space-y-2 mb-4'>
         {SOURCES.map(s => (
           <div key={s.name} className='flex items-center gap-2.5'>
-            <span className='w-2 h-2 rounded-full flex-shrink-0' style={{ backgroundColor: s.dot }} />
+            <span className='w-1.5 h-1.5 rounded-full flex-shrink-0' style={{ backgroundColor: s.dot }} />
             <span className='text-xs text-gray-500 dark:text-white/50'>{s.name}</span>
             <div className='flex-1 bg-gray-200 dark:bg-white/[0.05] rounded-full h-0.5 overflow-hidden'>
               <div
@@ -82,9 +80,12 @@ function SignalCounterTile() {
           </div>
         ))}
       </div>
-      <p className='text-[10px] text-gray-400 dark:text-white/20 mt-4'>
-        Real-time ingestion across all connected help-desk sources.
-      </p>
+
+      <div className='mt-auto pt-3 border-t border-gray-100 dark:border-white/[0.06]'>
+        <p className='text-[10px] text-gray-400 dark:text-white/20 leading-relaxed'>
+          Real-time ingestion across all connected help-desk sources.
+        </p>
+      </div>
     </div>
   )
 }
@@ -236,7 +237,7 @@ const SLIDER_ITEMS = [
   { id: 's5', label: 'Dashboard filter not persisted',    recency: 6.2, revenue: 5.4 },
 ]
 
-const ITEM_H = 46
+const ITEM_H = 38
 
 function ScoringSliderTile() {
   const { theme } = useTheme()
@@ -261,8 +262,8 @@ function ScoringSliderTile() {
       <TileLabel icon={<Sliders className='w-3.5 h-3.5' />} label='Opportunity Scoring' index='03' />
 
       {/* Slider */}
-      <div className='mt-3 mb-4'>
-        <div className='flex justify-between text-[10px] text-gray-400 dark:text-white/30 mb-2'>
+      <div className='mt-2 mb-3'>
+        <div className='flex justify-between text-[10px] text-gray-400 dark:text-white/30 mb-1.5'>
           <span>← Recency</span>
           <span>Revenue Impact →</span>
         </div>
@@ -277,13 +278,13 @@ function ScoringSliderTile() {
             background: `linear-gradient(to right, #3B82F6 ${weight * 100}%, ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} ${weight * 100}%)`,
           }}
         />
-        <p className='text-center font-mono text-[10px] text-gray-400 dark:text-white/25 mt-1.5'>
+        <p className='text-center font-mono text-[10px] text-gray-400 dark:text-white/25 mt-1'>
           {weight === 0 ? 'Recency only' : weight === 1 ? 'Revenue only' : `${Math.round((1 - weight) * 100)}% recency · ${Math.round(weight * 100)}% revenue`}
         </p>
       </div>
 
       {/* Sortable list */}
-      <div className='flex-1 relative' style={{ minHeight: SLIDER_ITEMS.length * ITEM_H }}>
+      <div className='relative overflow-hidden' style={{ height: SLIDER_ITEMS.length * ITEM_H }}>
         {SLIDER_ITEMS.map(item => {
           const rank = ranked.findIndex(r => r.id === item.id)
           const score = (1 - weight) * item.recency + weight * item.revenue
@@ -291,11 +292,12 @@ function ScoringSliderTile() {
           return (
             <div
               key={item.id}
-              className='absolute left-0 right-0 flex items-center gap-2.5 px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.06]'
+              className='absolute left-0 right-0 flex items-center gap-2 px-2.5 rounded-lg bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.06]'
               style={{
                 top: rank * ITEM_H,
                 transition: 'top 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 height: ITEM_H - 4,
+                alignItems: 'center',
               }}
             >
               <span className='font-mono text-[10px] text-gray-400 dark:text-white/25 w-4 text-center'>{rank + 1}</span>
@@ -357,7 +359,7 @@ function HandoffTile() {
   return (
     <div className='bento-tile flex flex-col h-full'>
       <TileLabel icon={<Send className='w-3.5 h-3.5' />} label='Spec & Agent Handoff' index='04' />
-      <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-3'>Hover a section to see the JSON mapping.</p>
+      <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-2'>Hover a section to see the JSON mapping.</p>
 
       <div className='flex-1 flex gap-3 min-h-0 overflow-hidden'>
         {/* Human brief */}
@@ -456,26 +458,28 @@ export function BentoSection() {
           </p>
         </div>
 
-        {/* Bento grid — 5 cols: Signal Counter takes col 1 (row-span-2), Problem Graph spans cols 2–5,
-            Scoring and Handoff each span cols 2–3 and 4–5 respectively in row 2 */}
-        <div className='grid grid-cols-5 grid-rows-2 gap-4' style={{ height: '640px' }}>
+        {/* Bento grid */}
+        <div
+          className='grid grid-cols-5 gap-4'
+          style={{ gridTemplateRows: '280px 340px' }}
+        >
           {/* Tile 1 — Signal Counter: col 1, rows 1-2 */}
-          <div className='row-span-2'>
+          <div className='row-span-2 min-h-0'>
             <SignalCounterTile />
           </div>
 
           {/* Tile 2 — Problem Graph: cols 2-5, row 1 */}
-          <div className='col-span-4'>
+          <div className='col-span-4 min-h-0'>
             <ProblemGraphTile />
           </div>
 
           {/* Tile 3 — Scoring Slider: cols 2-3, row 2 */}
-          <div className='col-span-2'>
+          <div className='col-span-2 min-h-0'>
             <ScoringSliderTile />
           </div>
 
           {/* Tile 4 — Handoff: cols 4-5, row 2 */}
-          <div className='col-span-2'>
+          <div className='col-span-2 min-h-0'>
             <HandoffTile />
           </div>
         </div>
