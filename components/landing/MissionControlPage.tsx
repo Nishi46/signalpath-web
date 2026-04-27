@@ -651,12 +651,6 @@ export function MissionControlPage() {
         <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none' />
 
         <div className='relative z-10 max-w-3xl mx-auto animate-slide-up'>
-          {/* Badge */}
-          <div className='inline-flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-full mb-6'>
-            <span className='w-1.5 h-1.5 rounded-full bg-blue-500 animate-dot-pulse' />
-            Now in early access
-          </div>
-
           <h1 className='font-display text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-[1.05] mb-5'>
             Turn support tickets into<br />
             <span className='text-blue-500'>product decisions</span>
