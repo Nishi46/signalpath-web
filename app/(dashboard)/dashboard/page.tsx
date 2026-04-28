@@ -287,7 +287,7 @@ export default function DashboardPage() {
             ) : (
               <div className='divide-y divide-white/[0.04]'>
                 {stats.top_opportunities.map((opp, idx) => {
-                  const colors = scoreColor(opp.opportunity_score)
+                  const colors = scoreColor(opp.opportunity_score ?? 0)
                   return (
                     <Link
                       key={opp.id}
@@ -320,7 +320,7 @@ export default function DashboardPage() {
                       </div>
                       <div className={`shrink-0 w-10 h-10 rounded-xl ring-1 ${colors.bg} ${colors.ring} flex items-center justify-center`}>
                         <span className={`text-sm font-bold font-mono ${colors.text} tabular-nums`}>
-                          {opp.opportunity_score.toFixed(1)}
+                          {opp.opportunity_score != null ? opp.opportunity_score.toFixed(1) : '—'}
                         </span>
                       </div>
                     </Link>

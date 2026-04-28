@@ -45,8 +45,8 @@ export async function GET(
 
   const { data: enrichments } = await supabaseAdmin
     .from('org_enrichments')
-    .select('organization_id, organization_name, domain, estimated_revenue_usd')
-    .in('organization_id', orgIds)
+    .select('zendesk_org_id, org_name, domain, estimated_revenue_usd')
+    .in('zendesk_org_id', orgIds)
     .eq('workspace_id', workspaceId)
 
   // Also check CRM for real ARR by domain
@@ -69,8 +69,8 @@ export async function GET(
   }
 
   const accounts = (enrichments ?? []).map(e => ({
-    organization_id: e.organization_id,
-    name: e.organization_name ?? e.domain ?? 'Unknown',
+    organization_id: e.zendesk_org_id,
+    name: e.org_name ?? e.domain ?? 'Unknown',
     domain: e.domain ?? null,
     arr_usd: e.domain && crmMap[e.domain] ? crmMap[e.domain] : (e.estimated_revenue_usd ?? null),
     revenue_source: e.domain && crmMap[e.domain] ? 'crm' : 'ai_estimate',
