@@ -25,7 +25,7 @@ export default function SignInPage() {
       return
     }
 
-    window.location.href = '/opportunities'
+    window.location.href = '/dashboard'
   }
 
   return (
