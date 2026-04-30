@@ -13,12 +13,15 @@ export async function POST(
 
   const { id: clusterId } = await params
 
+  const body = await _req.json().catch(() => ({}))
+  const notes = typeof body.notes === 'string' ? body.notes.slice(0, 2000) : undefined
+
   const res = await fetch(
     `${API_URL}/clusters/${encodeURIComponent(clusterId)}/generate-spec-sync`,
     {
       method: 'POST',
       headers: internalHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ workspace_id: workspaceId }),
+      body: JSON.stringify({ workspace_id: workspaceId, ...(notes ? { notes } : {}) }),
     },
   )
 

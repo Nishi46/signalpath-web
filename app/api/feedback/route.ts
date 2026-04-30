@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { action } = body
+  const { action, feedback_type = 'cluster', notes } = body
 
   // Support both single cluster_id (string) and batch cluster_ids (string[])
   const clusterIds: string[] = Array.isArray(body.cluster_ids)
@@ -26,6 +26,33 @@ export async function POST(req: NextRequest) {
 
   if (clusterIds.length === 0 || !action) {
     return NextResponse.json({ error: 'cluster_id(s) and action required' }, { status: 400 })
+  }
+
+  if (!['cluster', 'spec'].includes(feedback_type)) {
+    return NextResponse.json({ error: 'feedback_type must be cluster or spec' }, { status: 400 })
+  }
+
+  if (feedback_type === 'spec') {
+    // Spec-level feedback: store the PM's revision note, don't touch pm_rating or ML training.
+    if (action !== 'dismiss') {
+      return NextResponse.json({ error: 'spec feedback action must be dismiss' }, { status: 400 })
+    }
+    const rows = clusterIds.map(cluster_id => {
+      const row: Record<string, unknown> = {
+        workspace_id: workspaceId,
+        cluster_id,
+        action,
+        feedback_type: 'spec',
+      }
+      if (userId) row.user_id = userId
+      if (notes && typeof notes === 'string') row.notes = notes.slice(0, 2000)
+      return row
+    })
+    const { error } = await supabaseAdmin.from('feedback').insert(rows)
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ success: true })
   }
 
   if (!['approve', 'skip', 'dismiss', 'ship'].includes(action)) {

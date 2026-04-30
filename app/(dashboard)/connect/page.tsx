@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ConnectView } from '@/components/ConnectView'
 import { ProcessingView } from '@/components/ProcessingView'
+import { TechStackStep } from '@/components/TechStackStep'
 import { useWorkspace } from '@/lib/hooks/use-workspace'
 
 interface PipelineStatus {
@@ -30,6 +31,7 @@ function ConnectContent() {
   const [connectingIntercom, setConnectingIntercom] = useState(false)
   const [slackConnected, setSlackConnected] = useState(false)
   const [connectingSlack, setConnectingSlack] = useState(false)
+  const [techStackDone, setTechStackDone] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
   const connected = searchParams.get('connected') === 'true'
@@ -261,6 +263,20 @@ function ConnectContent() {
     return () => clearInterval(interval)
   }, [connected])
 
+  async function handleSaveTechStack(stack: { frontend: string; backend: string; database: string; hosting?: string }) {
+    try {
+      await fetch('/api/tech-stack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stack),
+      })
+    } catch { /* non-fatal — processing proceeds regardless */ }
+    setTechStackDone(true)
+  }
+
+  if (connected && !techStackDone) {
+    return <TechStackStep onSave={handleSaveTechStack} onSkip={() => setTechStackDone(true)} />
+  }
   if (connected) return <ProcessingView status={pipelineStatus} stalledPolls={stalledPolls} />
   if (linearConnected || jiraConnected) {
     const service = linearConnected ? 'Linear' : 'Jira'

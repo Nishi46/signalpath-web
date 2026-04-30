@@ -20,6 +20,7 @@ import {
   DollarSign,
   Package,
   Building2,
+  RefreshCw,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -91,6 +92,9 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   const [linearConnected, setLinearConnected] = useState<boolean | null>(null)
   const [jiraConnected, setJiraConnected] = useState<boolean | null>(null)
   const [briefExpanded, setBriefExpanded] = useState(false)
+  const [specRejecting, setSpecRejecting] = useState(false)
+  const [specNotes, setSpecNotes] = useState('')
+  const [specRejectBusy, setSpecRejectBusy] = useState(false)
   const [shipped, setShipped] = useState(false)
   const [shippingBusy, setShippingBusy] = useState(false)
   const [accountsOpen, setAccountsOpen] = useState(false)
@@ -269,12 +273,14 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
     window.print()
   }
 
-  async function triggerSpecGeneration() {
+  async function triggerSpecGeneration(notes?: string) {
     setSpecBusy(true)
     setSpecError(null)
     try {
       const res = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/generate-spec`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notes ? { notes } : {}),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -296,6 +302,30 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
       setSpecError(e instanceof Error ? e.message : 'Spec generation failed')
     } finally {
       setSpecBusy(false)
+    }
+  }
+
+  async function handleRejectSpec() {
+    if (!specNotes.trim()) return
+    setSpecRejectBusy(true)
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cluster_id: cluster.id,
+          action: 'dismiss',
+          feedback_type: 'spec',
+          notes: specNotes.trim(),
+        }),
+      })
+      setSpecRejecting(false)
+      setSpecNotes('')
+      await triggerSpecGeneration(specNotes.trim())
+    } catch {
+      toast('Could not submit revision — please try again', 'error')
+    } finally {
+      setSpecRejectBusy(false)
     }
   }
 
