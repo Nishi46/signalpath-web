@@ -603,8 +603,52 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                 <Sparkles className='w-3.5 h-3.5' />
                 {specBusy ? 'Generating…' : hasSpec ? 'Regenerate' : 'Generate'}
               </button>
+              {hasSpec && (
+                <button
+                  type='button'
+                  disabled={specBusy}
+                  onClick={() => setSpecRejecting(r => !r)}
+                  className='inline-flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-500/10 px-3 py-2 rounded-lg border border-amber-500/20 hover:bg-amber-500/15 disabled:opacity-50 transition-colors'
+                >
+                  <RefreshCw className='w-3.5 h-3.5' />
+                  Request revision
+                </button>
+              )}
             </div>
           </div>
+
+          {specRejecting && (
+            <div className='mb-4 p-4 bg-amber-500/8 border border-amber-500/20 rounded-xl space-y-3'>
+              <p className='text-xs font-medium text-amber-300'>
+                Describe what's wrong — this note is sent to Claude for the next generation.
+              </p>
+              <textarea
+                value={specNotes}
+                onChange={e => setSpecNotes(e.target.value)}
+                placeholder='e.g. "We use GraphQL not REST" or "Our frontend is SvelteKit, not React"'
+                rows={3}
+                className='w-full bg-white/[0.05] border border-amber-500/20 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/25 outline-none focus:border-amber-500/40 resize-none transition-all'
+              />
+              <div className='flex items-center gap-2'>
+                <button
+                  type='button'
+                  disabled={!specNotes.trim() || specRejectBusy || specBusy}
+                  onClick={() => void handleRejectSpec()}
+                  className='text-xs font-medium text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3 py-1.5 rounded-lg disabled:opacity-50 transition-colors'
+                >
+                  {specRejectBusy || specBusy ? 'Regenerating…' : 'Submit & regenerate'}
+                </button>
+                <button
+                  type='button'
+                  onClick={() => { setSpecRejecting(false); setSpecNotes('') }}
+                  className='text-xs text-gray-400 dark:text-white/30 hover:text-gray-500 dark:text-white/50 transition-colors'
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           {specError && (
             <p className='text-sm text-red-400 mb-3'>{specError}</p>
           )}
