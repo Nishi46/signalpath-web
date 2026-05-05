@@ -1,14 +1,10 @@
 'use client'
 import { DashboardNav } from './DashboardNav'
-import { Link2, CheckCircle2, DollarSign, MessageSquare, Bell, ExternalLink } from 'lucide-react'
+import { Link2, CheckCircle2, DollarSign, MessageSquare, Bell } from 'lucide-react'
 
 interface ConnectViewProps {
   subdomain: string
   setSubdomain: (v: string) => void
-  email: string
-  setEmail: (v: string) => void
-  apiToken: string
-  setApiToken: (v: string) => void
   connecting: boolean
   onConnect: () => void
   hubspotConnected?: boolean
@@ -24,16 +20,11 @@ interface ConnectViewProps {
   connectingSlack?: boolean
 }
 
-const inputClass = 'w-full bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 transition-all'
 const labelClass = 'block text-xs font-medium text-gray-500 dark:text-white/50 mb-1.5'
 
 export function ConnectView({
   subdomain,
   setSubdomain,
-  email,
-  setEmail,
-  apiToken,
-  setApiToken,
   connecting,
   onConnect,
   hubspotConnected = false,
@@ -48,7 +39,7 @@ export function ConnectView({
   onConnectSlack,
   connectingSlack = false,
 }: ConnectViewProps) {
-  const canConnect = subdomain.trim() && email.trim() && apiToken.trim() && !connecting
+  const canConnect = subdomain.trim() && !connecting
 
   return (
     <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
@@ -66,61 +57,21 @@ export function ConnectView({
             opportunities most likely to reduce churn. Setup takes 60 seconds.
           </p>
 
-          <div className='space-y-3'>
-            <div>
-              <label className={labelClass}>Zendesk subdomain</label>
-              <div className='flex rounded-xl border border-gray-200 dark:border-white/[0.08] overflow-hidden focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/30 transition-all'>
-                <input
-                  type='text'
-                  value={subdomain}
-                  onChange={e => setSubdomain(e.target.value)}
-                  placeholder='yourcompany'
-                  className='flex-1 px-4 py-3 text-sm outline-none bg-gray-100 dark:bg-white/[0.06] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20'
-                />
-                <span className='px-4 py-3 bg-gray-50 dark:bg-white/[0.04] text-gray-400 dark:text-white/30 text-sm border-l border-gray-200 dark:border-white/[0.08] flex items-center select-none'>
-                  .zendesk.com
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className={labelClass}>Zendesk admin email</label>
+          <div>
+            <label className={labelClass}>Zendesk subdomain</label>
+            <div className='flex rounded-xl border border-gray-200 dark:border-white/[0.08] overflow-hidden focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/30 transition-all'>
               <input
-                type='email'
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder='you@yourcompany.com'
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <div className='flex items-center justify-between mb-1.5'>
-                <label className={labelClass.replace(' mb-1.5', '')}>API token</label>
-                <a
-                  href={`https://${subdomain || 'yourcompany'}.zendesk.com/admin/apps-integrations/apis/zendesk-api/settings`}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors'
-                >
-                  Get token in Zendesk <ExternalLink className='w-3 h-3' />
-                </a>
-              </div>
-              <input
-                type='password'
-                value={apiToken}
-                onChange={e => setApiToken(e.target.value)}
+                type='text'
+                value={subdomain}
+                onChange={e => setSubdomain(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && canConnect && onConnect()}
-                placeholder='Paste your API token'
-                className={`${inputClass} font-mono`}
+                placeholder='yourcompany'
+                className='flex-1 px-4 py-3 text-sm outline-none bg-gray-100 dark:bg-white/[0.06] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20'
               />
+              <span className='px-4 py-3 bg-gray-50 dark:bg-white/[0.04] text-gray-400 dark:text-white/30 text-sm border-l border-gray-200 dark:border-white/[0.08] flex items-center select-none'>
+                .zendesk.com
+              </span>
             </div>
-          </div>
-
-          <div className='mt-4 p-3 bg-blue-500/8 border border-blue-500/15 rounded-xl text-xs text-blue-300/80 leading-relaxed'>
-            <strong className='text-blue-300'>How to get your API token:</strong> In Zendesk, go to{' '}
-            <strong className='text-blue-300'>Admin Center → Apps and Integrations → APIs → Zendesk API</strong>,
-            then click <strong className='text-blue-300'>Add API token</strong>, copy it, and paste it above.
           </div>
 
           <button
