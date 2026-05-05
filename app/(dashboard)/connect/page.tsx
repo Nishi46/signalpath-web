@@ -17,8 +17,6 @@ interface PipelineStatus {
 function ConnectContent() {
   const { workspaceId } = useWorkspace()
   const [subdomain, setSubdomain] = useState('')
-  const [email, setEmail] = useState('')
-  const [apiToken, setApiToken] = useState('')
   const [connecting, setConnecting] = useState(false)
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>({
     signals_total: 0, signals_embedded: 0, signals_clustered: 0, clusters: 0,
@@ -199,28 +197,29 @@ function ConnectContent() {
   }
 
   async function handleConnect() {
-    if (!subdomain.trim() || !email.trim() || !apiToken.trim() || !workspaceId) return
+    if (!subdomain.trim()) return
     setConnecting(true)
-
     try {
-      const res = await fetch('/api/auth-init', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subdomain: subdomain.trim(),
-          email: email.trim(),
-          api_token: apiToken.trim(),
-        }),
-      })
+      const res = await fetch(`/api/auth-zendesk?subdomain=${encodeURIComponent(subdomain.trim())}`)
       if (!res.ok) {
-        let message = 'Connection failed'
-        try { message = (await res.json()).detail ?? (await res.json()).error ?? message } catch { /* non-JSON */ }
-        alert(message)
+        alert((await res.json().catch(() => ({}))).error ?? 'Zendesk connection failed')
         setConnecting(false)
         return
       }
-      // Success — redirect to processing view
-      window.location.href = '/connect?connected=true'
+      const { redirect_url } = await res.json()
+      try {
+        const url = new URL(redirect_url)
+        if (!url.hostname.endsWith('.zendesk.com')) {
+          alert('Unexpected redirect URL')
+          setConnecting(false)
+          return
+        }
+      } catch {
+        alert('Invalid redirect URL')
+        setConnecting(false)
+        return
+      }
+      window.location.href = redirect_url
     } catch {
       alert('Network error — please try again')
       setConnecting(false)
@@ -293,10 +292,6 @@ function ConnectContent() {
     <ConnectView
       subdomain={subdomain}
       setSubdomain={setSubdomain}
-      email={email}
-      setEmail={setEmail}
-      apiToken={apiToken}
-      setApiToken={setApiToken}
       connecting={connecting}
       onConnect={handleConnect}
       hubspotConnected={hubspotConnected}
