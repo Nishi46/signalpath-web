@@ -78,9 +78,6 @@ export function ProblemGraph({ nodes, edges }: Props) {
 
     const activeNodes = nodes.filter(n => passesFilter(n, filter))
     const activeIds = new Set(activeNodes.map(n => n.id))
-    const activeEdges = edges.filter(
-      e => activeIds.has(e.source as string) && activeIds.has(e.target as string),
-    )
 
     // Zoom container
     const g = svg.append('g')
@@ -145,9 +142,8 @@ export function ProblemGraph({ nodes, edges }: Props) {
             d.fx = d.x; d.fy = d.y
           })
           .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y })
-          .on('end', (event, d) => {
+          .on('end', (event) => {
             if (!event.active) sim.alphaTarget(0)
-            d.fx = null; d.fy = null
           }),
       )
 
