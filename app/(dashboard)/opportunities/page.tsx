@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { OpportunityCard } from '@/components/OpportunityCard'
 import { OpportunityListRow } from '@/components/OpportunityListRow'
+import { ProblemGraph, type GraphNode, type GraphEdge } from '@/components/ProblemGraph'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DashboardNav } from '@/components/DashboardNav'
@@ -15,6 +16,7 @@ import { supabase } from '@/lib/supabase'
 import {
   LayoutGrid,
   List,
+  Network,
   SlidersHorizontal,
   X,
   Zap,
@@ -44,7 +46,7 @@ interface Cluster {
   signal_sources?: string[] | null
 }
 
-type ViewMode = 'grid' | 'list'
+type ViewMode = 'grid' | 'list' | 'graph'
 type SortField = 'opportunity_score' | 'signal_count' | 'churn_signal_count' | 'unique_orgs'
 type ConfidenceFilter = 'all' | 'High' | 'Medium' | 'Low'
 type SourceFilter = 'all' | 'zendesk' | 'intercom'
@@ -92,6 +94,10 @@ export default function OpportunitiesPage() {
   // Bulk actions
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+
+  // Graph data
+  const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; edges: GraphEdge[] } | null>(null)
+  const [graphLoading, setGraphLoading] = useState(false)
 
   // Onboarding
   const [mlStats, setMlStats] = useState<{ labeled_cluster_count: number; ml_model_version: number } | null>(null)
@@ -169,6 +175,17 @@ export default function OpportunitiesPage() {
       setMlStats(prev => prev ? { ...prev, labeled_cluster_count: prev.labeled_cluster_count + 1 } : prev)
     }
   }, [])
+
+  // Fetch graph data when graph view is selected
+  useEffect(() => {
+    if (view !== 'graph' || graphData || graphLoading) return
+    setGraphLoading(true)
+    fetch('/api/graph-data')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setGraphData(data) })
+      .catch(() => {})
+      .finally(() => setGraphLoading(false))
+  }, [view, graphData, graphLoading])
 
   // Fetch workspace status for onboarding checklist + signal count for empty state
   useEffect(() => {
@@ -490,6 +507,14 @@ export default function OpportunitiesPage() {
                 >
                   <List className='w-4 h-4' />
                 </button>
+                <button
+                  type='button'
+                  onClick={() => setView('graph')}
+                  className={`p-2 transition-colors ${view === 'graph' ? 'bg-gray-100 dark:bg-white/[0.08] text-white' : 'bg-transparent text-gray-400 dark:text-white/30 hover:text-gray-500 dark:text-white/60'}`}
+                  title='Problem graph'
+                >
+                  <Network className='w-4 h-4' />
+                </button>
               </div>
             </div>
           </div>
@@ -641,8 +666,25 @@ export default function OpportunitiesPage() {
             </div>
           )}
 
+          {/* Problem graph view */}
+          {view === 'graph' && (
+            <div className='mt-4'>
+              {graphLoading ? (
+                <div className='flex items-center justify-center h-[620px] rounded-2xl bg-white dark:bg-[#1A1D24] border border-gray-100 dark:border-white/[0.07]'>
+                  <p className='text-sm text-gray-400 dark:text-white/30'>Building graph…</p>
+                </div>
+              ) : graphData ? (
+                <ProblemGraph nodes={graphData.nodes} edges={graphData.edges} />
+              ) : (
+                <div className='flex items-center justify-center h-[620px] rounded-2xl bg-white dark:bg-[#1A1D24] border border-gray-100 dark:border-white/[0.07]'>
+                  <p className='text-sm text-gray-400 dark:text-white/30'>Failed to load graph.</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Results — tiered sections */}
-          {clusters.length === 0 ? (
+          {view !== 'graph' && (clusters.length === 0 ? (
             <EmptyState
               processing={zendeskConnected && signalCount === null}
               insufficient={zendeskConnected && signalCount !== null && signalCount < 3}
@@ -757,7 +799,7 @@ export default function OpportunitiesPage() {
                 </div>
               )}
             </div>
-          )}
+          ))}
         </div>
       </div>
 
