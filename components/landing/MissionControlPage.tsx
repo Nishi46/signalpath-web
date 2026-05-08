@@ -459,7 +459,7 @@ const FAQS = [
   },
   {
     q: 'What integrations do you support?',
-    a: 'We ingest from Zendesk, Intercom, and Freshdesk today. For output, you can push opportunities directly to Linear, Jira, or GitHub Issues with a single click.',
+    a: 'We ingest from Zendesk, Intercom, Freshdesk, and Salesforce today, with GitHub coming soon. For output, you can push specs directly to Linear, Jira, or GitHub Issues — but you never have to. SignalPath is designed to be the last stop: your specs, briefs, and opportunity backlog can all live here if you prefer.',
   },
   {
     q: 'How are opportunities scored?',
@@ -658,7 +658,7 @@ export function MissionControlPage() {
 
           <p className='text-lg text-gray-500 dark:text-white/45 max-w-xl mx-auto mb-10 leading-relaxed'>
             Get ranked product opportunities in 48 hours.
-            Push to Linear or Jira in one click.
+            Keep everything in SignalPath, or push to Linear, Jira, or GitHub when you&rsquo;re ready.
           </p>
 
           <div className='flex flex-col items-center gap-4'>

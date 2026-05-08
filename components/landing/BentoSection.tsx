@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Zap, GitMerge, Sliders, Send } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { Zap, GitMerge, Sliders, Send, CheckCircle2, Clock } from 'lucide-react'
 import { useTheme } from '../ThemeProvider'
 
 // ─── Tile 1: Signal Counter ────────────────────────────────────────────────────
@@ -313,117 +313,117 @@ function ScoringSliderTile() {
   )
 }
 
-// ─── Tile 4: Spec & Agent Handoff ─────────────────────────────────────────────
+// ─── Tile 4: Push anywhere (or don't) ─────────────────────────────────────────
 
-type Section = 'problem' | 'evidence' | 'recommendation' | 'criteria' | null
-
-const BRIEF_SECTIONS: { id: Section & string; title: string; body: string }[] = [
+const DESTINATIONS = [
   {
-    id: 'problem',
-    title: 'Problem',
-    body: 'OAuth2 access tokens expire after 1h with no silent refresh, terminating active API sessions.',
+    id: 'signalpath',
+    name: 'Stay in SignalPath',
+    description: 'Specs, briefs, and backlog all live here. No push required.',
+    status: 'available' as const,
+    accent: '#6366F1',
+    logo: (
+      <div className='w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center shadow-sm shadow-blue-600/30 flex-shrink-0'>
+        <span className='text-white font-bold text-[9px]'>S</span>
+      </div>
+    ),
   },
   {
-    id: 'evidence',
-    title: 'Evidence',
-    body: '47 tickets · $284K ARR at risk · 12 churn signals across 3 enterprise accounts.',
+    id: 'linear',
+    name: 'Linear',
+    description: 'Push directly to a Linear project as an issue.',
+    status: 'available' as const,
+    accent: '#5E6AD2',
+    logo: (
+      <svg className='w-6 h-6 flex-shrink-0' viewBox='0 0 100 100' fill='none'>
+        <rect width='100' height='100' rx='22' fill='#5E6AD2' />
+        <path d='M17.27 55.7 44.3 82.73a36.81 36.81 0 01-27.03-27.03zm-1.48-13.3 42.81 42.81A36.93 36.93 0 0150 86a36.56 36.56 0 01-6.2-.53L16.06 57.73a37.2 37.2 0 01-.27-15.33zM19.74 31l49.26 49.26A37 37 0 0119.74 31zm12.07-10.98L82 70.19A37 37 0 0131.81 20.02zM50 14c5.55 0 10.82 1.22 15.55 3.41L17.41 65.55A37 37 0 0150 14zm16.62 4.98a37 37 0 0124.4 24.4L66.62 18.98zM86 50c0 2.2-.19 4.37-.54 6.47L43.53 13.54A37 37 0 0186 50z' fill='white' />
+      </svg>
+    ),
   },
   {
-    id: 'recommendation',
-    title: 'Recommendation',
-    body: 'Ship silent token refresh endpoint with rotation. Assign to platform team, estimate 3–5 days.',
+    id: 'jira',
+    name: 'Jira',
+    description: 'Create a ticket in any Jira project.',
+    status: 'available' as const,
+    accent: '#0052CC',
+    logo: (
+      <svg className='w-6 h-6 flex-shrink-0' viewBox='0 0 32 32' fill='none'>
+        <rect width='32' height='32' rx='7' fill='#0052CC' />
+        <path d='M16.24 5.6 9.04 12.8a1.07 1.07 0 000 1.51l4.43 4.43 6.14-6.14 3.6-3.6a1.07 1.07 0 000-1.51l-5.45-2.34a.77.77 0 00-1.52.85z' fill='#2684FF' />
+        <path d='M16.24 26.4l7.2-7.2a1.07 1.07 0 000-1.51l-4.43-4.43-6.14 6.14-3.6 3.6a1.07 1.07 0 000 1.51l5.45 2.34a.77.77 0 001.52-.85z' fill='white' />
+      </svg>
+    ),
   },
   {
-    id: 'criteria',
-    title: 'Acceptance Criteria',
-    body: 'Silent refresh 5 min before expiry · Refresh token rotation 30-day TTL · Zero session interruptions in staging for 48h.',
+    id: 'github',
+    name: 'GitHub Issues',
+    description: 'Create an issue in any GitHub repository.',
+    status: 'coming-soon' as const,
+    accent: '#6B7280',
+    logo: (
+      <svg className='w-6 h-6 flex-shrink-0' viewBox='0 0 24 24' fill='currentColor'>
+        <path d='M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z' />
+      </svg>
+    ),
   },
-]
-
-const JSON_SEGMENTS: { section: string | null; text: string }[] = [
-  { section: null,             text: '{\n  "score": 9.1,\n  "affected_accounts": 47,\n  ' },
-  { section: 'recommendation', text: '"recommended_action": "ship_fix",\n  ' },
-  { section: 'problem',        text: '"spec": {\n    "problem_statement":\n      "OAuth2 tokens expire after 1h...",\n    ' },
-  { section: 'criteria',       text: '"acceptance_criteria": [\n      "Silent refresh 5min before expiry",\n      "Rotation with 30-day TTL",\n      "Zero interruptions 48h"\n    ]\n  },\n  ' },
-  { section: 'evidence',       text: '"evidence": {\n    "verbatim_count": 47,\n    "arr_at_risk": 284000\n  }\n}' },
 ]
 
 function HandoffTile() {
-  const [hovered, setHovered] = useState<string | null>(null)
+  const [active, setActive] = useState('signalpath')
 
-  function segmentColor(seg: { section: string | null; text: string }) {
-    if (!seg.section || seg.section !== hovered) return ''
-    return 'bg-blue-500/10 rounded'
-  }
+  const dest = DESTINATIONS.find(d => d.id === active)!
 
   return (
     <div className='bento-tile flex flex-col h-full'>
-      <TileLabel icon={<Send className='w-3.5 h-3.5' />} label='Spec & Agent Handoff' index='04' />
-      <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-2'>Hover a section to see the JSON mapping.</p>
+      <TileLabel icon={<Send className='w-3.5 h-3.5' />} label='Push anywhere — or stay here' index='04' />
+      <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-3'>
+        SignalPath is the last stop. Push to your tools when you&rsquo;re ready — or never.
+      </p>
 
-      <div className='flex-1 flex gap-3 min-h-0 overflow-hidden'>
-        {/* Human brief */}
-        <div className='flex-[5] space-y-1.5 overflow-y-auto'>
-          {BRIEF_SECTIONS.map(s => (
-            <div
-              key={s.id}
-              onMouseEnter={() => setHovered(s.id)}
-              onMouseLeave={() => setHovered(null)}
-              className={`rounded-lg p-2 border cursor-default transition-all duration-150 ${
-                hovered === s.id
-                  ? 'border-blue-500/40 bg-blue-500/10'
-                  : 'border-gray-200 dark:border-white/[0.06] bg-gray-50 dark:bg-white/[0.03]'
-              }`}
-            >
-              <p className={`text-[10px] font-semibold mb-0.5 transition-colors ${hovered === s.id ? 'text-blue-400' : 'text-gray-500 dark:text-white/40'}`}>
-                {s.title}
-              </p>
-              <p className='text-[10px] text-gray-500 dark:text-white/50 leading-snug'>{s.body}</p>
+      {/* Destination picker */}
+      <div className='space-y-1.5 mb-3'>
+        {DESTINATIONS.map(d => (
+          <button
+            key={d.id}
+            type='button'
+            onClick={() => d.status === 'available' && setActive(d.id)}
+            className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg border text-left transition-all duration-150 ${
+              active === d.id
+                ? 'border-blue-500/40 bg-blue-500/8'
+                : d.status === 'coming-soon'
+                  ? 'border-gray-200 dark:border-white/[0.05] bg-gray-50/50 dark:bg-white/[0.02] opacity-60 cursor-default'
+                  : 'border-gray-200 dark:border-white/[0.06] bg-gray-50 dark:bg-white/[0.03] hover:border-gray-300 dark:hover:border-white/[0.12] cursor-pointer'
+            }`}
+          >
+            {d.logo}
+            <div className='flex-1 min-w-0'>
+              <div className='flex items-center gap-1.5'>
+                <span className={`text-[11px] font-semibold truncate ${active === d.id ? 'text-blue-400' : 'text-gray-700 dark:text-white/70'}`}>
+                  {d.name}
+                </span>
+                {d.status === 'coming-soon' && (
+                  <span className='inline-flex items-center gap-0.5 text-[9px] font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-full flex-shrink-0'>
+                    <Clock className='w-2.5 h-2.5' />
+                    Soon
+                  </span>
+                )}
+                {d.status === 'available' && active === d.id && (
+                  <CheckCircle2 className='w-3 h-3 text-blue-400 flex-shrink-0' />
+                )}
+              </div>
             </div>
-          ))}
-        </div>
+          </button>
+        ))}
+      </div>
 
-        {/* Divider */}
-        <div className='w-px bg-gray-200 dark:bg-white/[0.06] flex-shrink-0' />
-
-        {/* JSON */}
-        <div className='flex-[6] overflow-y-auto'>
-          <pre className='font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all'>
-            {JSON_SEGMENTS.map((seg, i) => (
-              <span
-                key={i}
-                className={`transition-all duration-150 ${segmentColor(seg)}`}
-                style={{ display: 'inline' }}
-              >
-                <JsonTokens text={seg.text} highlighted={!!seg.section && seg.section === hovered} />
-              </span>
-            ))}
-          </pre>
-        </div>
+      {/* Selected destination detail */}
+      <div className='mt-auto pt-3 border-t border-gray-100 dark:border-white/[0.06]'>
+        <p className='text-[10px] text-gray-400 dark:text-white/30 leading-relaxed'>
+          {dest.description}
+        </p>
       </div>
     </div>
-  )
-}
-
-function JsonTokens({ text, highlighted }: { text: string; highlighted: boolean }) {
-  const tokens = text.split(/("(?:[^"\\]|\\.)*"|\b\d+(?:\.\d+)?\b|[{}\[\],:])/g)
-  return (
-    <>
-      {tokens.map((tok, i) => {
-        const isKey = tok.startsWith('"') && i + 1 < tokens.length && tokens[i + 1]?.trim() === ':'
-        if (tok.startsWith('"')) {
-          return (
-            <span key={i} className={highlighted ? (isKey ? 'text-blue-300' : 'text-emerald-300') : (isKey ? 'text-blue-400/60' : 'text-emerald-400/60')}>
-              {tok}
-            </span>
-          )
-        }
-        if (/^\d/.test(tok)) return <span key={i} className={highlighted ? 'text-orange-300' : 'text-orange-400/60'}>{tok}</span>
-        if (['{', '}', '[', ']', ',', ':'].includes(tok))
-          return <span key={i} className='text-gray-400 dark:text-white/20'>{tok}</span>
-        return <span key={i} className='text-gray-500 dark:text-white/35'>{tok}</span>
-      })}
-    </>
   )
 }
 
