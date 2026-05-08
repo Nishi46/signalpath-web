@@ -7,10 +7,11 @@ import { useTheme } from '../ThemeProvider'
 // ─── Tile 1: Signal Counter ────────────────────────────────────────────────────
 
 const SOURCES = [
-  { name: 'Zendesk', color: '#03363D', dot: '#78E1D2' },
-  { name: 'Intercom', color: '#2A2358', dot: '#7C3AED' },
-  { name: 'Freshdesk', color: '#1A2D4A', dot: '#38BDF8' },
-  { name: 'Salesforce', color: '#1A2D4A', dot: '#22D3EE' },
+  { name: 'Zendesk', dot: '#78E1D2', soon: false },
+  { name: 'Intercom', dot: '#7C3AED', soon: false },
+  { name: 'Freshdesk', dot: '#38BDF8', soon: false },
+  { name: 'Salesforce', dot: '#22D3EE', soon: false },
+  { name: 'GitHub (codebase)', dot: '#6B7280', soon: true },
 ]
 
 function useCountUp(target: number, duration: number, active: boolean) {
@@ -66,24 +67,32 @@ function SignalCounterTile() {
         {SOURCES.map(s => (
           <div key={s.name} className='flex items-center gap-2.5'>
             <span className='w-1.5 h-1.5 rounded-full flex-shrink-0' style={{ backgroundColor: s.dot }} />
-            <span className='text-xs text-gray-500 dark:text-white/50'>{s.name}</span>
-            <div className='flex-1 bg-gray-200 dark:bg-white/[0.05] rounded-full h-0.5 overflow-hidden'>
-              <div
-                className='h-full rounded-full'
-                style={{
-                  backgroundColor: s.dot,
-                  width: visible ? `${Math.random() * 40 + 40}%` : '0%',
-                  transition: 'width 1.4s ease',
-                }}
-              />
-            </div>
+            <span className={`text-xs ${s.soon ? 'text-gray-400 dark:text-white/25' : 'text-gray-500 dark:text-white/50'}`}>
+              {s.name}
+            </span>
+            {s.soon ? (
+              <span className='ml-auto text-[9px] font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-full'>
+                Soon
+              </span>
+            ) : (
+              <div className='flex-1 bg-gray-200 dark:bg-white/[0.05] rounded-full h-0.5 overflow-hidden'>
+                <div
+                  className='h-full rounded-full'
+                  style={{
+                    backgroundColor: s.dot,
+                    width: visible ? `${Math.random() * 40 + 40}%` : '0%',
+                    transition: 'width 1.4s ease',
+                  }}
+                />
+              </div>
+            )}
           </div>
         ))}
       </div>
 
       <div className='mt-auto pt-3 border-t border-gray-100 dark:border-white/[0.06]'>
         <p className='text-[10px] text-gray-400 dark:text-white/20 leading-relaxed'>
-          Real-time ingestion across all connected help-desk sources.
+          Help-desk signals today. GitHub codebase indexing coming in V2 — so specs reference your actual files.
         </p>
       </div>
     </div>
@@ -329,6 +338,20 @@ const DESTINATIONS = [
     ),
   },
   {
+    id: 'cursor',
+    name: 'Cursor',
+    description: 'Open the spec directly as a Cursor Composer session. The agent starts coding from your actual file paths.',
+    status: 'coming-soon' as const,
+    accent: '#6B7280',
+    logo: (
+      <svg className='w-6 h-6 flex-shrink-0' viewBox='0 0 32 32' fill='none'>
+        <rect width='32' height='32' rx='7' fill='#1A1A1A' />
+        <path d='M16 6L26 11.5V20.5L16 26L6 20.5V11.5L16 6Z' stroke='white' strokeWidth='1.5' fill='none' strokeOpacity='0.9' />
+        <path d='M16 6V26M6 11.5L26 20.5M26 11.5L6 20.5' stroke='white' strokeWidth='1.5' strokeOpacity='0.25' />
+      </svg>
+    ),
+  },
+  {
     id: 'linear',
     name: 'Linear',
     description: 'Push directly to a Linear project as an issue.',
@@ -376,9 +399,9 @@ function HandoffTile() {
 
   return (
     <div className='bento-tile flex flex-col h-full'>
-      <TileLabel icon={<Send className='w-3.5 h-3.5' />} label='Push anywhere — or stay here' index='04' />
+      <TileLabel icon={<Send className='w-3.5 h-3.5' />} label='Signal → spec → ship' index='04' />
       <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-3'>
-        SignalPath is the last stop. Push to your tools when you&rsquo;re ready — or never.
+        Stay in SignalPath, push to your PM tools, or send the spec straight into Cursor — the agent starts coding from your actual files.
       </p>
 
       {/* Destination picker */}

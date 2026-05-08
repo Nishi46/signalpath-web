@@ -459,7 +459,11 @@ const FAQS = [
   },
   {
     q: 'What integrations do you support?',
-    a: 'We ingest from Zendesk, Intercom, Freshdesk, and Salesforce today, with GitHub coming soon. For output, you can push specs directly to Linear, Jira, or GitHub Issues — but you never have to. SignalPath is designed to be the last stop: your specs, briefs, and opportunity backlog can all live here if you prefer.',
+    a: 'For signal ingestion we connect to Zendesk, Intercom, Freshdesk, and Salesforce today. For output, you can push specs directly to Linear, Jira, or GitHub Issues — or keep everything in SignalPath and never push anywhere. GitHub repository indexing (for codebase-aware specs) and direct Cursor / Claude Code integration are coming in V2.',
+  },
+  {
+    q: 'Can SignalPath read my codebase?',
+    a: 'Yes — connecting your GitHub repository (read-only access) lets SignalPath index your code structure: every file path, API route, model, and function. When a spec is generated, it references your actual files instead of generic descriptions. A generic AI writes "add an export endpoint." SignalPath writes "modify api/routes/exports.py, extend ExportJob in models/jobs.py." The index updates incrementally with each commit, so specs always reflect your current codebase. This feature is coming in V2.',
   },
   {
     q: 'How are opportunities scored?',
@@ -656,10 +660,31 @@ export function MissionControlPage() {
             <span className='text-blue-500'>product decisions</span>
           </h1>
 
-          <p className='text-lg text-gray-500 dark:text-white/45 max-w-xl mx-auto mb-10 leading-relaxed'>
-            Get ranked product opportunities in 48 hours.
-            Keep everything in SignalPath, or push to Linear, Jira, or GitHub when you&rsquo;re ready.
+          <p className='text-lg text-gray-500 dark:text-white/45 max-w-xl mx-auto mb-8 leading-relaxed'>
+            Turn support tickets into specs that reference your actual files.
+            Keep everything in SignalPath, or push to Linear, Jira, or straight into Cursor.
           </p>
+
+          <div className='flex flex-wrap items-center justify-center gap-2 mb-10'>
+            {[
+              { label: 'Zendesk · Intercom · Salesforce', status: 'live' },
+              { label: 'GitHub codebase indexing', status: 'soon' },
+              { label: 'Cursor · Claude Code integration', status: 'soon' },
+            ].map(({ label, status }) => (
+              <span
+                key={label}
+                className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${
+                  status === 'live'
+                    ? 'text-emerald-500 dark:text-emerald-400 border-emerald-500/20 bg-emerald-500/6'
+                    : 'text-amber-500 dark:text-amber-400 border-amber-500/20 bg-amber-500/6'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${status === 'live' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                {label}
+                {status === 'soon' && <span className='opacity-60'>· coming soon</span>}
+              </span>
+            ))}
+          </div>
 
           <div className='flex flex-col items-center gap-4'>
             <HeroEmailCapture />
