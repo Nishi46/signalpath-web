@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ScoreBadge } from './ScoreBadge'
 import { DashboardNav } from './DashboardNav'
 import {
@@ -21,6 +21,8 @@ import {
   Package,
   Building2,
   RefreshCw,
+  Pencil,
+  Check,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -99,6 +101,13 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   const [shippingBusy, setShippingBusy] = useState(false)
   const [accountsOpen, setAccountsOpen] = useState(false)
   const [accountsLoading, setAccountsLoading] = useState(false)
+
+  // Inline brief editing + auto-save
+  const [editingBrief, setEditingBrief] = useState(false)
+  const [draftBrief, setDraftBrief] = useState('')
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const [accounts, setAccounts] = useState<{
     organization_id: string
     name: string
@@ -161,6 +170,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   }
 
   async function handlePushToLinear() {
+    await finalizeIfEditing()
     setPushingLinear(true)
     setPushError(null)
     if (linearConnected === false) {
@@ -198,6 +208,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   }
 
   async function handlePushToJira() {
+    await finalizeIfEditing()
     setPushingJira(true)
     setPushError(null)
     if (jiraConnected === false) {
@@ -369,6 +380,61 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   function toggleAccounts() {
     if (!accountsOpen) void fetchAccounts()
     setAccountsOpen(prev => !prev)
+  }
+
+  function startEditingBrief() {
+    setDraftBrief(cluster.human_brief ?? '')
+    setEditingBrief(true)
+    setAutoSaveStatus('idle')
+  }
+
+  function handleDraftChange(value: string) {
+    setDraftBrief(value)
+    setAutoSaveStatus('idle')
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    autoSaveTimer.current = setTimeout(async () => {
+      setAutoSaveStatus('saving')
+      try {
+        await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/save-draft`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ human_brief: value }),
+        })
+        setAutoSaveStatus('saved')
+      } catch {
+        setAutoSaveStatus('idle')
+      }
+    }, 3000)
+  }
+
+  async function finalizeAndClose() {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    setAutoSaveStatus('saving')
+    try {
+      await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ human_brief: draftBrief }),
+      })
+      setAutoSaveStatus('saved')
+    } catch {
+      setAutoSaveStatus('idle')
+    }
+    setEditingBrief(false)
+    await refresh()
+  }
+
+  async function finalizeIfEditing(): Promise<void> {
+    if (!editingBrief) return
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    try {
+      await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ human_brief: draftBrief }),
+      })
+      setEditingBrief(false)
+    } catch { /* non-fatal — push still proceeds */ }
   }
 
   return (
@@ -659,24 +725,68 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           )}
           {cluster.human_brief ? (
             <div>
-              <div
-                className={`relative overflow-hidden transition-[max-height] duration-300 ease-in-out ${briefExpanded ? 'max-h-none' : 'max-h-64'}`}
-              >
-                <div className='prd-document max-w-none' id='prd-content'>
-                  <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{cluster.human_brief}</ReactMarkdown>
+              {editingBrief ? (
+                <div className='space-y-3'>
+                  <textarea
+                    value={draftBrief}
+                    onChange={e => handleDraftChange(e.target.value)}
+                    rows={24}
+                    className='w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.10] rounded-xl px-4 py-3 text-sm text-gray-800 dark:text-white/80 font-mono leading-relaxed outline-none focus:border-blue-500/40 resize-y transition-all'
+                  />
+                  <div className='flex items-center justify-between gap-3'>
+                    <span className='text-[10px] text-gray-400 dark:text-white/25'>
+                      {autoSaveStatus === 'saving' ? 'Saving…' : autoSaveStatus === 'saved' ? 'Draft saved' : 'Edits auto-save every 3 s'}
+                    </span>
+                    <div className='flex items-center gap-2'>
+                      <button
+                        type='button'
+                        onClick={() => { setEditingBrief(false); setAutoSaveStatus('idle') }}
+                        className='text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:text-white/60 transition-colors'
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type='button'
+                        onClick={() => void finalizeAndClose()}
+                        className='inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 hover:bg-emerald-500/15 transition-colors'
+                      >
+                        <Check className='w-3.5 h-3.5' />
+                        Done
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                {!briefExpanded && (
-                  <div className='absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-[#1A1D24] to-transparent pointer-events-none' />
-                )}
-              </div>
-              <button
-                type='button'
-                onClick={() => setBriefExpanded(!briefExpanded)}
-                className='w-full flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-white/40 hover:text-gray-600 dark:text-white/70 py-2 mt-1 transition-colors'
-              >
-                {briefExpanded ? 'Show less' : 'Show more'}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${briefExpanded ? 'rotate-180' : ''}`} />
-              </button>
+              ) : (
+                <div>
+                  <div
+                    className={`relative overflow-hidden transition-[max-height] duration-300 ease-in-out ${briefExpanded ? 'max-h-none' : 'max-h-64'}`}
+                  >
+                    <div className='prd-document max-w-none' id='prd-content'>
+                      <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{cluster.human_brief}</ReactMarkdown>
+                    </div>
+                    {!briefExpanded && (
+                      <div className='absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-[#1A1D24] to-transparent pointer-events-none' />
+                    )}
+                  </div>
+                  <div className='flex items-center justify-between mt-1'>
+                    <button
+                      type='button'
+                      onClick={() => startEditingBrief()}
+                      className='inline-flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:text-white/60 py-2 transition-colors'
+                    >
+                      <Pencil className='w-3 h-3' /> Edit brief
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setBriefExpanded(!briefExpanded)}
+                      className='flex items-center gap-1 text-xs text-gray-500 dark:text-white/40 hover:text-gray-600 dark:text-white/70 py-2 transition-colors'
+                    >
+                      {briefExpanded ? 'Show less' : 'Show more'}
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${briefExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <p className='text-gray-400 dark:text-white/30 text-sm'>
