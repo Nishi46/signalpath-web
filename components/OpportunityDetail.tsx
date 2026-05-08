@@ -28,6 +28,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
+import { BriefEditor } from './BriefEditor'
 import { exportPrdToDocx } from '@/lib/export-prd'
 import { ScoreBreakdownPanel, type ScoreHistoryEntry } from './ScoreBreakdownPanel'
 import { ScoreSparkline } from './ScoreSparkline'
@@ -727,11 +728,9 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             <div>
               {editingBrief ? (
                 <div className='space-y-3'>
-                  <textarea
-                    value={draftBrief}
-                    onChange={e => handleDraftChange(e.target.value)}
-                    rows={24}
-                    className='w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.10] rounded-xl px-4 py-3 text-sm text-gray-800 dark:text-white/80 font-mono leading-relaxed outline-none focus:border-blue-500/40 resize-y transition-all'
+                  <BriefEditor
+                    initialContent={draftBrief}
+                    onChange={handleDraftChange}
                   />
                   <div className='flex items-center justify-between gap-3'>
                     <span className='text-[10px] text-gray-400 dark:text-white/25'>

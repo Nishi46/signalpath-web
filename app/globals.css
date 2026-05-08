@@ -355,3 +355,26 @@ button {
     font-style: italic;
   }
 }
+
+/* Tiptap WYSIWYG brief editor */
+.prose-editor h1 { font-size: 1.25rem; font-weight: 700; margin: 1rem 0 0.5rem; color: inherit; }
+.prose-editor h2 { font-size: 1.1rem; font-weight: 700; margin: 0.9rem 0 0.4rem; color: inherit; border-bottom: 1px solid rgba(0,0,0,0.07); padding-bottom: 0.2rem; }
+.dark .prose-editor h2 { border-bottom-color: rgba(255,255,255,0.06); }
+.prose-editor h3 { font-size: 0.95rem; font-weight: 600; margin: 0.75rem 0 0.3rem; color: inherit; }
+.prose-editor p { margin: 0.4rem 0; }
+.prose-editor ul, .prose-editor ol { padding-left: 1.4rem; margin: 0.4rem 0; }
+.prose-editor ul { list-style-type: disc; }
+.prose-editor ol { list-style-type: decimal; }
+.prose-editor li { margin: 0.15rem 0; }
+.prose-editor blockquote { border-left: 3px solid #6366f1; padding-left: 0.85rem; margin: 0.5rem 0; color: rgba(0,0,0,0.55); font-style: italic; }
+.dark .prose-editor blockquote { border-left-color: #818cf8; color: rgba(255,255,255,0.5); }
+.prose-editor strong { font-weight: 700; }
+.prose-editor em { font-style: italic; }
+.prose-editor code { font-family: monospace; font-size: 0.85em; background: rgba(0,0,0,0.06); padding: 0.1em 0.3em; border-radius: 3px; }
+.dark .prose-editor code { background: rgba(255,255,255,0.08); }
+.prose-editor pre { background: rgba(0,0,0,0.05); border-radius: 8px; padding: 0.75rem 1rem; overflow-x: auto; margin: 0.5rem 0; }
+.dark .prose-editor pre { background: rgba(255,255,255,0.05); }
+.prose-editor hr { border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 0.75rem 0; }
+.dark .prose-editor hr { border-top-color: rgba(255,255,255,0.08); }
+.prose-editor .is-editor-empty:first-child::before { content: attr(data-placeholder); color: rgba(0,0,0,0.3); pointer-events: none; float: left; height: 0; }
+.dark .prose-editor .is-editor-empty:first-child::before { color: rgba(255,255,255,0.2); }
