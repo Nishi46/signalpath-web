@@ -489,7 +489,21 @@ export default function OpportunitiesPage() {
                 )}
               </button>
 
-              {/* View toggle */}
+              {/* Problem Graph — prominent entry point */}
+              <button
+                type='button'
+                onClick={() => setView(view === 'graph' ? 'grid' : 'graph')}
+                className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border transition-colors ${
+                  view === 'graph'
+                    ? 'bg-violet-500/15 text-violet-400 border-violet-500/20'
+                    : 'bg-white dark:bg-white/[0.04] text-gray-600 dark:text-white/60 border-gray-200 dark:border-white/[0.08] hover:border-violet-500/30 hover:text-violet-400'
+                }`}
+              >
+                <Network className='w-3.5 h-3.5' />
+                Problem Graph
+              </button>
+
+              {/* Grid / List toggle */}
               <div className='flex items-center border border-gray-200 dark:border-white/[0.08] rounded-lg overflow-hidden'>
                 <button
                   type='button'
@@ -506,14 +520,6 @@ export default function OpportunitiesPage() {
                   title='List view'
                 >
                   <List className='w-4 h-4' />
-                </button>
-                <button
-                  type='button'
-                  onClick={() => setView('graph')}
-                  className={`p-2 transition-colors ${view === 'graph' ? 'bg-gray-100 dark:bg-white/[0.08] text-white' : 'bg-transparent text-gray-400 dark:text-white/30 hover:text-gray-500 dark:text-white/60'}`}
-                  title='Problem graph'
-                >
-                  <Network className='w-4 h-4' />
                 </button>
               </div>
             </div>

@@ -76,9 +76,6 @@ export function ProblemGraph({ nodes, edges }: Props) {
     const W = rect.width || 900
     const H = rect.height || 600
 
-    const activeNodes = nodes.filter(n => passesFilter(n, filter))
-    const activeIds = new Set(activeNodes.map(n => n.id))
-
     // Zoom container
     const g = svg.append('g')
     svg.call(
