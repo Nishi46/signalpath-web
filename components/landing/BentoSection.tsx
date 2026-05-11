@@ -7,11 +7,11 @@ import { useTheme } from '../ThemeProvider'
 // ─── Tile 1: Signal Counter ────────────────────────────────────────────────────
 
 const SOURCES = [
-  { name: 'Zendesk', dot: '#78E1D2', soon: false },
-  { name: 'Intercom', dot: '#7C3AED', soon: false },
-  { name: 'Freshdesk', dot: '#38BDF8', soon: false },
-  { name: 'Salesforce', dot: '#22D3EE', soon: false },
-  { name: 'GitHub (codebase)', dot: '#6B7280', soon: true },
+  { name: 'Zendesk', dot: '#78E1D2', soon: false, width: 72 },
+  { name: 'Intercom', dot: '#7C3AED', soon: false, width: 45 },
+  { name: 'Freshdesk', dot: '#38BDF8', soon: false, width: 38 },
+  { name: 'Salesforce', dot: '#22D3EE', soon: false, width: 28 },
+  { name: 'GitHub (codebase)', dot: '#6B7280', soon: true, width: 0 },
 ]
 
 function useCountUp(target: number, duration: number, active: boolean) {
@@ -80,7 +80,7 @@ function SignalCounterTile() {
                   className='h-full rounded-full'
                   style={{
                     backgroundColor: s.dot,
-                    width: visible ? `${Math.random() * 40 + 40}%` : '0%',
+                    width: visible ? `${s.width}%` : '0%',
                     transition: 'width 1.4s ease',
                   }}
                 />
@@ -411,11 +411,12 @@ function HandoffTile() {
             key={d.id}
             type='button'
             onClick={() => d.status === 'available' && setActive(d.id)}
+            title={d.status === 'coming-soon' ? 'Coming in V2' : undefined}
             className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg border text-left transition-all duration-150 ${
               active === d.id
                 ? 'border-blue-500/40 bg-blue-500/8'
                 : d.status === 'coming-soon'
-                  ? 'border-gray-200 dark:border-white/[0.05] bg-gray-50/50 dark:bg-white/[0.02] opacity-60 cursor-default'
+                  ? 'border-gray-200 dark:border-white/[0.05] bg-gray-50/50 dark:bg-white/[0.02] opacity-60 cursor-not-allowed'
                   : 'border-gray-200 dark:border-white/[0.06] bg-gray-50 dark:bg-white/[0.03] hover:border-gray-300 dark:hover:border-white/[0.12] cursor-pointer'
             }`}
           >

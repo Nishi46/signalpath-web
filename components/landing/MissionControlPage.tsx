@@ -233,7 +233,7 @@ function FeedCard({
         isSelected
           ? 'border-blue-500/40 bg-white dark:bg-[#1A1D24]'
           : 'border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#1A1D24] hover:border-gray-300 dark:hover:border-white/[0.14] hover:bg-gray-50 dark:hover:bg-[#1E2129]',
-        isTop && !isSelected ? 'animate-glow-pulse' : '',
+        '',
       ].join(' ')}
     >
       {/* score bar accent */}
@@ -380,7 +380,7 @@ function DetailPanel({
 
 // ─── SpecPanel ────────────────────────────────────────────────────────────────
 
-function SpecPanel({ specText, onClose }: { specText: string; onClose: () => void }) {
+function SpecPanel({ specText, specTitle, onClose, onSkip }: { specText: string; specTitle: string; onClose: () => void; onSkip: () => void }) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -397,15 +397,18 @@ function SpecPanel({ specText, onClose }: { specText: string; onClose: () => voi
             <span className='w-2.5 h-2.5 rounded-full bg-yellow-500/50' />
             <span className='w-2.5 h-2.5 rounded-full bg-green-500/50' />
           </div>
-          <span className='font-mono text-[10px] text-white/50'>agent_spec.json</span>
+          <span className='font-mono text-[10px] text-white/50 truncate max-w-[160px]'>{specTitle}</span>
         </div>
-        <button
-          onClick={onClose}
-          className='text-white/20 hover:text-white/50 transition-colors'
-          aria-label='Close spec'
-        >
-          <X className='w-3.5 h-3.5' />
-        </button>
+        <div className='flex items-center gap-3'>
+          {specText.length < SPEC_JSON.length && (
+            <button onClick={onSkip} className='font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors'>
+              Skip →
+            </button>
+          )}
+          <button onClick={onClose} className='text-white/20 hover:text-white/50 transition-colors' aria-label='Close spec'>
+            <X className='w-3.5 h-3.5' />
+          </button>
+        </div>
       </div>
       <div className='flex-1 overflow-y-auto p-4'>
         <pre className='font-mono text-[11px] leading-relaxed whitespace-pre-wrap'>
@@ -568,6 +571,8 @@ export function MissionControlPage() {
   const [specText, setSpecText] = useState('')
   const specIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const specIndexRef = useRef(0)
+  const [hasScrolled, setHasScrolled] = useState(false)
+  const [hintSeen, setHintSeen] = useState(false)
 
   const selected = OPPS.find(o => o.id === selectedId) ?? null
 
@@ -593,7 +598,22 @@ export function MissionControlPage() {
     }
   }, [])
 
+  useEffect(() => {
+    function onScroll() { setHasScrolled(true) }
+    window.addEventListener('scroll', onScroll, { once: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const skipTypewriter = useCallback(() => {
+    if (specIntervalRef.current) {
+      clearInterval(specIntervalRef.current)
+      specIntervalRef.current = null
+    }
+    setSpecText(SPEC_JSON)
+  }, [])
+
   function handleCardClick(id: string) {
+    setHintSeen(true)
     if (selectedId === id) {
       setSelectedId(null)
       setShowSpec(false)
@@ -661,11 +681,18 @@ export function MissionControlPage() {
           </h1>
 
           <p className='text-lg text-gray-500 dark:text-white/45 max-w-xl mx-auto mb-8 leading-relaxed'>
-            Turn support tickets into specs that reference your actual files.
-            Keep everything in SignalPath, or push to Linear, Jira, or straight into Cursor.
+            SignalPath clusters your signals, writes the spec, and pushes it —
+            so your team ships the right thing, faster.
           </p>
 
-          <div className='flex flex-wrap items-center justify-center gap-2 mb-10'>
+          <div className='flex flex-col items-center gap-4 mb-8'>
+            <HeroEmailCapture />
+            <p className='text-xs text-gray-400 dark:text-white/25'>
+              No credit card required · Setup in under 5 minutes
+            </p>
+          </div>
+
+          <div className='flex flex-wrap items-center justify-center gap-2 mb-8'>
             {[
               { label: 'Zendesk · Intercom · Salesforce', status: 'live' },
               { label: 'GitHub codebase indexing', status: 'soon' },
@@ -686,16 +713,23 @@ export function MissionControlPage() {
             ))}
           </div>
 
-          <div className='flex flex-col items-center gap-4'>
-            <HeroEmailCapture />
-            <p className='text-xs text-gray-400 dark:text-white/25'>
-              No credit card required · Setup in under 5 minutes
-            </p>
+          {/* Social proof metrics */}
+          <div className='flex items-center justify-center gap-8 pt-4 border-t border-gray-200 dark:border-white/[0.06]'>
+            {[
+              { value: '2,400+', label: 'signals processed' },
+              { value: '14', label: 'teams in early access' },
+              { value: '< 2 min', label: 'avg to first spec' },
+            ].map(m => (
+              <div key={m.label} className='text-center'>
+                <p className='font-display font-bold text-gray-700 dark:text-white/70 text-lg leading-none'>{m.value}</p>
+                <p className='text-[10px] text-gray-400 dark:text-white/30 mt-1'>{m.label}</p>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Scroll hint */}
-        <div className='absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-gray-400 dark:text-white/20'>
+        <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-gray-400 dark:text-white/20 transition-opacity duration-500 ${hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <p className='text-[10px] font-mono uppercase tracking-widest'>Explore the demo</p>
           <ChevronDown className='w-4 h-4 animate-bounce' />
         </div>
@@ -737,6 +771,11 @@ export function MissionControlPage() {
                       onClick={() => handleCardClick(opp.id)}
                     />
                   ))}
+                  {!hintSeen && !selected && (
+                    <p className='text-center text-[10px] text-gray-400 dark:text-white/30 pt-2 animate-fade-in'>
+                      Click any signal to explore →
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -762,7 +801,12 @@ export function MissionControlPage() {
                   {/* Spec JSON panel */}
                   {showSpec && (
                     <div className='flex-1 overflow-hidden' style={{ minWidth: 0 }}>
-                      <SpecPanel specText={specText} onClose={() => { setShowSpec(false); setSpecText('') }} />
+                      <SpecPanel
+                        specText={specText}
+                        specTitle={selected ? `spec: ${selected.title.slice(0, 32)}…` : 'agent_spec.json'}
+                        onClose={() => { setShowSpec(false); setSpecText('') }}
+                        onSkip={skipTypewriter}
+                      />
                     </div>
                   )}
                 </div>
@@ -778,6 +822,21 @@ export function MissionControlPage() {
 
       {/* ══════════════════ BENTO ══════════════════ */}
       <BentoSection />
+
+      {/* ══════════════════ MID-PAGE CTA ══════════════════ */}
+      <section className='px-8 py-16'>
+        <div className='max-w-2xl mx-auto'>
+          <div className='rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-10 text-center'>
+            <h2 className='font-display text-2xl font-bold text-gray-900 dark:text-white mb-3'>
+              Ready to stop guessing what to build next?
+            </h2>
+            <p className='text-sm text-gray-500 dark:text-white/40 mb-7'>
+              Connect your help desk in minutes. See your first ranked opportunities within 48 hours.
+            </p>
+            <HeroEmailCapture />
+          </div>
+        </div>
+      </section>
 
       {/* ══════════════════ FAQ ══════════════════ */}
       <section className='px-8 py-20'>
@@ -796,21 +855,33 @@ export function MissionControlPage() {
 
       {/* ══════════════════ FOOTER ══════════════════ */}
       <footer className='border-t border-gray-200 dark:border-white/[0.05] py-8'>
-        <div className='max-w-6xl mx-auto px-8 flex items-center justify-between'>
-          <p className='text-xs text-gray-400 dark:text-white/20'>
-            &copy; {new Date().getFullYear()} SignalPath. All rights reserved.
-          </p>
-          <a
-            href='https://medium.com/@signalpath'
-            target='_blank'
-            rel='noopener noreferrer'
-            className='flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/25 hover:text-gray-700 dark:hover:text-white/60 transition-colors'
-          >
-            <svg className='w-3.5 h-3.5' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
-              <path d='M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zm7.42 0c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z' />
-            </svg>
-            Blog
-          </a>
+        <div className='max-w-6xl mx-auto px-8 flex items-center justify-between flex-wrap gap-4'>
+          <div className='flex items-center gap-4 text-xs text-gray-400 dark:text-white/25'>
+            <span>&copy; {new Date().getFullYear()} SignalPath</span>
+            <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
+            <a href='/privacy' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>Privacy Policy</a>
+            <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
+            <a href='mailto:hello@signalpath.ai' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>hello@signalpath.ai</a>
+          </div>
+          <div className='flex items-center gap-4'>
+            <a
+              href='https://medium.com/@signalpath'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/25 hover:text-gray-700 dark:hover:text-white/60 transition-colors'
+            >
+              <svg className='w-3.5 h-3.5' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
+                <path d='M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zm7.42 0c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z' />
+              </svg>
+              Blog
+            </a>
+            <a
+              href='mailto:hello@signalpath.ai'
+              className='text-xs bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors'
+            >
+              Get early access →
+            </a>
+          </div>
         </div>
       </footer>
     </div>
