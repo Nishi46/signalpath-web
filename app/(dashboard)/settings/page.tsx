@@ -50,22 +50,29 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     salesforce_token: string | null
     intercom_token: string | null
     slack_webhook_url: string | null
-    labeled_cluster_count: number | null
     ml_ready: boolean | null
     ml_model_version: number | null
   }
 
-  const { data } = await supabaseAdmin
-    .from('workspaces')
-    .select(
-      'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
-      'hubspot_token, salesforce_token, intercom_token, slack_webhook_url, ' +
-      'labeled_cluster_count, ml_ready, ml_model_version'
-    )
-    .eq('id', workspaceId)
-    .single() as { data: WsRow | null }
+  const [wsResult, countResult] = await Promise.all([
+    supabaseAdmin
+      .from('workspaces')
+      .select(
+        'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
+        'hubspot_token, salesforce_token, intercom_token, slack_webhook_url, ' +
+        'ml_ready, ml_model_version'
+      )
+      .eq('id', workspaceId)
+      .single(),
+    supabaseAdmin
+      .from('clusters')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspaceId)
+      .not('pm_rating', 'is', null),
+  ])
 
-  const labeledCount = data?.labeled_cluster_count ?? 0
+  const data = wsResult.data as WsRow | null
+  const labeledCount = countResult.count
 
   return {
     zendesk_connected: !!(data?.zendesk_domain && data?.zendesk_token),
@@ -76,10 +83,10 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     intercom_connected: !!data?.intercom_token,
     slack_connected: !!data?.slack_webhook_url,
     ml_stats: {
-      labeled_cluster_count: labeledCount,
+      labeled_cluster_count: labeledCount ?? 0,
       ml_ready: data?.ml_ready ?? false,
       ml_model_version: data?.ml_model_version ?? 0,
-      labels_needed: Math.max(0, ML_THRESHOLD - labeledCount),
+      labels_needed: Math.max(0, ML_THRESHOLD - (labeledCount ?? 0)),
     },
   }
 }
