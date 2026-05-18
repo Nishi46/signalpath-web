@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getWorkspaceId } from '@/lib/get-workspace-id'
+import { getAuthContext } from '@/lib/get-workspace-id'
 import { API_URL, internalHeaders } from '@/lib/internal-api'
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const workspaceId = await getWorkspaceId()
+  const { workspaceId, userId } = await getAuthContext()
   if (!workspaceId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -21,6 +21,7 @@ export async function POST(
       headers: internalHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         workspace_id: workspaceId,
+        user_id: userId,
         human_brief: body.human_brief ?? '',
         agent_spec: body.agent_spec ?? null,
       }),

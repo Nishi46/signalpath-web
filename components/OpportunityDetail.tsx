@@ -30,6 +30,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import { BriefEditor } from './BriefEditor'
 import { exportPrdToDocx } from '@/lib/export-prd'
+import { deepSet } from '@/lib/utils/deepSet'
 import { ScoreBreakdownPanel, type ScoreHistoryEntry } from './ScoreBreakdownPanel'
 import { ScoreSparkline } from './ScoreSparkline'
 import { useToast } from '@/lib/toast-context'
@@ -108,6 +109,10 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   const [draftBrief, setDraftBrief] = useState('')
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Inline agent_spec field editing
+  const [editingSpec, setEditingSpec] = useState(false)
+  const [draftSpec, setDraftSpec] = useState<Record<string, unknown> | null>(cluster.agent_spec ?? null)
 
   const [accounts, setAccounts] = useState<{
     organization_id: string
@@ -399,7 +404,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
         await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/save-draft`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ human_brief: value }),
+          body: JSON.stringify({ human_brief: value, agent_spec: draftSpec }),
         })
         setAutoSaveStatus('saved')
       } catch {
@@ -415,27 +420,64 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
       await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/finalize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ human_brief: draftBrief }),
+        body: JSON.stringify({ human_brief: draftBrief, agent_spec: draftSpec }),
       })
       setAutoSaveStatus('saved')
     } catch {
       setAutoSaveStatus('idle')
     }
     setEditingBrief(false)
+    setEditingSpec(false)
     await refresh()
   }
 
   async function finalizeIfEditing(): Promise<void> {
-    if (!editingBrief) return
+    if (!editingBrief && !editingSpec) return
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     try {
       await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/finalize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ human_brief: draftBrief }),
+        body: JSON.stringify({
+          human_brief: editingBrief ? draftBrief : (cluster.human_brief ?? ''),
+          agent_spec: draftSpec,
+        }),
       })
       setEditingBrief(false)
+      setEditingSpec(false)
     } catch { /* non-fatal — push still proceeds */ }
+  }
+
+  function handleSpecFieldChange(path: string, value: unknown) {
+    setDraftSpec(prev => deepSet(prev ?? {} as Record<string, unknown>, path, value))
+  }
+
+  async function saveSpecDraft(spec: Record<string, unknown> | null) {
+    try {
+      await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/save-draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          human_brief: cluster.human_brief ?? '',
+          agent_spec: spec,
+        }),
+      })
+    } catch { /* non-fatal */ }
+  }
+
+  async function finalizeSpec() {
+    try {
+      await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          human_brief: cluster.human_brief ?? '',
+          agent_spec: draftSpec,
+        }),
+      })
+    } catch { /* non-fatal */ }
+    setEditingSpec(false)
+    await refresh()
   }
 
   return (
@@ -724,6 +766,133 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               Analysing evidence and drafting specification… this can take 15–45 seconds.
             </p>
           )}
+          {cluster.agent_spec && (
+            <div className='mt-6 border-t border-gray-100 dark:border-white/[0.07] pt-5'>
+              <div className='flex items-center justify-between mb-3'>
+                <h3 className='text-xs font-semibold text-gray-700 dark:text-white/60 uppercase tracking-wide'>Agent spec fields</h3>
+                {!editingSpec ? (
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setDraftSpec(cluster.agent_spec ?? null)
+                      setEditingSpec(true)
+                    }}
+                    className='inline-flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:text-white/60 transition-colors'
+                  >
+                    <Pencil className='w-3 h-3' /> Edit spec
+                  </button>
+                ) : (
+                  <div className='flex items-center gap-2'>
+                    <button
+                      type='button'
+                      onClick={() => { setEditingSpec(false); setDraftSpec(cluster.agent_spec ?? null) }}
+                      className='text-xs text-gray-400 dark:text-white/30 hover:text-gray-500 dark:text-white/50 transition-colors'
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        void saveSpecDraft(draftSpec)
+                        void finalizeSpec()
+                      }}
+                      className='inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 hover:bg-emerald-500/15 transition-colors'
+                    >
+                      <Check className='w-3.5 h-3.5' /> Save spec
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {editingSpec ? (
+                <div className='space-y-5'>
+                  {/* Problem statement */}
+                  <div>
+                    <label className='block text-xs font-medium text-gray-500 dark:text-white/40 mb-1.5'>
+                      Problem statement
+                    </label>
+                    <textarea
+                      value={String((draftSpec as Record<string, unknown> | null)?.['feature'] && typeof (draftSpec as Record<string, unknown>)['feature'] === 'object'
+                        ? ((draftSpec as Record<string, unknown>)['feature'] as Record<string, unknown>)['problem_statement'] ?? ''
+                        : '')}
+                      onChange={e => handleSpecFieldChange('feature.problem_statement', e.target.value)}
+                      rows={4}
+                      className='w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/25 outline-none focus:border-sky-500/40 resize-none transition-all'
+                    />
+                  </div>
+
+                  {/* Engineering tasks */}
+                  {Array.isArray((draftSpec as Record<string, unknown> | null)?.['engineering_tasks']) && (
+                    <div>
+                      <label className='block text-xs font-medium text-gray-500 dark:text-white/40 mb-2'>
+                        Engineering tasks
+                      </label>
+                      <div className='space-y-3'>
+                        {((draftSpec as Record<string, unknown>)['engineering_tasks'] as Record<string, unknown>[]).map((task, ti) => (
+                          <div key={ti} className='bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.07] rounded-xl p-3 space-y-2'>
+                            <input
+                              type='text'
+                              value={String(task['title'] ?? '')}
+                              onChange={e => handleSpecFieldChange(`engineering_tasks[${ti}].title`, e.target.value)}
+                              className='w-full bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-sky-500/40 transition-all'
+                              placeholder='Task title'
+                            />
+                            {Array.isArray(task['acceptance_criteria']) && (
+                              <div className='space-y-1.5 pl-1'>
+                                <p className='text-[10px] text-gray-400 dark:text-white/30 font-medium uppercase tracking-wide'>Acceptance criteria</p>
+                                {(task['acceptance_criteria'] as string[]).map((ac, ai) => (
+                                  <textarea
+                                    key={ai}
+                                    value={ac}
+                                    onChange={e => handleSpecFieldChange(`engineering_tasks[${ti}].acceptance_criteria[${ai}]`, e.target.value)}
+                                    rows={2}
+                                    className='w-full bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.07] rounded-lg px-3 py-2 text-xs text-gray-700 dark:text-white/70 outline-none focus:border-sky-500/40 resize-none transition-all'
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className='space-y-2'>
+                  {typeof (cluster.agent_spec as Record<string, unknown> | null)?.['feature'] === 'object' &&
+                    Boolean(((cluster.agent_spec as Record<string, unknown>)['feature'] as Record<string, unknown>)['problem_statement']) && (
+                    <div>
+                      <p className='text-[10px] text-gray-400 dark:text-white/30 font-medium uppercase tracking-wide mb-1'>Problem statement</p>
+                      <p className='text-sm text-gray-700 dark:text-white/70 leading-relaxed'>
+                        {String(((cluster.agent_spec as Record<string, unknown>)['feature'] as Record<string, unknown>)['problem_statement'])}
+                      </p>
+                    </div>
+                  )}
+                  {Array.isArray((cluster.agent_spec as Record<string, unknown> | null)?.['engineering_tasks']) && (
+                    <div>
+                      <p className='text-[10px] text-gray-400 dark:text-white/30 font-medium uppercase tracking-wide mb-1'>
+                        {((cluster.agent_spec as Record<string, unknown>)['engineering_tasks'] as unknown[]).length} engineering tasks
+                      </p>
+                      <div className='space-y-1'>
+                        {(((cluster.agent_spec as Record<string, unknown>)['engineering_tasks']) as Record<string, unknown>[]).slice(0, 4).map((task, i) => (
+                          <div key={i} className='flex items-center gap-2 text-sm text-gray-600 dark:text-white/50'>
+                            <span className='w-5 h-5 rounded-full bg-sky-500/10 text-sky-400 text-[10px] font-bold flex items-center justify-center shrink-0'>{i + 1}</span>
+                            {String(task['title'] ?? '')}
+                          </div>
+                        ))}
+                        {((cluster.agent_spec as Record<string, unknown>)['engineering_tasks'] as unknown[]).length > 4 && (
+                          <p className='text-xs text-gray-400 dark:text-white/30 pl-7'>
+                            +{((cluster.agent_spec as Record<string, unknown>)['engineering_tasks'] as unknown[]).length - 4} more — click Edit spec to view all
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {cluster.human_brief ? (
             <div>
               {editingBrief ? (
