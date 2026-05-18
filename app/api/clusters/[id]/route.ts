@@ -25,7 +25,7 @@ export async function GET(
       `id, label, opportunity_score, signal_count, churn_signal_count, recent_signal_count, centroid, scored_at,
        human_brief, agent_spec, spec_generated_at, confidence, dimension_f, dimension_r, dimension_c,
        dimension_b, dimension_s, dimension_v, unique_orgs, unique_requesters, revenue_at_risk_usd,
-       scoring_model, ml_review_needed`,
+       scoring_model, ml_review_needed, pm_rating, selected_plan_id, plans_generated_at`,
     )
     .eq('id', id)
     .eq('workspace_id', workspaceId)

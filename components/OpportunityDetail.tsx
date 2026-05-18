@@ -23,6 +23,7 @@ import {
   RefreshCw,
   Pencil,
   Check,
+  Map,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -58,6 +59,9 @@ export interface ClusterDetail {
   scoring_model?: string | null
   ml_review_needed?: boolean | null
   revenue_source?: string | null
+  pm_rating?: string | null
+  selected_plan_id?: string | null
+  plans_generated_at?: string | null
 }
 
 interface Signal {
@@ -702,6 +706,15 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
                   <Download className='w-3.5 h-3.5' />
                   agent_spec.json
                 </button>
+              )}
+              {cluster.pm_rating === 'approve' && (
+                <Link
+                  href={`/opportunities/${encodeURIComponent(cluster.id)}/plan`}
+                  className='inline-flex items-center gap-1.5 text-xs font-medium text-violet-400 bg-violet-500/10 px-3 py-2 rounded-lg border border-violet-500/20 hover:bg-violet-500/15 transition-colors'
+                >
+                  <Map className='w-3.5 h-3.5' />
+                  {cluster.selected_plan_id ? 'Change Plan' : 'Explore Plans'}
+                </Link>
               )}
               <button
                 type='button'
