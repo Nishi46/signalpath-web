@@ -680,59 +680,96 @@ function PlanHighlight({ text }: { text: string }) {
 
 // ─── FAQ ──────────────────────────────────────────────────────────────────────
 
-const FAQS = [
+const FAQS: { q: string; a: string | React.ReactNode }[] = [
   {
-    q: 'How does SignalPath work?',
-    a: 'Connect your help desk (Zendesk, Intercom, or Freshdesk) and SignalPath analyzes your support conversations with ML to cluster related tickets, score them by business impact, and surface ranked product opportunities.',
+    q: 'How long does setup take?',
+    a: '60 seconds to connect your helpdesk via OAuth. Your first ranked opportunities appear within 24–48 hours — usually sooner for accounts with active ticket history. Nothing to configure, no agents to deploy.',
   },
   {
-    q: 'How long until I see results?',
-    a: "You'll see your first ranked opportunities within 48 hours of connecting your help desk — usually sooner. The scoring model improves continuously as your team rates opportunities.",
+    q: 'Do I need engineering to get started?',
+    a: 'No. You authorize SignalPath against your helpdesk with a standard OAuth flow — the same way you\'d add any integration to Slack. Engineers only need to be involved if you want to connect GitHub for codebase-aware specs, which is a one-click GitHub App install.',
   },
   {
-    q: 'What integrations do you support?',
-    a: 'For signal ingestion we connect to Zendesk, Intercom, Freshdesk, and Salesforce. For codebase context we connect to GitHub — SignalPath indexes your repo structure so specs reference your actual files. For output, you can push specs directly to Linear or Jira, or keep everything in SignalPath. Direct Cursor and Claude Code integration are on the roadmap.',
+    q: 'How does SignalPath identify opportunities from raw tickets?',
+    a: (
+      <>
+        Every ticket is embedded into a high-dimensional semantic space and clustered by meaning, not keywords. Clusters with related semantics but different phrasings get merged — so &ldquo;session dropped,&rdquo; &ldquo;API keeps disconnecting,&rdquo; and &ldquo;token expiry error&rdquo; all roll up into one opportunity. Each cluster is then scored across{' '}
+        <span className='text-gray-700 dark:text-white/70 font-medium'>six dimensions: churn risk, account breadth, severity, frequency, recency, and revenue at risk.</span>
+      </>
+    ),
   },
   {
-    q: 'Can SignalPath read my codebase?',
-    a: 'Yes — connect your GitHub repository and SignalPath indexes its structure: every file path, API route, model, and function name. No source code is stored, only the skeleton. When a spec is generated it references your actual files. A generic tool writes "add an export endpoint." SignalPath writes "modify app/routes/exports.py, extend ExportJob in app/models/jobs.py." The index updates incrementally with every push via webhooks, so specs always reflect your current codebase.',
+    q: 'How is this different from searching my helpdesk or building a report?',
+    a: 'Search gives you what you ask for. Reports give you what you measured. SignalPath surfaces what you didn\'t know to look for — clusters of related pain that span different ticket categories, accounts, and time windows. A search for "token expiry" misses the 40 tickets that describe the same problem as "session dropped" or "integration keeps breaking." We find those.',
   },
   {
-    q: 'How are opportunities scored?',
-    a: 'Each cluster is scored across six dimensions: churn risk, account breadth, severity, frequency, recency, and revenue at risk. Scores are weighted by your team\'s rating history as you use the product.',
+    q: 'Does SignalPath store my source code?',
+    a: (
+      <>
+        No source code is ever stored. When you connect GitHub, we index only the{' '}
+        <span className='text-gray-700 dark:text-white/70 font-medium'>skeleton</span>
+        {': every file path, route definition, model name, and function signature. That\'s enough for specs to reference your actual files — '}
+        <span className='font-mono text-[11px] text-blue-400/80 bg-blue-500/8 px-1 py-0.5 rounded'>app/middleware/token_refresh.py</span>
+        {' — without us ever seeing implementation logic. The index refreshes incrementally on every push via webhook.'}
+      </>
+    ),
   },
   {
-    q: 'Is my customer data secure?',
-    a: 'Yes. All data is encrypted in transit and at rest. We never share your data with third parties or use it to train shared models.',
+    q: 'What does a generated spec look like?',
+    a: 'Each spec is a structured JSON document with a problem statement, acceptance criteria tied to your actual file paths, affected files, estimated effort, and a suggested assignee. When the codebase index is connected, acceptance criteria include exact file paths and line numbers. You can see a live example in the interactive demo above.',
   },
   {
-    q: 'How much does it cost?',
-    a: "We're currently in early access with a limited number of design partners. Pricing will be usage-based on volume of support conversations analyzed. Drop us a note to discuss.",
+    q: 'Which integrations do you support?',
+    a: (
+      <span className='space-y-1.5 block'>
+        <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Signal ingestion:</span> Zendesk, Intercom, Freshdesk</span>
+        <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Revenue context:</span> HubSpot and Salesforce — syncs real ARR to replace AI-estimated values</span>
+        <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Codebase:</span> GitHub (App installation, works across orgs)</span>
+        <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Output:</span> Linear, Jira — push specs as tickets directly</span>
+        <span className='block text-gray-400 dark:text-white/30'>Cursor and Claude Code integration coming in V2.</span>
+      </span>
+    ),
+  },
+  {
+    q: 'How is my customer data handled?',
+    a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We never share your data with third parties, never use it to train shared models, and never surface one customer\'s verbatims to another workspace. You can request full deletion at any time.',
+  },
+  {
+    q: 'What does early access cost?',
+    a: "We're working with a small number of design partners right now — the focus is on fit over revenue. If SignalPath is useful for your team, we'll figure out pricing together. Reach out at hello@signalpath.ai.",
   },
 ]
 
 function FAQ() {
   const [open, setOpen] = useState<number | null>(null)
   return (
-    <div className='max-w-2xl mx-auto divide-y divide-gray-200 dark:divide-white/[0.07]'>
-      {FAQS.map((faq, i) => (
-        <div key={i}>
-          <button
-            onClick={() => setOpen(open === i ? null : i)}
-            className='w-full flex items-center justify-between gap-4 py-5 text-left'
+    <div className='max-w-2xl mx-auto'>
+      {FAQS.map((faq, i) => {
+        const isOpen = open === i
+        return (
+          <div
+            key={i}
+            className={`border-b border-gray-200 dark:border-white/[0.07] transition-colors duration-150 ${isOpen ? 'bg-gray-50/60 dark:bg-white/[0.02] -mx-4 px-4 rounded-xl' : ''}`}
           >
-            <span className='text-sm font-semibold text-gray-900 dark:text-white'>{faq.q}</span>
-            <ChevronDown
-              className={`w-4 h-4 text-gray-400 dark:text-white/30 flex-shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`}
-            />
-          </button>
-          {open === i && (
-            <p className='text-sm text-gray-500 dark:text-white/50 leading-relaxed pb-5'>
-              {faq.a}
-            </p>
-          )}
-        </div>
-      ))}
+            <button
+              onClick={() => setOpen(isOpen ? null : i)}
+              className='w-full flex items-center justify-between gap-4 py-5 text-left'
+            >
+              <span className={`text-sm font-semibold leading-snug transition-colors ${isOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                {faq.q}
+              </span>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isOpen ? 'bg-blue-500/10 text-blue-400' : 'bg-gray-100 dark:bg-white/[0.06] text-gray-400 dark:text-white/30'}`}>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+              </span>
+            </button>
+            {isOpen && (
+              <div className='text-sm text-gray-500 dark:text-white/50 leading-relaxed pb-5 animate-fade-in'>
+                {faq.a}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
