@@ -736,7 +736,7 @@ const FAQS: { q: string; a: string | React.ReactNode }[] = [
   },
   {
     q: 'What does early access cost?',
-    a: "We're working with a small number of design partners right now — the focus is on fit over revenue. If SignalPath is useful for your team, we'll figure out pricing together. Reach out at hello@signalpath.ai.",
+    a: "We're working with a small number of design partners right now — the focus is on fit over revenue. If SignalPath is useful for your team, we'll figure out pricing together. Reach out at nishigoldy@gmail.com.",
   },
 ]
 
