@@ -3,7 +3,15 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { DashboardNav } from '@/components/DashboardNav'
-import { ArrowLeft, CheckCircle, Clock, FileCode, Database, Route, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Clock, FileCode, Database, Route, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
+
+interface PlanStep {
+  order: number
+  title: string
+  file: string
+  what_to_do: string
+  test?: string
+}
 
 interface Plan {
   id: string
@@ -19,6 +27,7 @@ interface Plan {
   signal_coverage_pct: number
   estimated_tasks: number
   risk_notes: string | null
+  steps: PlanStep[]
   selected: boolean
 }
 
@@ -45,7 +54,12 @@ export default function PlanPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'polling' | 'ready' | 'error'>('idle')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>({})
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  function toggleSteps(planId: string) {
+    setExpandedSteps(prev => ({ ...prev, [planId]: !prev[planId] }))
+  }
 
   const fetchPlans = useCallback(async () => {
     const res = await fetch(`/api/clusters/${encodeURIComponent(clusterId)}/plans`)
@@ -264,6 +278,45 @@ export default function PlanPage() {
                       </p>
                     )}
                   </div>
+
+                  {/* Steps */}
+                  {plan.steps.length > 0 && (
+                    <div className='mt-4 pt-4 border-t border-white/[0.06]'>
+                      <button
+                        type='button'
+                        onClick={e => { e.stopPropagation(); toggleSteps(plan.id) }}
+                        className='flex items-center gap-2 text-xs font-medium text-white/50 hover:text-white/80 transition-colors'
+                      >
+                        {expandedSteps[plan.id]
+                          ? <ChevronUp className='w-3.5 h-3.5' />
+                          : <ChevronDown className='w-3.5 h-3.5' />
+                        }
+                        {plan.steps.length} implementation steps
+                      </button>
+
+                      {expandedSteps[plan.id] && (
+                        <ol className='mt-3 space-y-3'>
+                          {plan.steps.map(step => (
+                            <li key={step.order} className='flex gap-3'>
+                              <span className='flex-shrink-0 w-5 h-5 rounded-full bg-violet-500/20 text-violet-300 text-[10px] font-bold flex items-center justify-center mt-0.5'>
+                                {step.order}
+                              </span>
+                              <div className='min-w-0'>
+                                <p className='text-xs font-medium text-white/80'>{step.title}</p>
+                                <p className='text-[10px] font-mono text-violet-400/70 mt-0.5 truncate'>{step.file}</p>
+                                <p className='text-xs text-white/45 mt-1 leading-relaxed'>{step.what_to_do}</p>
+                                {step.test && (
+                                  <p className='text-[10px] text-amber-400/60 mt-1'>
+                                    <span className='font-medium'>Verify: </span>{step.test}
+                                  </p>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
