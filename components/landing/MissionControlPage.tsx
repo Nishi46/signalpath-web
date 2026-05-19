@@ -885,6 +885,12 @@ export function MissionControlPage() {
           <span className='font-display font-bold text-gray-900 dark:text-white'>SignalPath</span>
         </div>
         <div className='flex items-center gap-3'>
+          <Link
+            href='/about'
+            className='text-sm text-gray-500 dark:text-white/45 hover:text-gray-800 dark:hover:text-white/80 px-3 py-1.5 transition-colors'
+          >
+            About
+          </Link>
           <button
             onClick={toggle}
             className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors'
