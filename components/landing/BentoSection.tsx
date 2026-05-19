@@ -736,7 +736,7 @@ export function BentoSection() {
         {/* Bento grid */}
         <div
           className='grid grid-cols-5 gap-4'
-          style={{ gridTemplateRows: '280px 340px 300px' }}
+          style={{ gridTemplateRows: '280px 340px 420px' }}
         >
           {/* Tile 1 — Signal Counter: col 1, rows 1-2 */}
           <div className='row-span-2 min-h-0'>

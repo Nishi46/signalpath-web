@@ -9,6 +9,7 @@ import {
   Code2,
   X,
   CheckCircle,
+  CheckCircle2,
   ChevronRight,
   Sun,
   Moon,
@@ -328,19 +329,41 @@ function FeedCard({
   )
 }
 
-// ─── DetailPanel ──────────────────────────────────────────────────────────────
+// ─── WorkflowPanel ────────────────────────────────────────────────────────────
 
-function DetailPanel({
+type WorkflowTab = 'signals' | 'plan' | 'spec'
+
+function WorkflowPanel({
   opp,
+  activeTab,
+  onTabChange,
   onClose,
+  planText,
+  specText,
+  onGeneratePlan,
+  onSkipPlan,
   onGenerateSpec,
+  onSkipSpec,
 }: {
   opp: Opportunity
+  activeTab: WorkflowTab
+  onTabChange: (tab: WorkflowTab) => void
   onClose: () => void
+  planText: string
+  specText: string
+  onGeneratePlan: () => void
+  onSkipPlan: () => void
   onGenerateSpec: () => void
+  onSkipSpec: () => void
 }) {
   const [animated, setAnimated] = useState(false)
   const { bar, text } = scoreColor(opp.score)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  const planStarted = planText.length > 0
+  const planDone    = planText.length >= PLAN_TEXT.length
+  const specStarted = specText.length > 0
+  const specDone    = specText.length >= SPEC_JSON.length
 
   useEffect(() => {
     setAnimated(false)
@@ -348,10 +371,20 @@ function DetailPanel({
     return () => clearTimeout(t)
   }, [opp.id])
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [planText, specText])
+
+  const TABS: { id: WorkflowTab; label: string; num: string }[] = [
+    { id: 'signals', label: 'Signals', num: '1' },
+    { id: 'plan',    label: 'Plan',    num: '2' },
+    { id: 'spec',    label: 'Spec',    num: '3' },
+  ]
+
   return (
     <div className='h-full flex flex-col overflow-hidden'>
       {/* Header */}
-      <div className='flex items-start gap-3 mb-4'>
+      <div className='flex items-start gap-3 mb-3 flex-shrink-0'>
         <h2 className='text-sm font-bold text-gray-900 dark:text-white leading-snug flex-1'>{opp.title}</h2>
         <button
           onClick={onClose}
@@ -362,154 +395,218 @@ function DetailPanel({
         </button>
       </div>
 
-      {/* Score hero */}
-      <div className='flex items-end gap-3 mb-5'>
-        <span className='font-display text-4xl font-bold leading-none' style={{ color: text }}>
-          {opp.score.toFixed(1)}
-        </span>
-        <div className='text-[10px] text-gray-400 dark:text-white/35 pb-1 space-y-0.5'>
-          <div>{opp.tickets} tickets · {opp.churn} churn signals</div>
-          <div className='text-emerald-400/70'>{fmt(opp.revenue)} revenue at risk</div>
-        </div>
-      </div>
-
-      {/* Score dimensions */}
-      <div className='mb-5'>
-        <p className='text-[10px] font-semibold text-gray-400 dark:text-white/25 uppercase tracking-widest mb-2.5'>
-          Score Breakdown
-        </p>
-        <div className='space-y-2'>
-          {Object.entries(opp.dims).map(([dim, val]) => (
-            <div key={dim} className='flex items-center gap-2.5'>
-              <span className='text-[10px] text-gray-500 dark:text-white/45 w-28 flex-shrink-0'>{dim}</span>
-              <div className='flex-1 bg-gray-200 dark:bg-white/[0.06] rounded-full h-1 overflow-hidden'>
-                <div
-                  className='h-full rounded-full'
-                  style={{
-                    width: animated ? `${(val / 10) * 100}%` : '0%',
-                    backgroundColor: bar,
-                    transition: 'width 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                />
-              </div>
-              <span className='font-mono text-[10px] text-gray-400 dark:text-white/35 w-6 text-right'>{val.toFixed(1)}</span>
+      {/* Tab row */}
+      <div className='flex items-center gap-1 pb-3 mb-4 border-b border-gray-100 dark:border-white/[0.06] flex-shrink-0'>
+        {TABS.map((tab, i) => {
+          const isActive    = activeTab === tab.id
+          const isCompleted = (tab.id === 'signals') ||
+                              (tab.id === 'plan' && planDone) ||
+                              (tab.id === 'spec' && specDone)
+          return (
+            <div key={tab.id} className='flex items-center gap-1'>
+              <button
+                onClick={() => onTabChange(tab.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  isActive
+                    ? 'bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/20'
+                    : 'text-gray-400 dark:text-white/35 hover:text-gray-600 dark:hover:text-white/60'
+                }`}
+              >
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${
+                  isCompleted
+                    ? 'bg-emerald-500/15 text-emerald-400'
+                    : isActive
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-white/30'
+                }`}>
+                  {isCompleted ? '✓' : tab.num}
+                </span>
+                {tab.label}
+              </button>
+              {i < TABS.length - 1 && (
+                <ChevronRight className='w-3 h-3 text-gray-300 dark:text-white/15 flex-shrink-0' />
+              )}
             </div>
-          ))}
-        </div>
+          )
+        })}
       </div>
 
-      {/* Verbatims */}
-      <div className='flex-1 overflow-y-auto min-h-0 mb-4'>
-        <p className='text-[10px] font-semibold text-gray-400 dark:text-white/25 uppercase tracking-widest mb-2.5'>
-          Representative Signals
-        </p>
-        <div className='space-y-2'>
-          {opp.verbatims.map((v, i) => (
-            <div key={i} className='bg-gray-50 dark:bg-white/[0.03] rounded-lg p-3 border border-gray-200 dark:border-white/[0.06]'>
-              <p className='text-[11px] text-gray-600 dark:text-white/65 leading-relaxed italic mb-1.5'>
-                &ldquo;{v.text}&rdquo;
-              </p>
-              <p className='text-[10px] text-gray-400 dark:text-white/25'>{v.from}</p>
+      {/* ── Tab: Signals ── */}
+      {activeTab === 'signals' && (
+        <div className='flex-1 flex flex-col overflow-hidden'>
+          <div className='flex items-end gap-3 mb-4 flex-shrink-0'>
+            <span className='font-display text-4xl font-bold leading-none' style={{ color: text }}>
+              {opp.score.toFixed(1)}
+            </span>
+            <div className='text-[10px] text-gray-400 dark:text-white/35 pb-1 space-y-0.5'>
+              <div>{opp.tickets} tickets · {opp.churn} churn signals</div>
+              <div className='text-emerald-400/70'>{fmt(opp.revenue)} revenue at risk</div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* CTA */}
-      <button
-        onClick={onGenerateSpec}
-        className='flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors flex-shrink-0'
-      >
-        <Code2 className='w-3.5 h-3.5' />
-        Generate Spec
-        <ChevronRight className='w-3.5 h-3.5' />
-      </button>
-    </div>
-  )
-}
-
-// ─── SpecPanel ────────────────────────────────────────────────────────────────
-
-interface SpecPanelProps {
-  specText: string
-  specTitle: string
-  onClose: () => void
-  onSkip: () => void
-  onGeneratePlan: () => void
-  onSkipPlan: () => void
-  showPlan: boolean
-  planText: string
-}
-
-function SpecPanel({ specText, specTitle, onClose, onSkip, onGeneratePlan, onSkipPlan, showPlan, planText }: SpecPanelProps) {
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const specDone = specText.length >= SPEC_JSON.length
-  const planDone = planText.length >= PLAN_TEXT.length
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }, [specText, planText])
-
-  const title = showPlan ? 'signalpath-plan.md' : specTitle
-
-  return (
-    <div className='h-full flex flex-col bg-[#0D1117] rounded-2xl border border-white/[0.07] overflow-hidden animate-slide-in-right'>
-      {/* Title bar */}
-      <div className='flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] flex-shrink-0'>
-        <div className='flex items-center gap-2.5'>
-          <div className='flex gap-1.5'>
-            <span className='w-2.5 h-2.5 rounded-full bg-red-500/50' />
-            <span className='w-2.5 h-2.5 rounded-full bg-yellow-500/50' />
-            <span className='w-2.5 h-2.5 rounded-full bg-green-500/50' />
           </div>
-          <span className={`font-mono text-[10px] text-white/50 truncate max-w-[180px] transition-all duration-300 ${showPlan ? 'text-violet-400/70' : ''}`}>
-            {title}
-          </span>
-        </div>
-        <div className='flex items-center gap-3'>
-          {!showPlan && !specDone && (
-            <button onClick={onSkip} className='font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors'>
-              Skip →
-            </button>
-          )}
-          {showPlan && !planDone && (
-            <button onClick={onSkipPlan} className='font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors'>
-              Skip →
-            </button>
-          )}
-          <button onClick={onClose} className='text-white/20 hover:text-white/50 transition-colors' aria-label='Close'>
-            <X className='w-3.5 h-3.5' />
-          </button>
-        </div>
-      </div>
 
-      <div className='flex-1 overflow-y-auto p-4'>
-        {!showPlan ? (
-          <pre className='font-mono text-[11px] leading-relaxed whitespace-pre-wrap'>
-            <JsonHighlight text={specText} />
-            {!specDone && <span className='text-white/60 animate-pulse'>█</span>}
-          </pre>
-        ) : (
-          <pre className='font-mono text-[11px] leading-relaxed whitespace-pre-wrap'>
-            <PlanHighlight text={planText} />
-            {!planDone && <span className='text-white/60 animate-pulse'>█</span>}
-          </pre>
-        )}
-        <div ref={bottomRef} />
-      </div>
+          <div className='mb-4 flex-shrink-0'>
+            <p className='text-[10px] font-semibold text-gray-400 dark:text-white/25 uppercase tracking-widest mb-2.5'>
+              Score Breakdown
+            </p>
+            <div className='space-y-2'>
+              {Object.entries(opp.dims).map(([dim, val]) => (
+                <div key={dim} className='flex items-center gap-2.5'>
+                  <span className='text-[10px] text-gray-500 dark:text-white/45 w-28 flex-shrink-0'>{dim}</span>
+                  <div className='flex-1 bg-gray-200 dark:bg-white/[0.06] rounded-full h-1 overflow-hidden'>
+                    <div
+                      className='h-full rounded-full'
+                      style={{
+                        width: animated ? `${(val / 10) * 100}%` : '0%',
+                        backgroundColor: bar,
+                        transition: 'width 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                    />
+                  </div>
+                  <span className='font-mono text-[10px] text-gray-400 dark:text-white/35 w-6 text-right'>{val.toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-      {/* Generate Plan CTA — appears when spec is done and plan hasn't started */}
-      {specDone && !showPlan && (
-        <div className='px-4 pb-4 flex-shrink-0'>
-          <div className='h-px bg-white/[0.06] mb-3' />
+          <div className='flex-1 overflow-y-auto min-h-0 mb-4'>
+            <p className='text-[10px] font-semibold text-gray-400 dark:text-white/25 uppercase tracking-widest mb-2.5'>
+              Representative Signals
+            </p>
+            <div className='space-y-2'>
+              {opp.verbatims.map((v, i) => (
+                <div key={i} className='bg-gray-50 dark:bg-white/[0.03] rounded-lg p-3 border border-gray-200 dark:border-white/[0.06]'>
+                  <p className='text-[11px] text-gray-600 dark:text-white/65 leading-relaxed italic mb-1.5'>
+                    &ldquo;{v.text}&rdquo;
+                  </p>
+                  <p className='text-[10px] text-gray-400 dark:text-white/25'>{v.from}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <button
-            onClick={onGeneratePlan}
-            className='flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold transition-colors'
+            onClick={() => { onTabChange('plan'); onGeneratePlan() }}
+            className='flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold transition-colors flex-shrink-0'
           >
             <ListChecks className='w-3.5 h-3.5' />
             Generate Plan
             <ChevronRight className='w-3.5 h-3.5' />
           </button>
+        </div>
+      )}
+
+      {/* ── Tab: Plan ── */}
+      {activeTab === 'plan' && (
+        <div className='flex-1 flex flex-col overflow-hidden'>
+          <div className='flex-1 bg-[#0D1117] rounded-2xl border border-white/[0.07] overflow-hidden flex flex-col'>
+            <div className='flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] flex-shrink-0'>
+              <div className='flex items-center gap-2.5'>
+                <div className='flex gap-1.5'>
+                  <span className='w-2.5 h-2.5 rounded-full bg-red-500/50' />
+                  <span className='w-2.5 h-2.5 rounded-full bg-yellow-500/50' />
+                  <span className='w-2.5 h-2.5 rounded-full bg-green-500/50' />
+                </div>
+                <span className='font-mono text-[10px] text-violet-400/70'>signalpath-plan.md</span>
+              </div>
+              {planStarted && !planDone && (
+                <button onClick={onSkipPlan} className='font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors'>
+                  Skip →
+                </button>
+              )}
+            </div>
+            <div className='flex-1 overflow-y-auto p-4'>
+              {planStarted ? (
+                <pre className='font-mono text-[11px] leading-relaxed whitespace-pre-wrap'>
+                  <PlanHighlight text={planText} />
+                  {!planDone && <span className='text-white/60 animate-pulse'>█</span>}
+                </pre>
+              ) : (
+                <div className='h-full flex items-center justify-center'>
+                  <div className='text-center'>
+                    <p className='font-mono text-[10px] text-white/25 mb-4'>Plan not generated yet</p>
+                    <button
+                      onClick={onGeneratePlan}
+                      className='flex items-center gap-2 mx-auto px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium transition-colors'
+                    >
+                      <ListChecks className='w-3.5 h-3.5' />
+                      Generate Plan
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef} />
+            </div>
+          </div>
+
+          {planDone && (
+            <div className='mt-3 flex-shrink-0'>
+              <button
+                onClick={() => { onTabChange('spec'); onGenerateSpec() }}
+                className='flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors'
+              >
+                <Code2 className='w-3.5 h-3.5' />
+                Generate Spec
+                <ChevronRight className='w-3.5 h-3.5' />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Tab: Spec ── */}
+      {activeTab === 'spec' && (
+        <div className='flex-1 flex flex-col overflow-hidden'>
+          <div className='flex-1 bg-[#0D1117] rounded-2xl border border-white/[0.07] overflow-hidden flex flex-col'>
+            <div className='flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] flex-shrink-0'>
+              <div className='flex items-center gap-2.5'>
+                <div className='flex gap-1.5'>
+                  <span className='w-2.5 h-2.5 rounded-full bg-red-500/50' />
+                  <span className='w-2.5 h-2.5 rounded-full bg-yellow-500/50' />
+                  <span className='w-2.5 h-2.5 rounded-full bg-green-500/50' />
+                </div>
+                <span className='font-mono text-[10px] text-blue-400/70'>agent_spec.json</span>
+              </div>
+              {specStarted && !specDone && (
+                <button onClick={onSkipSpec} className='font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors'>
+                  Skip →
+                </button>
+              )}
+            </div>
+            <div className='flex-1 overflow-y-auto p-4'>
+              {specStarted ? (
+                <pre className='font-mono text-[11px] leading-relaxed whitespace-pre-wrap'>
+                  <JsonHighlight text={specText} />
+                  {!specDone && <span className='text-white/60 animate-pulse'>█</span>}
+                </pre>
+              ) : !planDone ? (
+                <div className='h-full flex items-center justify-center'>
+                  <div className='text-center'>
+                    <p className='font-mono text-[10px] text-white/25 mb-3'>Generate the plan first</p>
+                    <button
+                      onClick={() => onTabChange('plan')}
+                      className='font-mono text-[10px] text-white/40 hover:text-white/60 underline transition-colors'
+                    >
+                      ← Back to Plan
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className='h-full flex items-center justify-center'>
+                  <div className='text-center'>
+                    <p className='font-mono text-[10px] text-white/25 mb-4'>Plan complete — ready to generate</p>
+                    <button
+                      onClick={onGenerateSpec}
+                      className='flex items-center gap-2 mx-auto px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors'
+                    >
+                      <Code2 className='w-3.5 h-3.5' />
+                      Generate Spec
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef} />
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -698,9 +795,8 @@ function HeroEmailCapture() {
 export function MissionControlPage() {
   const { theme, toggle } = useTheme()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [showSpec, setShowSpec] = useState(false)
+  const [activeTab, setActiveTab] = useState<WorkflowTab>('signals')
   const [specText, setSpecText] = useState('')
-  const [showPlan, setShowPlan] = useState(false)
   const [planText, setPlanText] = useState('')
   const specIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const specIndexRef = useRef(0)
@@ -712,10 +808,7 @@ export function MissionControlPage() {
   const selected = OPPS.find(o => o.id === selectedId) ?? null
 
   const startSpec = useCallback(() => {
-    setShowSpec(true)
     setSpecText('')
-    setShowPlan(false)
-    setPlanText('')
     specIndexRef.current = 0
     if (specIntervalRef.current) clearInterval(specIntervalRef.current)
     specIntervalRef.current = setInterval(() => {
@@ -729,7 +822,6 @@ export function MissionControlPage() {
   }, [])
 
   const startPlan = useCallback(() => {
-    setShowPlan(true)
     setPlanText('')
     planIndexRef.current = 0
     if (planIntervalRef.current) clearInterval(planIntervalRef.current)
@@ -770,15 +862,13 @@ export function MissionControlPage() {
     setHintSeen(true)
     if (selectedId === id) {
       setSelectedId(null)
-      setShowSpec(false)
+      setActiveTab('signals')
       setSpecText('')
-      setShowPlan(false)
       setPlanText('')
     } else {
       setSelectedId(id)
-      setShowSpec(false)
+      setActiveTab('signals')
       setSpecText('')
-      setShowPlan(false)
       setPlanText('')
     }
   }
@@ -938,40 +1028,28 @@ export function MissionControlPage() {
                 </div>
               </div>
 
-              {/* Detail / Spec column */}
+              {/* Workflow panel */}
               {selected && (
-                <div className='flex-1 flex gap-4 animate-slide-in-right overflow-hidden' style={{ minHeight: 0 }}>
-                  {/* Detail panel */}
-                  <div
-                    className='bg-gray-50 dark:bg-[#111318] rounded-xl border border-gray-200 dark:border-white/[0.06] p-5 flex flex-col overflow-hidden flex-shrink-0 transition-all duration-300'
-                    style={{ width: showSpec ? '300px' : '100%' }}
-                  >
-                    <DetailPanel
+                <div className='flex-1 animate-slide-in-right overflow-hidden' style={{ minHeight: 0 }}>
+                  <div className='bg-gray-50 dark:bg-[#111318] rounded-xl border border-gray-200 dark:border-white/[0.06] p-5 h-full flex flex-col overflow-hidden'>
+                    <WorkflowPanel
                       opp={selected}
+                      activeTab={activeTab}
+                      onTabChange={setActiveTab}
                       onClose={() => {
                         setSelectedId(null)
-                        setShowSpec(false)
+                        setActiveTab('signals')
                         setSpecText('')
+                        setPlanText('')
                       }}
+                      planText={planText}
+                      specText={specText}
+                      onGeneratePlan={startPlan}
+                      onSkipPlan={skipPlan}
                       onGenerateSpec={startSpec}
+                      onSkipSpec={skipTypewriter}
                     />
                   </div>
-
-                  {/* Spec JSON panel */}
-                  {showSpec && (
-                    <div className='flex-1 overflow-hidden' style={{ minWidth: 0 }}>
-                      <SpecPanel
-                        specText={specText}
-                        specTitle={selected ? `spec: ${selected.title.slice(0, 32)}…` : 'agent_spec.json'}
-                        onClose={() => { setShowSpec(false); setSpecText(''); setShowPlan(false); setPlanText('') }}
-                        onSkip={skipTypewriter}
-                        onGeneratePlan={startPlan}
-                        onSkipPlan={skipPlan}
-                        showPlan={showPlan}
-                        planText={planText}
-                      />
-                    </div>
-                  )}
                 </div>
               )}
             </div>
