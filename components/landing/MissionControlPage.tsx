@@ -1107,7 +1107,7 @@ export function MissionControlPage() {
             <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
             <a href='/privacy' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>Privacy Policy</a>
             <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
-            <a href='mailto:hello@signalpath.ai' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>hello@signalpath.ai</a>
+            <a href='mailto:nishigoldy@gmail.com' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>nishigoldy@gmail.com</a>
           </div>
           <div className='flex items-center gap-4'>
             <a
@@ -1122,7 +1122,7 @@ export function MissionControlPage() {
               Blog
             </a>
             <a
-              href='mailto:hello@signalpath.ai'
+              href='mailto:nishigoldy@gmail.com'
               className='text-xs bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors'
             >
               Get early access →
