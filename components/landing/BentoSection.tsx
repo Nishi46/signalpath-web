@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Zap, GitMerge, Sliders, Send, CheckCircle2, Clock } from 'lucide-react'
+import { Zap, GitMerge, Sliders, Send, CheckCircle2, Clock, FileCode, Github } from 'lucide-react'
 import { useTheme } from '../ThemeProvider'
 
 // ─── Tile 1: Signal Counter ────────────────────────────────────────────────────
@@ -11,7 +11,7 @@ const SOURCES = [
   { name: 'Intercom', dot: '#7C3AED', soon: false, width: 45 },
   { name: 'Freshdesk', dot: '#38BDF8', soon: false, width: 38 },
   { name: 'Salesforce', dot: '#22D3EE', soon: false, width: 28 },
-  { name: 'GitHub (codebase)', dot: '#6B7280', soon: true, width: 0 },
+  { name: 'GitHub (codebase)', dot: '#6B7280', soon: false, width: 14 },
 ]
 
 function useCountUp(target: number, duration: number, active: boolean) {
@@ -92,7 +92,7 @@ function SignalCounterTile() {
 
       <div className='mt-auto pt-3 border-t border-gray-100 dark:border-white/[0.06]'>
         <p className='text-[10px] text-gray-400 dark:text-white/20 leading-relaxed'>
-          Help-desk signals today. GitHub codebase indexing coming in V2 — so specs reference your actual files.
+          Help-desk signals plus your GitHub repository structure — so every spec references your actual files, not generic service names.
         </p>
       </div>
     </div>
@@ -340,7 +340,7 @@ const DESTINATIONS = [
   {
     id: 'cursor',
     name: 'Cursor',
-    description: 'Open the spec directly as a Cursor Composer session. The agent starts coding from your actual file paths.',
+    description: 'Open the spec as a Cursor Composer session. Codebase indexing is live — Cursor integration lands next.',
     status: 'coming-soon' as const,
     accent: '#6B7280',
     logo: (
@@ -451,6 +451,156 @@ function HandoffTile() {
   )
 }
 
+// ─── Tile 5: Codebase Indexing ────────────────────────────────────────────────
+
+const INDEXED_FILES = [
+  { path: 'app/routes/oauth.py',           symbols: ['POST /oauth/token', 'GET /oauth/authorize'],           color: '#3B82F6' },
+  { path: 'app/services/auth_service.py',  symbols: ['AuthService.refresh()', 'TokenValidator.check()'],      color: '#8B5CF6' },
+  { path: 'app/models/session.py',         symbols: ['Session', 'RefreshToken'],                              color: '#10B981' },
+  { path: 'app/middleware/token_refresh.py', symbols: ['TokenRefreshMiddleware'],                             color: '#F59E0B' },
+  { path: 'app/routes/github_auth.py',     symbols: ['GET /auth/github/install', 'GET /auth/github/callback'], color: '#3B82F6' },
+  { path: 'app/services/github_client.py', symbols: ['GitHubClient.create_branch()', 'create_pull_request()'], color: '#8B5CF6' },
+  { path: 'app/models/workspace.py',       symbols: ['Workspace', 'GithubInstallation'],                    color: '#10B981' },
+]
+
+function CodebaseIndexTile() {
+  const tileRef = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+  const [activeIdx, setActiveIdx] = useState(0)
+  const fileCount = useCountUp(241, 1600, visible)
+  const routeCount = useCountUp(18, 1200, visible)
+  const fnCount = useCountUp(164, 1800, visible)
+  const modelCount = useCountUp(31, 1400, visible)
+
+  useEffect(() => {
+    const el = tileRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
+      { threshold: 0.3 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!visible) return
+    const interval = setInterval(() => setActiveIdx(i => (i + 1) % INDEXED_FILES.length), 900)
+    return () => clearInterval(interval)
+  }, [visible])
+
+  const activeFile = INDEXED_FILES[activeIdx]
+
+  return (
+    <div ref={tileRef} className='bento-tile flex flex-col h-full'>
+      <TileLabel icon={<FileCode className='w-3.5 h-3.5' />} label='Codebase Index' index='05' />
+      <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-4'>
+        Connect GitHub and SignalPath maps your repository skeleton — file paths, routes, models, functions.
+        Specs reference your actual code, not generic descriptions. Source code is never stored.
+      </p>
+
+      <div className='flex-1 grid grid-cols-3 gap-4 min-h-0'>
+
+        {/* Left: animated file tree */}
+        <div className='bg-gray-50 dark:bg-white/[0.02] rounded-xl p-3 border border-gray-100 dark:border-white/[0.05] flex flex-col overflow-hidden'>
+          <div className='flex items-center gap-2 mb-3'>
+            <Github className='w-3 h-3 text-gray-400 dark:text-white/30' />
+            <span className='font-mono text-[9px] text-gray-400 dark:text-white/25 uppercase tracking-widest'>Repository</span>
+            <span className='ml-auto flex items-center gap-1 text-[9px] text-emerald-500'>
+              <span className='w-1 h-1 rounded-full bg-emerald-500 animate-pulse' />
+              live
+            </span>
+          </div>
+          <div className='space-y-0.5 flex-1 overflow-hidden'>
+            {INDEXED_FILES.map((file, i) => (
+              <div
+                key={file.path}
+                className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-all duration-300 ${activeIdx === i ? 'bg-blue-500/10' : ''}`}
+              >
+                <span
+                  className='w-1 h-1 rounded-full flex-shrink-0 transition-all duration-300'
+                  style={{ backgroundColor: activeIdx === i ? file.color : '#6B7280', opacity: activeIdx === i ? 1 : 0.25 }}
+                />
+                <span
+                  className={`font-mono text-[9px] truncate transition-colors duration-300 ${activeIdx === i ? 'text-gray-800 dark:text-white/90' : 'text-gray-400 dark:text-white/25'}`}
+                >
+                  {file.path}
+                </span>
+                {activeIdx === i && (
+                  <span className='ml-auto w-1 h-1 rounded-full bg-blue-400 animate-pulse flex-shrink-0' />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Middle: stats + active symbols */}
+        <div className='flex flex-col gap-2.5'>
+          <div className='grid grid-cols-2 gap-2'>
+            {[
+              { value: fileCount,  label: 'files'     },
+              { value: routeCount, label: 'routes'    },
+              { value: fnCount,    label: 'functions' },
+              { value: modelCount, label: 'models'    },
+            ].map(({ value, label }) => (
+              <div key={label} className='bg-gray-50 dark:bg-white/[0.03] rounded-lg p-2 border border-gray-100 dark:border-white/[0.05] text-center'>
+                <p className='font-mono text-sm font-bold text-gray-900 dark:text-white tabular-nums leading-none mb-0.5'>{value}</p>
+                <p className='text-[9px] text-gray-400 dark:text-white/30'>{label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className='flex-1 bg-gray-50 dark:bg-white/[0.02] rounded-xl p-3 border border-gray-100 dark:border-white/[0.05]'>
+            <p className='font-mono text-[9px] text-gray-400 dark:text-white/25 mb-2 uppercase tracking-widest'>Current file</p>
+            <p
+              className='font-mono text-[9px] mb-2 break-all leading-relaxed transition-colors duration-300'
+              style={{ color: activeFile.color }}
+            >
+              {activeFile.path}
+            </p>
+            <div className='space-y-1'>
+              {activeFile.symbols.map(sym => (
+                <div key={sym} className='flex items-center gap-1.5'>
+                  <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20 flex-shrink-0' />
+                  <span className='font-mono text-[9px] text-gray-500 dark:text-white/40 truncate'>{sym}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className='text-[10px] text-gray-400 dark:text-white/20 leading-relaxed'>
+            Index refreshes incrementally on every push via GitHub webhooks.
+          </p>
+        </div>
+
+        {/* Right: codebase-aware spec extract */}
+        <div className='bg-[#0D1117] rounded-xl p-3.5 border border-white/[0.07] overflow-hidden flex flex-col'>
+          <p className='font-mono text-[9px] text-white/30 mb-3 uppercase tracking-widest'>Codebase-aware spec</p>
+          <pre className='font-mono text-[9px] leading-relaxed whitespace-pre-wrap flex-1 overflow-hidden'>
+            <span className='text-white/25'>{'{'}{'\n'}</span>
+            <span className='text-blue-400'>  &quot;affected_files&quot;</span><span className='text-white/25'>: [{'\n'}</span>
+            <span className='text-emerald-400'>    &quot;app/middleware/token_refresh.py&quot;</span><span className='text-white/25'>,{'\n'}</span>
+            <span className='text-emerald-400'>    &quot;app/services/auth_service.py&quot;</span><span className='text-white/25'>,{'\n'}</span>
+            <span className='text-emerald-400'>    &quot;app/models/session.py&quot;</span><span className='text-white/25'>{'\n'}  ],{'\n'}</span>
+            <span className='text-blue-400'>  &quot;acceptance_criteria&quot;</span><span className='text-white/25'>: [{'\n'}</span>
+            <span className='text-orange-300'>    &quot;Modify TokenRefreshMiddleware</span><span className='text-white/25'>{'\n'}</span>
+            <span className='text-orange-300'>     in </span><span className='text-yellow-300'>app/middleware/{'\n'}     token_refresh.py</span><span className='text-white/50'>:L42</span><span className='text-orange-300'>{'\n'}     — refresh 5 min early&quot;</span><span className='text-white/25'>,{'\n'}</span>
+            <span className='text-orange-300'>    &quot;Extend Session model in</span><span className='text-white/25'>{'\n'}</span>
+            <span className='text-yellow-300'>     app/models/session.py</span><span className='text-orange-300'>{'\n'}     — add refresh_token field&quot;</span><span className='text-white/25'>{'\n'}  ]{'\n'}{'}'}</span>
+          </pre>
+          <div className='mt-3 pt-3 border-t border-white/[0.06]'>
+            <p className='text-[9px] text-white/25 leading-relaxed'>
+              Generic AI: &ldquo;add token refresh middleware&rdquo;<br />
+              <span className='text-blue-400'>SignalPath:</span> <span className='text-white/40'>exact file · exact line</span>
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 // ─── Shared: TileLabel ────────────────────────────────────────────────────────
 
 function TileLabel({ icon, label, index }: { icon: React.ReactNode; label: string; index: string }) {
@@ -475,17 +625,17 @@ export function BentoSection() {
             Under the hood
           </p>
           <h2 className='font-display text-3xl font-bold text-gray-900 dark:text-white tracking-tight'>
-            Four layers. Zero noise.
+            Five layers. Zero noise.
           </h2>
           <p className='text-gray-500 dark:text-white/35 text-sm mt-2 max-w-lg'>
-            Each layer in the SignalPath engine is interactive. Explore how raw tickets become ranked decisions.
+            Each layer in the SignalPath engine is interactive. Explore how raw tickets and code structure become ranked, dev-ready specs.
           </p>
         </div>
 
         {/* Bento grid */}
         <div
           className='grid grid-cols-5 gap-4'
-          style={{ gridTemplateRows: '280px 340px' }}
+          style={{ gridTemplateRows: '280px 340px 300px' }}
         >
           {/* Tile 1 — Signal Counter: col 1, rows 1-2 */}
           <div className='row-span-2 min-h-0'>
@@ -505,6 +655,11 @@ export function BentoSection() {
           {/* Tile 4 — Handoff: cols 4-5, row 2 */}
           <div className='col-span-2 min-h-0'>
             <HandoffTile />
+          </div>
+
+          {/* Tile 5 — Codebase Index: all cols, row 3 */}
+          <div className='col-span-5 min-h-0'>
+            <CodebaseIndexTile />
           </div>
         </div>
       </div>

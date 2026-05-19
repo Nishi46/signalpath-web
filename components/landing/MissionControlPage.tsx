@@ -161,8 +161,8 @@ const OPPS: Opportunity[] = [
 
 const SPEC_JSON = `{
   "opportunity_id": "opp_9f2a3c",
-  "schema_version": "1.2",
-  "generated_at": "2026-04-20T09:14:33Z",
+  "schema_version": "1.3",
+  "generated_at": "2026-05-18T09:14:33Z",
   "title": "OAuth token expiry crashes API integrations",
   "priority": "critical",
   "score": 9.1,
@@ -170,18 +170,29 @@ const SPEC_JSON = `{
   "revenue_at_risk_usd": 284000,
   "churn_signals": 12,
   "recommended_action": "ship_fix",
+  "codebase": {
+    "indexed_sha": "a3f9d2c",
+    "tech_stack": "Python, TypeScript",
+    "affected_files": [
+      "app/middleware/token_refresh.py",
+      "app/services/auth_service.py",
+      "app/models/session.py",
+      "app/routes/oauth.py"
+    ]
+  },
   "spec": {
     "problem_statement": "OAuth2 access tokens expire after 1h with no silent refresh, terminating active API sessions and requiring full re-auth.",
     "acceptance_criteria": [
-      "Implement silent token refresh 5 min before expiry",
-      "Add refresh token rotation with 30-day TTL",
-      "Emit auth.token_refreshed event to audit log",
+      "Add proactive refresh in TokenRefreshMiddleware (app/middleware/token_refresh.py) — trigger 5 min before expiry",
+      "Extend Session model (app/models/session.py) with refresh_token field and 30-day TTL",
+      "Emit auth.token_refreshed event in AuthService.refresh() (app/services/auth_service.py:L84)",
       "Zero session interruptions in staging for 48h"
     ],
-    "affected_services": [
-      "api-gateway",
-      "auth-service",
-      "session-manager"
+    "affected_files": [
+      "app/middleware/token_refresh.py",
+      "app/services/auth_service.py",
+      "app/models/session.py",
+      "app/routes/oauth.py"
     ],
     "suggested_assignee": "platform-team",
     "estimated_effort": "3-5 days"
@@ -462,11 +473,11 @@ const FAQS = [
   },
   {
     q: 'What integrations do you support?',
-    a: 'For signal ingestion we connect to Zendesk, Intercom, Freshdesk, and Salesforce today. For output, you can push specs directly to Linear, Jira, or GitHub Issues — or keep everything in SignalPath and never push anywhere. GitHub repository indexing (for codebase-aware specs) and direct Cursor / Claude Code integration are coming in V2.',
+    a: 'For signal ingestion we connect to Zendesk, Intercom, Freshdesk, and Salesforce. For codebase context we connect to GitHub — SignalPath indexes your repo structure so specs reference your actual files. For output, you can push specs directly to Linear or Jira, or keep everything in SignalPath. Direct Cursor and Claude Code integration are on the roadmap.',
   },
   {
     q: 'Can SignalPath read my codebase?',
-    a: 'Yes — connecting your GitHub repository (read-only access) lets SignalPath index your code structure: every file path, API route, model, and function. When a spec is generated, it references your actual files instead of generic descriptions. A generic AI writes "add an export endpoint." SignalPath writes "modify api/routes/exports.py, extend ExportJob in models/jobs.py." The index updates incrementally with each commit, so specs always reflect your current codebase. This feature is coming in V2.',
+    a: 'Yes — connect your GitHub repository and SignalPath indexes its structure: every file path, API route, model, and function name. No source code is stored, only the skeleton. When a spec is generated it references your actual files. A generic tool writes "add an export endpoint." SignalPath writes "modify app/routes/exports.py, extend ExportJob in app/models/jobs.py." The index updates incrementally with every push via webhooks, so specs always reflect your current codebase.',
   },
   {
     q: 'How are opportunities scored?',
@@ -677,12 +688,13 @@ export function MissionControlPage() {
         <div className='relative z-10 max-w-3xl mx-auto animate-slide-up'>
           <h1 className='font-display text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-[1.05] mb-5'>
             Turn support tickets into<br />
-            <span className='text-blue-500'>product decisions</span>
+            <span className='text-blue-500'>dev-ready specs</span>
           </h1>
 
           <p className='text-lg text-gray-500 dark:text-white/45 max-w-xl mx-auto mb-8 leading-relaxed'>
-            SignalPath clusters your signals, writes the spec, and pushes it —
-            so your team ships the right thing, faster.
+            SignalPath clusters your support signals, maps them to your codebase,
+            and writes specs that reference your actual files — so engineers can
+            start building immediately.
           </p>
 
           <div className='flex flex-col items-center gap-4 mb-8'>
@@ -695,7 +707,7 @@ export function MissionControlPage() {
           <div className='flex flex-wrap items-center justify-center gap-2 mb-8'>
             {[
               { label: 'Zendesk · Intercom · Salesforce', status: 'live' },
-              { label: 'GitHub codebase indexing', status: 'soon' },
+              { label: 'GitHub codebase indexing', status: 'live' },
               { label: 'Cursor · Claude Code integration', status: 'soon' },
             ].map(({ label, status }) => (
               <span
