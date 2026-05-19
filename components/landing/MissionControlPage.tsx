@@ -17,6 +17,7 @@ import {
   ListChecks,
 } from 'lucide-react'
 import { BentoSection } from './BentoSection'
+import { SignalPathLogo } from './SignalPathLogo'
 import { useTheme } from '../ThemeProvider'
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -879,9 +880,7 @@ export function MissionControlPage() {
       {/* ══════════════════ NAV ══════════════════ */}
       <nav className='sticky top-0 z-50 bg-white/80 dark:bg-[#111318]/80 backdrop-blur border-b border-gray-200/60 dark:border-white/[0.06] flex justify-between items-center px-8 py-4'>
         <div className='flex items-center gap-2.5'>
-          <div className='w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center shadow-sm shadow-blue-600/30'>
-            <span className='text-white font-bold text-xs'>S</span>
-          </div>
+          <SignalPathLogo />
           <span className='font-display font-bold text-gray-900 dark:text-white'>SignalPath</span>
         </div>
         <div className='flex items-center gap-3'>

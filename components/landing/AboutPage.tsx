@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Sun, Moon, CheckCircle, MessageSquare, BarChart2, Code2, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from '../ThemeProvider'
+import { SignalPathLogo } from './SignalPathLogo'
 
 function HeroEmailCapture() {
   const [email, setEmail] = useState('')
@@ -66,9 +67,7 @@ export function AboutPage() {
       {/* ── Nav ── */}
       <nav className='sticky top-0 z-50 bg-white/80 dark:bg-[#111318]/80 backdrop-blur border-b border-gray-200/60 dark:border-white/[0.06] flex justify-between items-center px-8 py-4'>
         <Link href='/' className='flex items-center gap-2.5'>
-          <div className='w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center shadow-sm shadow-blue-600/30'>
-            <span className='text-white font-bold text-xs'>S</span>
-          </div>
+          <SignalPathLogo />
           <span className='font-display font-bold text-gray-900 dark:text-white'>SignalPath</span>
         </Link>
         <div className='flex items-center gap-3'>
