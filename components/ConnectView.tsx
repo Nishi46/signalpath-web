@@ -1,6 +1,7 @@
 'use client'
+import { useState } from 'react'
 import { DashboardNav } from './DashboardNav'
-import { Link2, CheckCircle2, DollarSign, MessageSquare, Bell, Github } from 'lucide-react'
+import { Link2, CheckCircle2, DollarSign, MessageSquare, Bell, Github, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface ConnectViewProps {
   subdomain: string
@@ -44,6 +45,25 @@ export function ConnectView({
   onConnectGitHub,
 }: ConnectViewProps) {
   const canConnect = subdomain.trim() && !connecting
+  const [treeOpen, setTreeOpen] = useState(false)
+  const [fileTree, setFileTree] = useState('')
+  const [treeSaving, setTreeSaving] = useState(false)
+  const [treeSaved, setTreeSaved] = useState(false)
+
+  async function handleSaveTree() {
+    if (!fileTree.trim()) return
+    setTreeSaving(true)
+    try {
+      await fetch('/api/file-tree', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_tree: fileTree }),
+      })
+      setTreeSaved(true)
+    } catch { /* non-fatal */ } finally {
+      setTreeSaving(false)
+    }
+  }
 
   return (
     <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
@@ -128,7 +148,7 @@ export function ConnectView({
           icon={<Github className='w-5 h-5 text-gray-400 dark:text-white/50' />}
           iconBg='bg-gray-100 dark:bg-white/10'
           title='Codebase'
-          description='Map your codebase so opportunities include implementation context.'
+          description='Map your codebase so opportunities include real file paths.'
         >
           <IntegrationRow
             abbr='GH' color='#24292e'
@@ -138,6 +158,49 @@ export function ConnectView({
             connecting={false}
             onConnect={onConnectGitHub}
           />
+
+          {!githubConnected && (
+            <div className='mt-3'>
+              <button
+                type='button'
+                onClick={() => setTreeOpen(o => !o)}
+                className='flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 transition-colors'
+              >
+                {treeOpen ? <ChevronUp className='w-3.5 h-3.5' /> : <ChevronDown className='w-3.5 h-3.5' />}
+                No GitHub? Paste your file tree instead
+              </button>
+
+              {treeOpen && (
+                <div className='mt-3 space-y-2'>
+                  <p className='text-xs text-gray-400 dark:text-white/30 leading-relaxed'>
+                    Run <code className='font-mono bg-gray-100 dark:bg-white/[0.07] px-1 py-0.5 rounded text-gray-600 dark:text-white/60'>tree -L 4 --gitignore</code> in your repo root and paste the output below. SignalPath will use it to reference real file paths in specs and plans.
+                  </p>
+                  <textarea
+                    value={fileTree}
+                    onChange={e => { setFileTree(e.target.value); setTreeSaved(false) }}
+                    placeholder={'src/\n  app/\n    page.tsx\n    layout.tsx\n  components/\n    Button.tsx\n  lib/\n    api.ts'}
+                    rows={8}
+                    className='w-full font-mono text-xs bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-gray-700 dark:text-white/70 placeholder-gray-300 dark:placeholder-white/15 outline-none focus:border-gray-400 dark:focus:border-white/20 resize-none transition-colors'
+                  />
+                  <div className='flex items-center gap-3'>
+                    <button
+                      type='button'
+                      disabled={!fileTree.trim() || treeSaving}
+                      onClick={handleSaveTree}
+                      className='text-xs font-medium px-3 py-1.5 bg-gray-800 dark:bg-white/10 hover:bg-gray-700 dark:hover:bg-white/15 disabled:opacity-40 text-white rounded-lg transition-colors'
+                    >
+                      {treeSaving ? 'Saving…' : 'Save file tree'}
+                    </button>
+                    {treeSaved && (
+                      <span className='flex items-center gap-1 text-xs text-emerald-400'>
+                        <CheckCircle2 className='w-3.5 h-3.5' /> Saved
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </OptionalSection>
 
         {/* ── Revenue data — CRM (optional) ── */}
