@@ -19,6 +19,7 @@ interface WorkspaceRow {
   salesforce_token: string | null
   intercom_token: string | null
   slack_webhook_url: string | null
+  github_installation_id: number | null
 }
 
 export async function GET() {
@@ -32,7 +33,8 @@ export async function GET() {
     .select(
       'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
       'labeled_cluster_count, ml_ready, ml_model_version, ' +
-      'hubspot_token, salesforce_token, intercom_token, slack_webhook_url'
+      'hubspot_token, salesforce_token, intercom_token, slack_webhook_url, ' +
+      'github_installation_id'
     )
     .eq('id', workspaceId)
     .single() as { data: WorkspaceRow | null }
@@ -49,6 +51,7 @@ export async function GET() {
     salesforce_connected: !!data?.salesforce_token,
     intercom_connected: !!data?.intercom_token,
     slack_connected: !!data?.slack_webhook_url,
+    github_connected: !!data?.github_installation_id,
     // ML readiness stats — safe to expose (version number + counts, no model weights or paths).
     ml_stats: {
       labeled_cluster_count: labeledCount,

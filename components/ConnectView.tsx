@@ -1,6 +1,6 @@
 'use client'
 import { DashboardNav } from './DashboardNav'
-import { Link2, CheckCircle2, DollarSign, MessageSquare, Bell } from 'lucide-react'
+import { Link2, CheckCircle2, DollarSign, MessageSquare, Bell, Github } from 'lucide-react'
 
 interface ConnectViewProps {
   subdomain: string
@@ -18,6 +18,8 @@ interface ConnectViewProps {
   slackConnected?: boolean
   onConnectSlack?: () => void
   connectingSlack?: boolean
+  githubConnected?: boolean
+  onConnectGitHub?: () => void
 }
 
 const labelClass = 'block text-xs font-medium text-gray-500 dark:text-white/50 mb-1.5'
@@ -38,6 +40,8 @@ export function ConnectView({
   slackConnected = false,
   onConnectSlack,
   connectingSlack = false,
+  githubConnected = false,
+  onConnectGitHub,
 }: ConnectViewProps) {
   const canConnect = subdomain.trim() && !connecting
 
@@ -116,6 +120,23 @@ export function ConnectView({
             onConnect={onConnectSlack}
             btnBg='#4A154B'
             btnHover='#611f69'
+          />
+        </OptionalSection>
+
+        {/* ── Codebase — GitHub (optional) ── */}
+        <OptionalSection
+          icon={<Github className='w-5 h-5 text-gray-400 dark:text-white/50' />}
+          iconBg='bg-gray-100 dark:bg-white/10'
+          title='Codebase'
+          description='Map your codebase so opportunities include implementation context.'
+        >
+          <IntegrationRow
+            abbr='GH' color='#24292e'
+            label='GitHub'
+            desc='Indexes file paths, routes, and model names — never source code'
+            connected={githubConnected}
+            connecting={false}
+            onConnect={onConnectGitHub}
           />
         </OptionalSection>
 

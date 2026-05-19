@@ -29,6 +29,7 @@ function ConnectContent() {
   const [connectingIntercom, setConnectingIntercom] = useState(false)
   const [slackConnected, setSlackConnected] = useState(false)
   const [connectingSlack, setConnectingSlack] = useState(false)
+  const [githubConnected, setGithubConnected] = useState(false)
   const [techStackDone, setTechStackDone] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -49,6 +50,7 @@ function ConnectContent() {
         setSalesforceConnected(!!data.salesforce_connected)
         setIntercomConnected(!!data.intercom_connected)
         setSlackConnected(!!data.slack_connected)
+        setGithubConnected(!!data.github_connected)
       })
       .catch(() => { /* ignore */ })
   }, [])
@@ -79,6 +81,10 @@ function ConnectContent() {
       }
     }
   }, [linearConnected, jiraConnected, router])
+
+  function handleConnectGitHub() {
+    router.push('/connect/github')
+  }
 
   async function handleConnectSlack() {
     setConnectingSlack(true)
@@ -305,6 +311,8 @@ function ConnectContent() {
       slackConnected={slackConnected}
       onConnectSlack={handleConnectSlack}
       connectingSlack={connectingSlack}
+      githubConnected={githubConnected}
+      onConnectGitHub={handleConnectGitHub}
     />
   )
 }
