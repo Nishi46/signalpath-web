@@ -40,7 +40,7 @@ function GitHubConnectContent() {
     setRepoError(null)
     fetch('/api/github-repos')
       .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error ?? 'Failed to load repos')))
-      .then(data => setRepos(data.repositories ?? []))
+      .then(data => setRepos(data.repos ?? []))
       .catch(err => setRepoError(typeof err === 'string' ? err : 'Failed to load repositories'))
       .finally(() => setLoadingRepos(false))
   }, [installationId])
