@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  ListChecks,
 } from 'lucide-react'
 import { BentoSection } from './BentoSection'
 import { useTheme } from '../ThemeProvider'
@@ -206,6 +207,44 @@ const SPEC_JSON = `{
   }
 }`
 
+const PLAN_TEXT = `# Implementation Plan
+OAuth token expiry crashes API integrations
+Score 9.1  ·  47 accounts  ·  $284K at risk
+
+## Phase 1 — Token Refresh  (Day 1–2)
+
+  ☐  app/middleware/token_refresh.py
+     Extend TokenRefreshMiddleware
+     Fire proactive refresh when
+     session.expires_at − now() < 300s
+
+  ☐  app/services/auth_service.py : L84
+     AuthService.refresh() — emit
+     auth.token_refreshed to audit log
+
+## Phase 2 — Session Model  (Day 2–3)
+
+  ☐  app/models/session.py
+     Add refresh_token (str, unique)
+     Add refresh_expires_at (30-day TTL)
+     Update Session.as_dict() serializer
+
+  ☐  migrations/0047_refresh_token.py
+     Alembic migration — NULL backfill
+     Safe on Postgres 14+  (no table lock)
+
+## Phase 3 — Test & Ship  (Day 4–5)
+
+  ☐  tests/test_token_refresh.py
+     Edge cases: near-expiry, rotation,
+     concurrent refresh, revoked token
+
+  ☐  Staging deploy → 48 h monitor
+     Target: zero session interruptions
+
+──────────────────────────────────────────
+Assignee: platform-team  ·  Effort: 3–5d`
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function scoreColor(score: number) {
@@ -391,12 +430,27 @@ function DetailPanel({
 
 // ─── SpecPanel ────────────────────────────────────────────────────────────────
 
-function SpecPanel({ specText, specTitle, onClose, onSkip }: { specText: string; specTitle: string; onClose: () => void; onSkip: () => void }) {
+interface SpecPanelProps {
+  specText: string
+  specTitle: string
+  onClose: () => void
+  onSkip: () => void
+  onGeneratePlan: () => void
+  onSkipPlan: () => void
+  showPlan: boolean
+  planText: string
+}
+
+function SpecPanel({ specText, specTitle, onClose, onSkip, onGeneratePlan, onSkipPlan, showPlan, planText }: SpecPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const specDone = specText.length >= SPEC_JSON.length
+  const planDone = planText.length >= PLAN_TEXT.length
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }, [specText])
+  }, [specText, planText])
+
+  const title = showPlan ? 'signalpath-plan.md' : specTitle
 
   return (
     <div className='h-full flex flex-col bg-[#0D1117] rounded-2xl border border-white/[0.07] overflow-hidden animate-slide-in-right'>
@@ -408,28 +462,56 @@ function SpecPanel({ specText, specTitle, onClose, onSkip }: { specText: string;
             <span className='w-2.5 h-2.5 rounded-full bg-yellow-500/50' />
             <span className='w-2.5 h-2.5 rounded-full bg-green-500/50' />
           </div>
-          <span className='font-mono text-[10px] text-white/50 truncate max-w-[160px]'>{specTitle}</span>
+          <span className={`font-mono text-[10px] text-white/50 truncate max-w-[180px] transition-all duration-300 ${showPlan ? 'text-violet-400/70' : ''}`}>
+            {title}
+          </span>
         </div>
         <div className='flex items-center gap-3'>
-          {specText.length < SPEC_JSON.length && (
+          {!showPlan && !specDone && (
             <button onClick={onSkip} className='font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors'>
               Skip →
             </button>
           )}
-          <button onClick={onClose} className='text-white/20 hover:text-white/50 transition-colors' aria-label='Close spec'>
+          {showPlan && !planDone && (
+            <button onClick={onSkipPlan} className='font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors'>
+              Skip →
+            </button>
+          )}
+          <button onClick={onClose} className='text-white/20 hover:text-white/50 transition-colors' aria-label='Close'>
             <X className='w-3.5 h-3.5' />
           </button>
         </div>
       </div>
+
       <div className='flex-1 overflow-y-auto p-4'>
-        <pre className='font-mono text-[11px] leading-relaxed whitespace-pre-wrap'>
-          <JsonHighlight text={specText} />
-          {specText.length < SPEC_JSON.length && (
-            <span className='text-white/60 animate-pulse'>█</span>
-          )}
-        </pre>
+        {!showPlan ? (
+          <pre className='font-mono text-[11px] leading-relaxed whitespace-pre-wrap'>
+            <JsonHighlight text={specText} />
+            {!specDone && <span className='text-white/60 animate-pulse'>█</span>}
+          </pre>
+        ) : (
+          <pre className='font-mono text-[11px] leading-relaxed whitespace-pre-wrap'>
+            <PlanHighlight text={planText} />
+            {!planDone && <span className='text-white/60 animate-pulse'>█</span>}
+          </pre>
+        )}
         <div ref={bottomRef} />
       </div>
+
+      {/* Generate Plan CTA — appears when spec is done and plan hasn't started */}
+      {specDone && !showPlan && (
+        <div className='px-4 pb-4 flex-shrink-0'>
+          <div className='h-px bg-white/[0.06] mb-3' />
+          <button
+            onClick={onGeneratePlan}
+            className='flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold transition-colors'
+          >
+            <ListChecks className='w-3.5 h-3.5' />
+            Generate Plan
+            <ChevronRight className='w-3.5 h-3.5' />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -455,6 +537,44 @@ function JsonHighlight({ text }: { text: string }) {
         if (['{', '}', '[', ']', ',', ':'].includes(tok))
           return <span key={i} className='text-white/30'>{tok}</span>
         return <span key={i} className='text-white/50'>{tok}</span>
+      })}
+    </>
+  )
+}
+
+// ─── Plan Highlight ───────────────────────────────────────────────────────────
+
+function PlanHighlight({ text }: { text: string }) {
+  return (
+    <>
+      {text.split('\n').map((line, i) => {
+        if (line.startsWith('# '))
+          return <span key={i} className='text-white font-bold block'>{line}{'\n'}</span>
+        if (line.startsWith('## '))
+          return <span key={i} className='text-violet-400 block mt-1'>{line}{'\n'}</span>
+        if (line.startsWith('──'))
+          return <span key={i} className='text-white/20 block'>{line}{'\n'}</span>
+        if (line.startsWith('Assignee:'))
+          return <span key={i} className='text-white/35 block'>{line}{'\n'}</span>
+
+        // Lines with a checkbox or a file path — tokenise
+        const hasPath = /(app|migrations|tests)\/[^\s:]+/.test(line)
+        const hasCheckbox = line.includes('☐')
+        if (hasPath || hasCheckbox) {
+          const tokens = line.split(/((?:app|migrations|tests)\/[^\s:]+|☐|: L\d+)/)
+          return (
+            <span key={i} className='block'>
+              {tokens.map((tok, j) => {
+                if (tok === '☐') return <span key={j} className='text-amber-400'>{tok}</span>
+                if (/^: L\d+$/.test(tok)) return <span key={j} className='text-orange-400'>{tok}</span>
+                if (/^(app|migrations|tests)\//.test(tok)) return <span key={j} className='text-yellow-300'>{tok}</span>
+                return <span key={j} className='text-white/60'>{tok}</span>
+              })}
+              {'\n'}
+            </span>
+          )
+        }
+        return <span key={i} className='text-white/50 block'>{line}{'\n'}</span>
       })}
     </>
   )
@@ -580,17 +700,22 @@ export function MissionControlPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showSpec, setShowSpec] = useState(false)
   const [specText, setSpecText] = useState('')
+  const [showPlan, setShowPlan] = useState(false)
+  const [planText, setPlanText] = useState('')
   const specIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const specIndexRef = useRef(0)
+  const planIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const planIndexRef = useRef(0)
   const [hasScrolled, setHasScrolled] = useState(false)
   const [hintSeen, setHintSeen] = useState(false)
 
   const selected = OPPS.find(o => o.id === selectedId) ?? null
 
-  // Start typewriter for spec JSON
   const startSpec = useCallback(() => {
     setShowSpec(true)
     setSpecText('')
+    setShowPlan(false)
+    setPlanText('')
     specIndexRef.current = 0
     if (specIntervalRef.current) clearInterval(specIntervalRef.current)
     specIntervalRef.current = setInterval(() => {
@@ -603,9 +728,25 @@ export function MissionControlPage() {
     }, 10)
   }, [])
 
+  const startPlan = useCallback(() => {
+    setShowPlan(true)
+    setPlanText('')
+    planIndexRef.current = 0
+    if (planIntervalRef.current) clearInterval(planIntervalRef.current)
+    planIntervalRef.current = setInterval(() => {
+      planIndexRef.current += 2
+      setPlanText(PLAN_TEXT.slice(0, planIndexRef.current))
+      if (planIndexRef.current >= PLAN_TEXT.length) {
+        clearInterval(planIntervalRef.current!)
+        planIntervalRef.current = null
+      }
+    }, 12)
+  }, [])
+
   useEffect(() => {
     return () => {
       if (specIntervalRef.current) clearInterval(specIntervalRef.current)
+      if (planIntervalRef.current) clearInterval(planIntervalRef.current)
     }
   }, [])
 
@@ -616,11 +757,13 @@ export function MissionControlPage() {
   }, [])
 
   const skipTypewriter = useCallback(() => {
-    if (specIntervalRef.current) {
-      clearInterval(specIntervalRef.current)
-      specIntervalRef.current = null
-    }
+    if (specIntervalRef.current) { clearInterval(specIntervalRef.current); specIntervalRef.current = null }
     setSpecText(SPEC_JSON)
+  }, [])
+
+  const skipPlan = useCallback(() => {
+    if (planIntervalRef.current) { clearInterval(planIntervalRef.current); planIntervalRef.current = null }
+    setPlanText(PLAN_TEXT)
   }, [])
 
   function handleCardClick(id: string) {
@@ -629,10 +772,14 @@ export function MissionControlPage() {
       setSelectedId(null)
       setShowSpec(false)
       setSpecText('')
+      setShowPlan(false)
+      setPlanText('')
     } else {
       setSelectedId(id)
       setShowSpec(false)
       setSpecText('')
+      setShowPlan(false)
+      setPlanText('')
     }
   }
 
@@ -816,8 +963,12 @@ export function MissionControlPage() {
                       <SpecPanel
                         specText={specText}
                         specTitle={selected ? `spec: ${selected.title.slice(0, 32)}…` : 'agent_spec.json'}
-                        onClose={() => { setShowSpec(false); setSpecText('') }}
+                        onClose={() => { setShowSpec(false); setSpecText(''); setShowPlan(false); setPlanText('') }}
                         onSkip={skipTypewriter}
+                        onGeneratePlan={startPlan}
+                        onSkipPlan={skipPlan}
+                        showPlan={showPlan}
+                        planText={planText}
                       />
                     </div>
                   )}

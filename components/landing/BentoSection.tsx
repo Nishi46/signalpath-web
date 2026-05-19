@@ -453,24 +453,46 @@ function HandoffTile() {
 
 // ─── Tile 5: Codebase Indexing ────────────────────────────────────────────────
 
-const INDEXED_FILES = [
-  { path: 'app/routes/oauth.py',           symbols: ['POST /oauth/token', 'GET /oauth/authorize'],           color: '#3B82F6' },
-  { path: 'app/services/auth_service.py',  symbols: ['AuthService.refresh()', 'TokenValidator.check()'],      color: '#8B5CF6' },
-  { path: 'app/models/session.py',         symbols: ['Session', 'RefreshToken'],                              color: '#10B981' },
-  { path: 'app/middleware/token_refresh.py', symbols: ['TokenRefreshMiddleware'],                             color: '#F59E0B' },
-  { path: 'app/routes/github_auth.py',     symbols: ['GET /auth/github/install', 'GET /auth/github/callback'], color: '#3B82F6' },
-  { path: 'app/services/github_client.py', symbols: ['GitHubClient.create_branch()', 'create_pull_request()'], color: '#8B5CF6' },
-  { path: 'app/models/workspace.py',       symbols: ['Workspace', 'GithubInstallation'],                    color: '#10B981' },
+type DirNode  = { kind: 'dir';  label: string; depth: number }
+type FileNode = { kind: 'file'; label: string; depth: number; color: string; typeLabel: string; symbols: string[] }
+type TreeNode = DirNode | FileNode
+
+type FeedItem = { text: string; color: string; typeLabel: string; key: number }
+
+const TREE: TreeNode[] = [
+  { kind: 'dir',  label: 'app/',                depth: 0 },
+  { kind: 'dir',  label: 'routes/',             depth: 1 },
+  { kind: 'file', label: 'oauth.py',            depth: 2, color: '#3B82F6', typeLabel: 'route',      symbols: ['POST /oauth/token', 'GET /oauth/authorize']              },
+  { kind: 'file', label: 'github_auth.py',      depth: 2, color: '#3B82F6', typeLabel: 'route',      symbols: ['GET /auth/github/install', 'GET /auth/github/callback']  },
+  { kind: 'dir',  label: 'services/',           depth: 1 },
+  { kind: 'file', label: 'auth_service.py',     depth: 2, color: '#8B5CF6', typeLabel: 'service',    symbols: ['AuthService.refresh()', 'TokenValidator.check()']         },
+  { kind: 'file', label: 'ast_parser.py',       depth: 2, color: '#8B5CF6', typeLabel: 'parser',     symbols: ['parse_python_file()', 'parse_typescript_file()']          },
+  { kind: 'dir',  label: 'models/',             depth: 1 },
+  { kind: 'file', label: 'session.py',          depth: 2, color: '#10B981', typeLabel: 'model',      symbols: ['Session', 'RefreshToken']                                 },
+  { kind: 'file', label: 'workspace.py',        depth: 2, color: '#10B981', typeLabel: 'model',      symbols: ['Workspace', 'GithubInstallation']                         },
+  { kind: 'dir',  label: 'middleware/',         depth: 1 },
+  { kind: 'file', label: 'token_refresh.py',    depth: 2, color: '#F59E0B', typeLabel: 'middleware', symbols: ['TokenRefreshMiddleware']                                   },
+]
+const FILE_NODES = TREE.filter((n): n is FileNode => n.kind === 'file')
+
+// Spec files to reveal progressively — indexed by their FILE_NODES position
+const SPEC_REVEAL: { fileIdx: number; path: string }[] = [
+  { fileIdx: 0, path: 'app/routes/oauth.py' },
+  { fileIdx: 2, path: 'app/services/auth_service.py' },
+  { fileIdx: 4, path: 'app/models/session.py' },
+  { fileIdx: 6, path: 'app/middleware/token_refresh.py' },
 ]
 
 function CodebaseIndexTile() {
   const tileRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
-  const [activeIdx, setActiveIdx] = useState(0)
-  const fileCount = useCountUp(241, 1600, visible)
-  const routeCount = useCountUp(18, 1200, visible)
-  const fnCount = useCountUp(164, 1800, visible)
-  const modelCount = useCountUp(31, 1400, visible)
+  const [scanIdx, setScanIdx] = useState(-1)
+  const [allDone, setAllDone] = useState(false)
+  const [feed, setFeed] = useState<FeedItem[]>([])
+  const fileCount  = useCountUp(241, 1600, visible)
+  const routeCount = useCountUp(18,  1200, visible)
+  const fnCount    = useCountUp(164, 1800, visible)
+  const modelCount = useCountUp(31,  1400, visible)
 
   useEffect(() => {
     const el = tileRef.current
@@ -485,25 +507,63 @@ function CodebaseIndexTile() {
 
   useEffect(() => {
     if (!visible) return
-    const interval = setInterval(() => setActiveIdx(i => (i + 1) % INDEXED_FILES.length), 900)
-    return () => clearInterval(interval)
+    let mounted = true
+    let idx = 0
+
+    function step() {
+      if (!mounted) return
+      if (idx < FILE_NODES.length) {
+        setScanIdx(idx)
+        setAllDone(false)
+        if (idx > 0) {
+          const prev = FILE_NODES[idx - 1]
+          setFeed(f => [
+            ...prev.symbols.map((s, k) => ({ text: s, color: prev.color, typeLabel: prev.typeLabel, key: Date.now() + k })),
+            ...f,
+          ].slice(0, 6))
+        }
+        idx++
+        setTimeout(step, 720)
+      } else {
+        const last = FILE_NODES[FILE_NODES.length - 1]
+        setFeed(f => [
+          ...last.symbols.map((s, k) => ({ text: s, color: last.color, typeLabel: last.typeLabel, key: Date.now() + k })),
+          ...f,
+        ].slice(0, 6))
+        setAllDone(true)
+        setScanIdx(-1)
+        setTimeout(() => {
+          if (!mounted) return
+          idx = 0
+          setAllDone(false)
+          setScanIdx(-1)
+          setFeed([])
+          setTimeout(step, 500)
+        }, 2200)
+      }
+    }
+
+    const t = setTimeout(step, 600)
+    return () => { mounted = false; clearTimeout(t) }
   }, [visible])
 
-  const activeFile = INDEXED_FILES[activeIdx]
+  const revealedPaths = allDone
+    ? SPEC_REVEAL.map(r => r.path)
+    : SPEC_REVEAL.filter(r => r.fileIdx < scanIdx).map(r => r.path)
 
   return (
     <div ref={tileRef} className='bento-tile flex flex-col h-full'>
       <TileLabel icon={<FileCode className='w-3.5 h-3.5' />} label='Codebase Index' index='05' />
       <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-4'>
         Connect GitHub and SignalPath maps your repository skeleton — file paths, routes, models, functions.
-        Specs reference your actual code, not generic descriptions. Source code is never stored.
+        Specs reference your actual code. Source code is never stored.
       </p>
 
       <div className='flex-1 grid grid-cols-3 gap-4 min-h-0'>
 
-        {/* Left: animated file tree */}
+        {/* ── Left: nested file tree ── */}
         <div className='bg-gray-50 dark:bg-white/[0.02] rounded-xl p-3 border border-gray-100 dark:border-white/[0.05] flex flex-col overflow-hidden'>
-          <div className='flex items-center gap-2 mb-3'>
+          <div className='flex items-center gap-2 mb-3 flex-shrink-0'>
             <Github className='w-3 h-3 text-gray-400 dark:text-white/30' />
             <span className='font-mono text-[9px] text-gray-400 dark:text-white/25 uppercase tracking-widest'>Repository</span>
             <span className='ml-auto flex items-center gap-1 text-[9px] text-emerald-500'>
@@ -511,32 +571,54 @@ function CodebaseIndexTile() {
               live
             </span>
           </div>
-          <div className='space-y-0.5 flex-1 overflow-hidden'>
-            {INDEXED_FILES.map((file, i) => (
-              <div
-                key={file.path}
-                className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-all duration-300 ${activeIdx === i ? 'bg-blue-500/10' : ''}`}
-              >
-                <span
-                  className='w-1 h-1 rounded-full flex-shrink-0 transition-all duration-300'
-                  style={{ backgroundColor: activeIdx === i ? file.color : '#6B7280', opacity: activeIdx === i ? 1 : 0.25 }}
-                />
-                <span
-                  className={`font-mono text-[9px] truncate transition-colors duration-300 ${activeIdx === i ? 'text-gray-800 dark:text-white/90' : 'text-gray-400 dark:text-white/25'}`}
-                >
-                  {file.path}
-                </span>
-                {activeIdx === i && (
-                  <span className='ml-auto w-1 h-1 rounded-full bg-blue-400 animate-pulse flex-shrink-0' />
-                )}
-              </div>
-            ))}
+          <div className='space-y-px overflow-hidden flex-1'>
+            {(() => {
+              let fc = -1
+              return TREE.map((node, ni) => {
+                if (node.kind === 'dir') {
+                  return (
+                    <div key={ni} className='flex items-center gap-1' style={{ paddingLeft: node.depth * 12 }}>
+                      <span className='text-gray-400 dark:text-white/20 text-[8px] select-none'>▾</span>
+                      <span className='font-mono text-[9px] text-gray-400 dark:text-white/25'>{node.label}</span>
+                    </div>
+                  )
+                }
+                fc++
+                const fi = fc
+                const isDone     = allDone || fi < scanIdx
+                const isScanning = !allDone && fi === scanIdx
+                const file       = node as FileNode
+                return (
+                  <div
+                    key={ni}
+                    className={`flex items-center gap-1.5 rounded py-0.5 transition-all duration-300 ${isScanning ? 'bg-blue-500/10' : ''}`}
+                    style={{ paddingLeft: node.depth * 12 + 4 }}
+                  >
+                    {isDone     && <span className='text-[8px] text-emerald-400 flex-shrink-0 w-3 text-center'>✓</span>}
+                    {isScanning && <span className='w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse' style={{ backgroundColor: file.color }} />}
+                    {!isDone && !isScanning && <span className='w-1 h-1 rounded-full flex-shrink-0 bg-gray-200 dark:bg-white/10' />}
+                    <span className={`font-mono text-[9px] truncate transition-colors duration-300 flex-1 ${
+                      isScanning ? 'text-gray-800 dark:text-white/90'
+                      : isDone   ? 'text-gray-400 dark:text-white/35'
+                      : 'text-gray-200 dark:text-white/12'
+                    }`}>
+                      {node.label}
+                    </span>
+                    {isScanning && (
+                      <span className='font-mono text-[8px] px-1 rounded flex-shrink-0' style={{ color: file.color, backgroundColor: file.color + '22' }}>
+                        {file.typeLabel}
+                      </span>
+                    )}
+                  </div>
+                )
+              })
+            })()}
           </div>
         </div>
 
-        {/* Middle: stats + active symbols */}
+        {/* ── Middle: symbol feed + stats ── */}
         <div className='flex flex-col gap-2.5'>
-          <div className='grid grid-cols-2 gap-2'>
+          <div className='grid grid-cols-2 gap-2 flex-shrink-0'>
             {[
               { value: fileCount,  label: 'files'     },
               { value: routeCount, label: 'routes'    },
@@ -550,48 +632,67 @@ function CodebaseIndexTile() {
             ))}
           </div>
 
-          <div className='flex-1 bg-gray-50 dark:bg-white/[0.02] rounded-xl p-3 border border-gray-100 dark:border-white/[0.05]'>
-            <p className='font-mono text-[9px] text-gray-400 dark:text-white/25 mb-2 uppercase tracking-widest'>Current file</p>
-            <p
-              className='font-mono text-[9px] mb-2 break-all leading-relaxed transition-colors duration-300'
-              style={{ color: activeFile.color }}
-            >
-              {activeFile.path}
-            </p>
-            <div className='space-y-1'>
-              {activeFile.symbols.map(sym => (
-                <div key={sym} className='flex items-center gap-1.5'>
-                  <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20 flex-shrink-0' />
-                  <span className='font-mono text-[9px] text-gray-500 dark:text-white/40 truncate'>{sym}</span>
-                </div>
-              ))}
+          <div className='flex-1 bg-gray-50 dark:bg-white/[0.02] rounded-xl border border-gray-100 dark:border-white/[0.05] overflow-hidden flex flex-col'>
+            <div className='px-3 pt-2.5 pb-1.5 flex items-center gap-2 border-b border-gray-100 dark:border-white/[0.05] flex-shrink-0'>
+              <span className='w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse' />
+              <span className='font-mono text-[9px] text-gray-400 dark:text-white/25 uppercase tracking-widest'>Extracted symbols</span>
+            </div>
+            <div className='flex-1 overflow-hidden p-2 space-y-0.5'>
+              {feed.length === 0
+                ? <p className='text-[9px] text-gray-300 dark:text-white/15 font-mono px-1 pt-1'>Waiting to scan…</p>
+                : feed.map((item, i) => (
+                  <div key={item.key} className='flex items-center gap-2 px-1 py-0.5 rounded' style={{ opacity: Math.max(0.15, 1 - i * 0.15) }}>
+                    <span className='font-mono text-[8px] px-1 rounded flex-shrink-0' style={{ color: item.color, backgroundColor: item.color + '22' }}>
+                      {item.typeLabel}
+                    </span>
+                    <span className='font-mono text-[9px] text-gray-600 dark:text-white/60 truncate'>{item.text}</span>
+                  </div>
+                ))
+              }
             </div>
           </div>
 
-          <p className='text-[10px] text-gray-400 dark:text-white/20 leading-relaxed'>
-            Index refreshes incrementally on every push via GitHub webhooks.
+          <p className='text-[10px] text-gray-400 dark:text-white/20 leading-relaxed flex-shrink-0'>
+            Refreshes incrementally on every push via webhooks.
           </p>
         </div>
 
-        {/* Right: codebase-aware spec extract */}
-        <div className='bg-[#0D1117] rounded-xl p-3.5 border border-white/[0.07] overflow-hidden flex flex-col'>
-          <p className='font-mono text-[9px] text-white/30 mb-3 uppercase tracking-widest'>Codebase-aware spec</p>
-          <pre className='font-mono text-[9px] leading-relaxed whitespace-pre-wrap flex-1 overflow-hidden'>
-            <span className='text-white/25'>{'{'}{'\n'}</span>
-            <span className='text-blue-400'>  &quot;affected_files&quot;</span><span className='text-white/25'>: [{'\n'}</span>
-            <span className='text-emerald-400'>    &quot;app/middleware/token_refresh.py&quot;</span><span className='text-white/25'>,{'\n'}</span>
-            <span className='text-emerald-400'>    &quot;app/services/auth_service.py&quot;</span><span className='text-white/25'>,{'\n'}</span>
-            <span className='text-emerald-400'>    &quot;app/models/session.py&quot;</span><span className='text-white/25'>{'\n'}  ],{'\n'}</span>
-            <span className='text-blue-400'>  &quot;acceptance_criteria&quot;</span><span className='text-white/25'>: [{'\n'}</span>
-            <span className='text-orange-300'>    &quot;Modify TokenRefreshMiddleware</span><span className='text-white/25'>{'\n'}</span>
-            <span className='text-orange-300'>     in </span><span className='text-yellow-300'>app/middleware/{'\n'}     token_refresh.py</span><span className='text-white/50'>:L42</span><span className='text-orange-300'>{'\n'}     — refresh 5 min early&quot;</span><span className='text-white/25'>,{'\n'}</span>
-            <span className='text-orange-300'>    &quot;Extend Session model in</span><span className='text-white/25'>{'\n'}</span>
-            <span className='text-yellow-300'>     app/models/session.py</span><span className='text-orange-300'>{'\n'}     — add refresh_token field&quot;</span><span className='text-white/25'>{'\n'}  ]{'\n'}{'}'}</span>
-          </pre>
-          <div className='mt-3 pt-3 border-t border-white/[0.06]'>
+        {/* ── Right: spec building from scan ── */}
+        <div className='bg-[#0D1117] rounded-xl border border-white/[0.07] overflow-hidden flex flex-col'>
+          <div className='px-3.5 pt-3 pb-2 border-b border-white/[0.06] flex items-center gap-2 flex-shrink-0'>
+            <span className='font-mono text-[9px] text-white/30 uppercase tracking-widest'>Spec building…</span>
+            {allDone && <span className='ml-auto text-[9px] text-emerald-400'>✓ ready</span>}
+          </div>
+          <div className='flex-1 overflow-hidden p-3.5'>
+            <pre className='font-mono text-[9px] leading-relaxed whitespace-pre-wrap'>
+              <span className='text-white/25'>{'{\n'}</span>
+              <span className='text-blue-400'>  &quot;affected_files&quot;</span>
+              <span className='text-white/25'>: [</span>
+              {SPEC_REVEAL.map(r => (
+                <span key={r.path} style={{ display: revealedPaths.includes(r.path) ? 'inline' : 'none' }}>
+                  {'\n'}<span className='text-emerald-400'>    &quot;{r.path}&quot;</span><span className='text-white/25'>,</span>
+                </span>
+              ))}
+              <span className='text-white/25'>{'\n'}  ],\n</span>
+              <span className='text-blue-400'>  &quot;acceptance_criteria&quot;</span>
+              <span className='text-white/25'>: [{'\n'}</span>
+              <span className='text-orange-300'>    &quot;Modify TokenRefreshMiddleware{'\n'}     in </span>
+              <span className='text-yellow-300'>app/middleware/token_refresh.py</span>
+              <span className='text-white/50'>:L42</span>
+              <span className='text-orange-300'>{'\n'}     — refresh 5 min early&quot;</span>
+              <span className='text-white/25'>,{'\n'}</span>
+              <span className='text-orange-300'>    &quot;Extend Session in{'\n'}     </span>
+              <span className='text-yellow-300'>app/models/session.py</span>
+              <span className='text-orange-300'>{'\n'}     — add refresh_token field&quot;</span>
+              <span className='text-white/25'>{'\n'}  ]{'\n'}{'}'}</span>
+            </pre>
+          </div>
+          <div className='px-3.5 pb-3 flex-shrink-0'>
+            <div className='h-px bg-white/[0.06] mb-2' />
             <p className='text-[9px] text-white/25 leading-relaxed'>
-              Generic AI: &ldquo;add token refresh middleware&rdquo;<br />
-              <span className='text-blue-400'>SignalPath:</span> <span className='text-white/40'>exact file · exact line</span>
+              Generic: &ldquo;add token refresh&rdquo;<br />
+              <span className='text-blue-400'>SignalPath:</span>{' '}
+              <span className='text-white/40'>exact file · exact line</span>
             </p>
           </div>
         </div>
