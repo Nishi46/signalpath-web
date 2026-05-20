@@ -1,20 +1,35 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 import { UserMenu } from './UserMenu'
 import { useTheme } from './ThemeProvider'
-import { BarChart3, Link2, Settings, LayoutDashboard, Sun, Moon } from 'lucide-react'
+import { BarChart3, Link2, Settings, LayoutDashboard, Sun, Moon, Plus, FileText } from 'lucide-react'
 
 export function DashboardNav() {
   const pathname = usePathname()
+  const router   = useRouter()
   const { theme, toggle } = useTheme()
 
   const links = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/opportunities', label: 'Opportunities', icon: BarChart3 },
-    { href: '/connect', label: 'Integrations', icon: Link2 },
-    { href: '/settings', label: 'Settings', icon: Settings },
+    { href: '/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
+    { href: '/opportunities', label: 'Opportunities',  icon: BarChart3 },
+    { href: '/specs',         label: 'Specs',          icon: FileText },
+    { href: '/connect',       label: 'Integrations',   icon: Link2 },
+    { href: '/settings',      label: 'Settings',       icon: Settings },
   ]
+
+  // Cmd+K / Ctrl+K → navigate to /freeform from any screen
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        router.push('/freeform')
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [router])
 
   return (
     <nav className='bg-white dark:bg-[#111318] border-b border-gray-200 dark:border-white/[0.06]'>
@@ -47,6 +62,15 @@ export function DashboardNav() {
           </div>
         </div>
         <div className='flex items-center gap-2'>
+          {/* + New Spec — outline style so it doesn't compete with the evidence-driven flow */}
+          <Link
+            href='/freeform'
+            title='New freeform spec (⌘K)'
+            className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 dark:border-white/[0.10] text-gray-600 dark:text-white/60 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors'
+          >
+            <Plus className='w-3.5 h-3.5' />
+            New Spec
+          </Link>
           <button
             onClick={toggle}
             className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors'
