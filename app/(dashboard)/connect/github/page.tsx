@@ -109,7 +109,7 @@ function GitHubConnectContent() {
         setInstalling(false)
         return
       }
-      window.location.href = redirect_url
+      window.open(redirect_url, '_blank', 'noopener,noreferrer')
     } catch {
       alert('Network error — please try again')
       setInstalling(false)
