@@ -1,5 +1,5 @@
 'use client'
-import { Suspense, useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DashboardNav } from '@/components/DashboardNav'
@@ -14,15 +14,14 @@ interface Repo {
 }
 
 type IndexStatus = 'none' | 'pending' | 'indexing' | 'ready' | 'failed' | 'stale'
+type Step = 'install' | 'waiting' | 'pick' | 'indexing' | 'done'
 
 function GitHubConnectContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const installationId = searchParams.get('installation_id')
 
-  const [step, setStep] = useState<'install' | 'pick' | 'indexing' | 'done'>(
-    installationId ? 'pick' : 'install'
-  )
+  const [step, setStep] = useState<Step>(installationId ? 'pick' : 'install')
   const [installing, setInstalling] = useState(false)
   const [repos, setRepos] = useState<Repo[]>([])
   const [loadingRepos, setLoadingRepos] = useState(false)
@@ -32,15 +31,32 @@ function GitHubConnectContent() {
   const [indexStatus, setIndexStatus] = useState<IndexStatus>('none')
   const [indexError, setIndexError] = useState<string | null>(null)
   const [indexStats, setIndexStats] = useState<Record<string, unknown> | null>(null)
-  // Start false always; set true after we confirm connection (claim or workspace-status check)
   const [readyToLoadRepos, setReadyToLoadRepos] = useState(false)
+
+  // Manual claim state (shown inside 'waiting' step)
   const [showClaim, setShowClaim] = useState(false)
   const [claimId, setClaimId] = useState('')
   const [claiming, setClaiming] = useState(false)
   const [claimError, setClaimError] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
 
-  // When GitHub redirects back with installation_id in URL, auto-save it to the workspace
-  // then load repos. This runs instead of the workspace-status check below.
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+  }, [])
+
+  const advanceToPicker = useCallback(() => {
+    stopPolling()
+    setStep('pick')
+    setReadyToLoadRepos(true)
+  }, [stopPolling])
+
+  // When GitHub redirects back with installation_id in URL (Setup URL configured),
+  // auto-save the installation then go straight to the repo picker.
   useEffect(() => {
     if (!installationId) return
     const id = Number(installationId)
@@ -51,32 +67,37 @@ function GitHubConnectContent() {
       body: JSON.stringify({ installation_id: id }),
     })
       .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error ?? 'Failed')))
-      .then(() => {
-        setStep('pick')
-        setReadyToLoadRepos(true)
-      })
-      .catch((err) => {
-        // If claim fails (e.g. already saved), still try loading repos
-        console.error('github-claim error:', err)
-        setStep('pick')
-        setReadyToLoadRepos(true)
-      })
-  }, [installationId])
+      .then(() => advanceToPicker())
+      .catch(() => advanceToPicker()) // even on error, show picker (installation may already be saved)
+  }, [installationId, advanceToPicker])
 
-  // On mount (no installation_id in URL), check if GitHub was already connected
-  // in a prior session so returning users land straight on the picker.
+  // On mount (no installation_id in URL), check if already connected from a prior session.
   useEffect(() => {
     if (installationId) return
     fetch('/api/workspace-status')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data?.github_connected) {
-          setStep('pick')
-          setReadyToLoadRepos(true)
-        }
+        if (data?.github_connected) advanceToPicker()
       })
-      .catch(() => { /* ignore — stay on install step */ })
-  }, [installationId])
+      .catch(() => {})
+  }, [installationId, advanceToPicker])
+
+  // While in the 'waiting' step, poll workspace-status every 4s.
+  // In production (with webhook configured), the backend saves the installation
+  // via the webhook event and this polling detects it automatically.
+  useEffect(() => {
+    if (step !== 'waiting') {
+      stopPolling()
+      return
+    }
+    pollRef.current = setInterval(() => {
+      fetch('/api/workspace-status')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data?.github_connected) advanceToPicker() })
+        .catch(() => {})
+    }, 4000)
+    return stopPolling
+  }, [step, advanceToPicker, stopPolling])
 
   // Load repos once we have a confirmed installation
   useEffect(() => {
@@ -103,7 +124,6 @@ function GitHubConnectContent() {
     } catch { /* ignore network blips */ }
   }, [selectedRepo])
 
-  // Poll while indexing
   useEffect(() => {
     if (step !== 'indexing') return
     pollIndexStatus()
@@ -134,17 +154,34 @@ function GitHubConnectContent() {
         setInstalling(false)
         return
       }
-      window.location.href = redirect_url
-      // Page navigates away — no need to reset state
+      // Open GitHub in a new tab so this tab can poll for the connection.
+      window.open(redirect_url, '_blank', 'noopener,noreferrer')
+      setInstalling(false)
+      setStep('waiting')
     } catch {
       alert('Network error — please try again')
       setInstalling(false)
     }
   }
 
+  async function handleCheckConnection() {
+    setChecking(true)
+    try {
+      const res = await fetch('/api/workspace-status')
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.github_connected) {
+          advanceToPicker()
+          return
+        }
+      }
+    } catch { /* ignore */ }
+    // Not connected yet — show the manual claim form
+    setChecking(false)
+    setShowClaim(true)
+  }
+
   async function handleClaim() {
-    // Accept either the full URL (https://github.com/settings/installations/12345)
-    // or just the numeric ID.
     const match = claimId.trim().match(/(\d+)\s*$/)
     const id = match ? parseInt(match[1], 10) : NaN
     if (!id || isNaN(id)) {
@@ -165,8 +202,7 @@ function GitHubConnectContent() {
         setClaiming(false)
         return
       }
-      setStep('pick')
-      setReadyToLoadRepos(true)
+      advanceToPicker()
     } catch {
       setClaimError('Network error — please try again')
       setClaiming(false)
@@ -233,51 +269,83 @@ function GitHubConnectContent() {
               className='w-full bg-gray-900 hover:bg-gray-800 dark:bg-white/10 dark:hover:bg-white/15 disabled:opacity-50 text-white font-medium py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed'
             >
               {installing ? (
-                <><Loader2 className='w-4 h-4 animate-spin' /> Redirecting to GitHub…</>
+                <><Loader2 className='w-4 h-4 animate-spin' /> Opening GitHub…</>
               ) : (
                 <><Github className='w-4 h-4' /> Install GitHub App</>
               )}
             </button>
+          </div>
+        )}
 
-            {/* Recovery path for users whose app is already installed */}
-            <div className='mt-6 pt-5 border-t border-gray-100 dark:border-white/[0.06]'>
-              {!showClaim ? (
-                <button
-                  onClick={() => setShowClaim(true)}
-                  className='w-full text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50 transition-colors cursor-pointer'
-                >
-                  Already installed the app? Connect it manually →
-                </button>
+        {/* Step: Waiting for GitHub installation to complete */}
+        {step === 'waiting' && (
+          <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-8'>
+            <div className='w-14 h-14 bg-blue-500/10 rounded-2xl mx-auto mb-6 flex items-center justify-center'>
+              <Github className='w-7 h-7 text-blue-400' />
+            </div>
+            <h1 className='text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center'>
+              Complete the install on GitHub
+            </h1>
+            <p className='text-gray-500 dark:text-white/40 text-sm mb-6 leading-relaxed text-center'>
+              GitHub opened in a new tab. Approve the app there, then come back here and click the button below.
+            </p>
+
+            <div className='flex items-center justify-center gap-2 mb-8 text-xs text-gray-400 dark:text-white/25'>
+              <Loader2 className='w-3.5 h-3.5 animate-spin' />
+              Checking automatically every few seconds…
+            </div>
+
+            <button
+              onClick={handleCheckConnection}
+              disabled={checking}
+              className='w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed'
+            >
+              {checking ? (
+                <><Loader2 className='w-4 h-4 animate-spin' /> Checking…</>
               ) : (
-                <div className='space-y-3'>
-                  <p className='text-xs text-gray-500 dark:text-white/40 text-center'>
-                    Paste the URL GitHub sent you to, or just the numeric installation ID.
-                    <br />
-                    <span className='text-gray-400 dark:text-white/25'>e.g. github.com/settings/installations/133704229</span>
-                  </p>
-                  <input
-                    type='text'
-                    value={claimId}
-                    onChange={e => { setClaimId(e.target.value); setClaimError(null) }}
-                    placeholder='https://github.com/settings/installations/...'
-                    className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.03] text-sm text-gray-800 dark:text-white/80 placeholder-gray-300 dark:placeholder-white/20 outline-none focus:border-blue-400 dark:focus:border-blue-500/50'
-                  />
-                  {claimError && (
-                    <p className='text-xs text-red-500 dark:text-red-400'>{claimError}</p>
-                  )}
-                  <button
-                    onClick={handleClaim}
-                    disabled={claiming || !claimId.trim()}
-                    className='w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed'
-                  >
-                    {claiming ? (
-                      <><Loader2 className='w-4 h-4 animate-spin' /> Connecting…</>
-                    ) : (
-                      <>Connect existing installation</>
-                    )}
-                  </button>
-                </div>
+                <><CheckCircle2 className='w-4 h-4' /> I&apos;ve installed it — check connection</>
               )}
+            </button>
+
+            {showClaim && (
+              <div className='mt-6 pt-5 border-t border-gray-100 dark:border-white/[0.06] space-y-3'>
+                <p className='text-xs text-gray-500 dark:text-white/40 text-center'>
+                  Not connected yet. Paste the URL or ID from GitHub&apos;s installation settings page.
+                </p>
+                <p className='text-xs text-gray-400 dark:text-white/25 text-center'>
+                  github.com/settings/installations/{'<number>'}
+                </p>
+                <input
+                  type='text'
+                  value={claimId}
+                  onChange={e => { setClaimId(e.target.value); setClaimError(null) }}
+                  placeholder='https://github.com/settings/installations/...'
+                  className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.03] text-sm text-gray-800 dark:text-white/80 placeholder-gray-300 dark:placeholder-white/20 outline-none focus:border-blue-400 dark:focus:border-blue-500/50'
+                />
+                {claimError && (
+                  <p className='text-xs text-red-500 dark:text-red-400'>{claimError}</p>
+                )}
+                <button
+                  onClick={handleClaim}
+                  disabled={claiming || !claimId.trim()}
+                  className='w-full bg-gray-800 hover:bg-gray-700 dark:bg-white/10 dark:hover:bg-white/15 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed'
+                >
+                  {claiming ? (
+                    <><Loader2 className='w-4 h-4 animate-spin' /> Connecting…</>
+                  ) : (
+                    <>Connect manually</>
+                  )}
+                </button>
+              </div>
+            )}
+
+            <div className='mt-4 text-center'>
+              <button
+                onClick={() => setStep('install')}
+                className='text-xs text-gray-400 dark:text-white/25 hover:text-gray-600 dark:hover:text-white/40 transition-colors cursor-pointer'
+              >
+                ← Start over
+              </button>
             </div>
           </div>
         )}
