@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { DashboardNav } from '@/components/DashboardNav'
 import { BriefEditor } from '@/components/BriefEditor'
 import { useToast } from '@/lib/toast-context'
+import { exportPrdToDocx } from '@/lib/export-prd'
 import {
   ArrowLeft, Loader2, AlertTriangle, CheckCircle, ExternalLink,
-  Link2, TrendingUp, Download, ChevronDown, ChevronUp,
+  Link2, TrendingUp, Download, ChevronDown, ChevronUp, RefreshCw,
 } from 'lucide-react'
 
 interface RelatedCluster {
@@ -35,7 +36,9 @@ interface FreeformSpec {
   created_at: string
 }
 
-const POLL_MS = 3000
+const POLL_INITIAL_MS = 2000
+const POLL_MAX_MS     = 8000
+const POLL_MAX_TRIES  = 40  // ~2 min before showing timeout error
 
 function StatusBadge({ status }: { status: FreeformSpec['generation_status'] }) {
   if (status === 'ready') return null
@@ -124,12 +127,20 @@ export default function FreeformSpecPage() {
   const [notFound, setNotFound] = useState(false)
 
   const [brief, setBrief] = useState('')
-  const [savingDraft, setSavingDraft] = useState(false)
-  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const draftTimer    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedTimer    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const briefInited   = useRef(false)
+
+  const [pollTimedOut, setPollTimedOut] = useState(false)
 
   const [pushing, setPushing] = useState(false)
   const [promoting, setPromoting] = useState(false)
   const [showCodebaseFiles, setShowCodebaseFiles] = useState(false)
+
+  const [showRegenModal, setShowRegenModal] = useState(false)
+  const [regenNotes, setRegenNotes] = useState('')
+  const [regenerating, setRegenerating] = useState(false)
 
   const [generatingMsg, setGeneratingMsg] = useState('Analyzing your codebase...')
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -141,20 +152,31 @@ export default function FreeformSpecPage() {
     if (!res.ok) { setLoading(false); return null }
     const data: FreeformSpec = await res.json()
     setSpec(data)
-    if (data.human_brief && brief === '') setBrief(data.human_brief)
+    if (data.human_brief && !briefInited.current) {
+      setBrief(data.human_brief)
+      briefInited.current = true
+    }
     setLoading(false)
     return data
-  }, [id, brief])
+  }, [id])
 
-  // Initial load + polling while generating
+  // Initial load + polling while generating (exponential backoff + max-retry guard)
   useEffect(() => {
     let cancelled = false
+    let currentDelay = POLL_INITIAL_MS
+    let tries = 0
 
     async function poll() {
       const data = await fetchSpec()
       if (cancelled) return
       if (data && (data.generation_status === 'pending' || data.generation_status === 'generating')) {
-        pollTimer.current = setTimeout(poll, POLL_MS)
+        tries += 1
+        if (tries >= POLL_MAX_TRIES) {
+          setPollTimedOut(true)
+          return
+        }
+        currentDelay = Math.min(currentDelay * 2, POLL_MAX_MS)
+        pollTimer.current = setTimeout(poll, currentDelay)
       }
     }
 
@@ -164,7 +186,8 @@ export default function FreeformSpecPage() {
       cancelled = true
       if (pollTimer.current) clearTimeout(pollTimer.current)
     }
-  }, [fetchSpec])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   // Delayed secondary loading message for trust-building
   useEffect(() => {
@@ -180,18 +203,28 @@ export default function FreeformSpecPage() {
     return () => { if (msgTimer.current) clearTimeout(msgTimer.current) }
   }, [spec])
 
-  // Debounced auto-save
+  // Debounced auto-save with confirmation state
   function handleBriefChange(md: string) {
     setBrief(md)
     if (draftTimer.current) clearTimeout(draftTimer.current)
     draftTimer.current = setTimeout(async () => {
-      setSavingDraft(true)
-      await fetch(`/api/freeform/${encodeURIComponent(id)}/save-draft`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ human_brief: md }),
-      }).catch(() => {})
-      setSavingDraft(false)
+      setSaveState('saving')
+      try {
+        const res = await fetch(`/api/freeform/${encodeURIComponent(id)}/save-draft`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ human_brief: md }),
+        })
+        if (res.ok) {
+          setSaveState('saved')
+          if (savedTimer.current) clearTimeout(savedTimer.current)
+          savedTimer.current = setTimeout(() => setSaveState('idle'), 2000)
+        } else {
+          setSaveState('error')
+        }
+      } catch {
+        setSaveState('error')
+      }
     }, 2000)
   }
 
@@ -234,7 +267,41 @@ export default function FreeformSpecPage() {
     setPromoting(false)
   }
 
-  function handleDownload() {
+  // Fire finalize when component unmounts (page navigation)
+  useEffect(() => {
+    return () => {
+      if (spec?.generation_status === 'ready') {
+        void fetch(`/api/freeform/${encodeURIComponent(id)}/finalize`, { method: 'POST' })
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, spec?.generation_status])
+
+  async function handleRegenerate() {
+    setRegenerating(true)
+    setShowRegenModal(false)
+    try {
+      const res = await fetch(`/api/freeform/${encodeURIComponent(id)}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revision_notes: regenNotes.trim() || null }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        showToast(data.error ?? 'Regeneration failed', 'error')
+      } else {
+        briefInited.current = false
+        setPollTimedOut(false)
+        void fetchSpec()
+      }
+    } catch {
+      showToast('Network error', 'error')
+    }
+    setRegenNotes('')
+    setRegenerating(false)
+  }
+
+  function handleDownloadJson() {
     if (!spec?.agent_spec) return
     const json = JSON.stringify(spec.agent_spec, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
@@ -244,6 +311,14 @@ export default function FreeformSpecPage() {
     a.download = `agent_spec_freeform_${id.slice(0, 8)}.json`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function handleDownloadDocx() {
+    if (!brief && !spec?.human_brief) return
+    const content = brief || spec?.human_brief || ''
+    const docTitle = ((spec?.agent_spec as Record<string, unknown> | null)?.feature as Record<string, unknown> | null)?.title as string | undefined
+      ?? spec?.description.slice(0, 80) ?? 'Freeform Spec'
+    await exportPrdToDocx(content, docTitle)
   }
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -307,11 +382,26 @@ export default function FreeformSpecPage() {
         <h1 className='text-xl font-bold text-gray-900 dark:text-white mb-6 leading-snug'>{title}</h1>
 
         {/* Loading state */}
-        {isGenerating && (
+        {isGenerating && !pollTimedOut && (
           <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-12 text-center'>
             <Loader2 className='w-8 h-8 text-blue-600 animate-spin mx-auto mb-4' />
             <p className='text-sm text-gray-600 dark:text-white/60'>{generatingMsg}</p>
             <p className='text-xs text-gray-400 dark:text-white/25 mt-1'>This takes 8–15 seconds</p>
+          </div>
+        )}
+
+        {/* Poll timeout banner */}
+        {isGenerating && pollTimedOut && (
+          <div className='bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-8 text-center'>
+            <AlertTriangle className='w-8 h-8 text-amber-500 mx-auto mb-3' />
+            <p className='text-sm font-medium text-amber-700 dark:text-amber-400 mb-1'>Generation is taking longer than expected</p>
+            <p className='text-xs text-amber-600 dark:text-amber-500/70 mb-4'>The worker may be busy. Refresh to check progress.</p>
+            <button
+              onClick={() => { setPollTimedOut(false); void fetchSpec() }}
+              className='inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors'
+            >
+              <RefreshCw className='w-3.5 h-3.5' /> Refresh
+            </button>
           </div>
         )}
 
@@ -333,7 +423,22 @@ export default function FreeformSpecPage() {
               {/* Action bar */}
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  {savingDraft && <span className='text-xs text-gray-400 dark:text-white/30 animate-pulse'>Saving...</span>}
+                  {saveState === 'saving' && (
+                    <span className='text-xs text-gray-400 dark:text-white/30 animate-pulse'>Saving...</span>
+                  )}
+                  {saveState === 'saved' && (
+                    <span className='flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400'>
+                      <CheckCircle className='w-3 h-3' /> Draft saved
+                    </span>
+                  )}
+                  {saveState === 'error' && (
+                    <button
+                      onClick={() => handleBriefChange(brief)}
+                      className='text-xs text-red-500 dark:text-red-400 hover:underline'
+                    >
+                      Save failed — retry
+                    </button>
+                  )}
                   {spec.pushed_to && (
                     <span className='text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1'>
                       <CheckCircle className='w-3 h-3' />
@@ -343,11 +448,26 @@ export default function FreeformSpecPage() {
                 </div>
                 <div className='flex items-center gap-2'>
                   <button
-                    onClick={handleDownload}
+                    onClick={() => setShowRegenModal(true)}
+                    disabled={regenerating}
+                    className='flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 transition-colors disabled:opacity-40'
+                  >
+                    {regenerating ? <Loader2 className='w-3.5 h-3.5 animate-spin' /> : <RefreshCw className='w-3.5 h-3.5' />}
+                    Regenerate
+                  </button>
+                  <button
+                    onClick={handleDownloadJson}
                     className='flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 transition-colors'
                   >
                     <Download className='w-3.5 h-3.5' />
                     agent_spec.json
+                  </button>
+                  <button
+                    onClick={() => void handleDownloadDocx()}
+                    className='flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 transition-colors'
+                  >
+                    <Download className='w-3.5 h-3.5' />
+                    Download DOCX
                   </button>
                   <button
                     onClick={() => handlePush('linear')}
@@ -454,6 +574,40 @@ export default function FreeformSpecPage() {
           </div>
         )}
       </div>
+
+      {/* Regenerate modal */}
+      {showRegenModal && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40'>
+          <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-200 dark:border-white/[0.08] shadow-xl w-full max-w-md mx-4 p-6'>
+            <h3 className='text-base font-semibold text-gray-900 dark:text-white mb-2'>Regenerate Spec</h3>
+            <p className='text-sm text-gray-500 dark:text-white/40 mb-4'>
+              Optionally describe what to change. Leave blank to regenerate from scratch.
+            </p>
+            <textarea
+              value={regenNotes}
+              onChange={e => setRegenNotes(e.target.value)}
+              placeholder='e.g. Make the scope smaller, focus only on mobile, add more technical detail...'
+              rows={4}
+              className='w-full text-sm rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-[#111318] text-gray-900 dark:text-white px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-gray-400 dark:placeholder:text-white/25'
+            />
+            <div className='flex justify-end gap-2 mt-4'>
+              <button
+                onClick={() => { setShowRegenModal(false); setRegenNotes('') }}
+                className='px-4 py-2 text-sm text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white transition-colors'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleRegenerate()}
+                className='flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors'
+              >
+                <RefreshCw className='w-3.5 h-3.5' />
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
