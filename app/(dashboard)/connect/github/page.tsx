@@ -32,10 +32,27 @@ function GitHubConnectContent() {
   const [indexStatus, setIndexStatus] = useState<IndexStatus>('none')
   const [indexError, setIndexError] = useState<string | null>(null)
   const [indexStats, setIndexStats] = useState<Record<string, unknown> | null>(null)
+  const [readyToLoadRepos, setReadyToLoadRepos] = useState(!!installationId)
 
-  // Load repos once we have an installation
+  // On mount, check if GitHub is already connected (app installed in a prior session).
+  // When already connected, GitHub redirects back to its own settings page instead of
+  // calling our callback, so installation_id never lands in the URL.
   useEffect(() => {
-    if (!installationId) return
+    if (installationId) return // URL param already handled above
+    fetch('/api/workspace-status')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.github_connected) {
+          setStep('pick')
+          setReadyToLoadRepos(true)
+        }
+      })
+      .catch(() => { /* ignore — stay on install step */ })
+  }, [installationId])
+
+  // Load repos once we have an installation (via URL param or existing connection)
+  useEffect(() => {
+    if (!readyToLoadRepos) return
     setLoadingRepos(true)
     setRepoError(null)
     fetch('/api/github-repos')
@@ -43,7 +60,7 @@ function GitHubConnectContent() {
       .then(data => setRepos(data.repos ?? []))
       .catch(err => setRepoError(typeof err === 'string' ? err : 'Failed to load repositories'))
       .finally(() => setLoadingRepos(false))
-  }, [installationId])
+  }, [readyToLoadRepos])
 
   const pollIndexStatus = useCallback(async () => {
     try {
