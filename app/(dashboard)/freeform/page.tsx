@@ -12,10 +12,8 @@ const EXAMPLES = [
   'Build a white-label theming system for enterprise customers',
 ]
 
-type CodebaseStatus = 'none' | 'pending' | 'indexing' | 'ready' | 'failed' | 'stale'
-
-interface IndexInfo {
-  status: CodebaseStatus
+interface RepoInfo {
+  status: 'none' | 'pending' | 'indexing' | 'ready' | 'failed' | 'stale'
   repo?: string
   last_indexed_at?: string | null
 }
@@ -24,17 +22,32 @@ function hoursAgo(iso: string): number {
   return Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000)
 }
 
-function CodebaseIndicator({ info }: { info: IndexInfo | null }) {
-  if (!info) return null
+function CodebaseIndicator({ repos }: { repos: RepoInfo[] | null }) {
+  if (!repos) return null
 
-  if (info.status === 'ready' && info.repo) {
-    const hours = info.last_indexed_at ? hoursAgo(info.last_indexed_at) : null
-    const isStale = hours !== null && hours > 24 * 5 // >5 days = stale
+  const ready = repos.filter(r => r.status === 'ready')
+  const indexing = repos.filter(r => r.status === 'indexing' || r.status === 'pending')
+
+  if (ready.length > 0) {
+    // Use the oldest last_indexed_at to determine staleness (most conservative)
+    const oldestHours = ready.reduce<number | null>((max, r) => {
+      if (!r.last_indexed_at) return max
+      const h = hoursAgo(r.last_indexed_at)
+      return max === null ? h : Math.max(max, h)
+    }, null)
+    const isStale = oldestHours !== null && oldestHours > 24 * 5
+    const repoNames = ready.map(r => r.repo).filter(Boolean).join(', ')
+    const newestHours = ready.reduce<number | null>((min, r) => {
+      if (!r.last_indexed_at) return min
+      const h = hoursAgo(r.last_indexed_at)
+      return min === null ? h : Math.min(min, h)
+    }, null)
+
     if (isStale) {
       return (
         <p className='flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400'>
           <AlertTriangle className='w-3.5 h-3.5 flex-shrink-0' />
-          Codebase index is stale (last indexed {hours ? `${hours}h` : 'unknown'} ago) —{' '}
+          Codebase index is stale (last indexed {oldestHours ? `${oldestHours}h` : 'unknown'} ago) —{' '}
           <a href='/connect/github' className='underline hover:no-underline'>Refresh index</a>
         </p>
       )
@@ -42,12 +55,13 @@ function CodebaseIndicator({ info }: { info: IndexInfo | null }) {
     return (
       <p className='flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400'>
         <CheckCircle className='w-3.5 h-3.5 flex-shrink-0' />
-        Codebase connected: {info.repo} {hours !== null && `(last indexed ${hours < 1 ? '<1h' : `${hours}h`} ago)`}
+        Codebase connected: {repoNames}{newestHours !== null && ` (last indexed ${newestHours < 1 ? '<1h' : `${newestHours}h`} ago)`}
+        {' — '}<a href='/connect/github' className='underline hover:no-underline'>Add repo</a>
       </p>
     )
   }
 
-  if (info.status === 'indexing' || info.status === 'pending') {
+  if (indexing.length > 0) {
     return (
       <p className='flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400'>
         <Loader2 className='w-3.5 h-3.5 flex-shrink-0 animate-spin' />
@@ -79,7 +93,7 @@ export default function FreeformPage() {
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [indexInfo, setIndexInfo] = useState<IndexInfo | null>(null)
+  const [indexRepos, setIndexRepos] = useState<RepoInfo[] | null>(null)
 
   // Cycle placeholder text every 5 seconds when textarea is empty
   useEffect(() => {
@@ -93,8 +107,8 @@ export default function FreeformPage() {
   useEffect(() => {
     fetch('/api/codebase-index')
       .then(r => r.json())
-      .then((d: IndexInfo) => setIndexInfo(d))
-      .catch(() => setIndexInfo({ status: 'none' }))
+      .then((d: { repos?: RepoInfo[] }) => setIndexRepos(d.repos ?? []))
+      .catch(() => setIndexRepos([]))
   }, [])
 
   // Auto-expand textarea
@@ -175,7 +189,7 @@ export default function FreeformPage() {
 
             {/* Codebase context indicator */}
             <div className='mb-4'>
-              <CodebaseIndicator info={indexInfo} />
+              <CodebaseIndicator repos={indexRepos} />
             </div>
 
             {/* Advanced options */}

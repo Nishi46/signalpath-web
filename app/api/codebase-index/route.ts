@@ -42,31 +42,48 @@ export async function POST(req: Request) {
 
 /**
  * GET /api/codebase-index
- * Polls the indexing status for the workspace's connected repo.
+ * Without ?repo=: returns all indexed repos for the workspace (used by freeform indicator).
+ * With ?repo=owner/name: returns status for that specific repo (used during indexing polling).
  */
-export async function GET() {
+export async function GET(req: Request) {
   const workspaceId = await getWorkspaceId()
   if (!workspaceId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data } = await supabaseAdmin
+  const { searchParams } = new URL(req.url)
+  const repoFilter = searchParams.get('repo')
+
+  let query = supabaseAdmin
     .from('workspace_codebase_index')
     .select('repo_full_name, indexing_status, indexing_error, last_indexed_at, index_stats')
     .eq('workspace_id', workspaceId)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
-  if (!data) {
-    return NextResponse.json({ status: 'none' })
+  if (repoFilter) {
+    // Targeted poll for a specific repo being indexed
+    const { data } = await query.eq('repo_full_name', repoFilter).limit(1).maybeSingle()
+    if (!data) return NextResponse.json({ status: 'none' })
+    return NextResponse.json({
+      status: data.indexing_status,
+      repo: data.repo_full_name,
+      error: data.indexing_error ?? null,
+      last_indexed_at: data.last_indexed_at ?? null,
+      stats: data.index_stats ?? null,
+    })
   }
 
+  // Return all repos
+  const { data } = await query
+  if (!data || data.length === 0) return NextResponse.json({ repos: [] })
+
   return NextResponse.json({
-    status: data.indexing_status,
-    repo: data.repo_full_name,
-    error: data.indexing_error ?? null,
-    last_indexed_at: data.last_indexed_at ?? null,
-    stats: data.index_stats ?? null,
+    repos: data.map(r => ({
+      status: r.indexing_status,
+      repo: r.repo_full_name,
+      error: r.indexing_error ?? null,
+      last_indexed_at: r.last_indexed_at ?? null,
+      stats: r.index_stats ?? null,
+    })),
   })
 }

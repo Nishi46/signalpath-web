@@ -67,8 +67,9 @@ function GitHubConnectContent() {
   }, [readyToLoadRepos])
 
   const pollIndexStatus = useCallback(async () => {
+    if (!selectedRepo) return
     try {
-      const res = await fetch('/api/codebase-index')
+      const res = await fetch(`/api/codebase-index?repo=${encodeURIComponent(selectedRepo)}`)
       if (!res.ok) return
       const data = await res.json()
       setIndexStatus(data.status ?? 'none')
@@ -76,7 +77,7 @@ function GitHubConnectContent() {
       if (data.stats) setIndexStats(data.stats)
       if (data.status === 'ready') setStep('done')
     } catch { /* ignore network blips */ }
-  }, [])
+  }, [selectedRepo])
 
   // Poll while indexing
   useEffect(() => {
@@ -384,6 +385,19 @@ function GitHubConnectContent() {
               className='w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl text-sm transition-colors cursor-pointer'
             >
               Go to dashboard
+            </button>
+            <button
+              onClick={() => {
+                setSelectedRepo(null)
+                setIndexStatus('none')
+                setIndexError(null)
+                setIndexStats(null)
+                setStartingIndex(false)
+                setStep('pick')
+              }}
+              className='w-full mt-3 text-sm text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50 transition-colors cursor-pointer'
+            >
+              Index another repo →
             </button>
           </div>
         )}
