@@ -24,6 +24,8 @@ import {
   Pencil,
   Check,
   Map,
+  Plus,
+  Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -87,6 +89,285 @@ function formatRevenue(amount: number | null | undefined): string {
   return `$${amount}`
 }
 
+
+// ── Shared edit-field styles ──────────────────────────────────────────────────
+const inputCls = 'w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white outline-none focus:border-sky-500/40 transition-all'
+const textareaCls = `${inputCls} resize-none`
+const sectionLabelCls = 'block text-[10px] font-semibold text-gray-400 dark:text-white/30 uppercase tracking-wider mb-1.5'
+const addBtnCls = 'flex items-center gap-1 text-xs text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 mt-2 transition-colors'
+const removeBtnCls = 'shrink-0 p-1 text-gray-300 dark:text-white/20 hover:text-red-400 dark:hover:text-red-400 transition-colors rounded'
+
+function StringListEditor({
+  label, path, items, onAdd, onRemove, onChange, placeholder,
+}: {
+  label: string
+  path: string
+  items: string[]
+  onAdd: (path: string, def: unknown) => void
+  onRemove: (path: string, index: number) => void
+  onChange: (path: string, value: unknown) => void
+  placeholder?: string
+}) {
+  return (
+    <div>
+      <label className={sectionLabelCls}>{label}</label>
+      <div className='space-y-1.5'>
+        {items.map((item, i) => (
+          <div key={i} className='flex items-start gap-1.5'>
+            <textarea
+              value={item}
+              onChange={e => onChange(`${path}[${i}]`, e.target.value)}
+              rows={2}
+              placeholder={placeholder}
+              className={textareaCls + ' flex-1'}
+            />
+            <button type='button' onClick={() => onRemove(path, i)} className={removeBtnCls} title='Remove'>
+              <Trash2 className='w-3.5 h-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button type='button' onClick={() => onAdd(path, '')} className={addBtnCls}>
+        <Plus className='w-3.5 h-3.5' /> Add {label.toLowerCase().replace(/s$/, '')}
+      </button>
+    </div>
+  )
+}
+
+function SpecEditor({
+  draftSpec,
+  onChange,
+  onAddItem,
+  onRemoveItem,
+}: {
+  draftSpec: Record<string, unknown> | null
+  onChange: (path: string, value: unknown) => void
+  onAddItem: (arrayPath: string, defaultValue: unknown) => void
+  onRemoveItem: (arrayPath: string, index: number) => void
+}) {
+  const spec = draftSpec ?? {}
+  const feature = (spec['feature'] as Record<string, unknown> | null | undefined) ?? {}
+  const tasks = Array.isArray(spec['engineering_tasks']) ? spec['engineering_tasks'] as Record<string, unknown>[] : []
+  const uiChanges = Array.isArray(spec['ui_changes']) ? spec['ui_changes'] as string[] : []
+  const testPlan = Array.isArray(spec['test_plan']) ? spec['test_plan'] as string[] : []
+  const userStories = Array.isArray(feature['user_stories']) ? feature['user_stories'] as string[] : []
+  const featAC = Array.isArray(feature['acceptance_criteria']) ? feature['acceptance_criteria'] as string[] : []
+  const scopeIn = Array.isArray(feature['scope_in']) ? feature['scope_in'] as string[] : []
+  const scopeOut = Array.isArray(feature['scope_out']) ? feature['scope_out'] as string[] : []
+
+  return (
+    <div className='space-y-6 pt-1'>
+      {/* Feature title */}
+      <div>
+        <label className={sectionLabelCls}>Feature title</label>
+        <input
+          type='text'
+          value={String(feature['title'] ?? '')}
+          onChange={e => onChange('feature.title', e.target.value)}
+          className={inputCls}
+          placeholder='Feature title'
+        />
+      </div>
+
+      {/* Problem statement */}
+      <div>
+        <label className={sectionLabelCls}>Problem statement</label>
+        <textarea
+          value={String(feature['problem_statement'] ?? '')}
+          onChange={e => onChange('feature.problem_statement', e.target.value)}
+          rows={4}
+          className={textareaCls}
+        />
+      </div>
+
+      {/* Proposed solution */}
+      <div>
+        <label className={sectionLabelCls}>Proposed solution</label>
+        <textarea
+          value={String(feature['proposed_solution'] ?? '')}
+          onChange={e => onChange('feature.proposed_solution', e.target.value)}
+          rows={4}
+          className={textareaCls}
+        />
+      </div>
+
+      {/* Target users */}
+      {(feature['target_users'] !== undefined || feature['target_audience'] !== undefined) && (
+        <div>
+          <label className={sectionLabelCls}>Target users</label>
+          <textarea
+            value={String(feature['target_users'] ?? feature['target_audience'] ?? '')}
+            onChange={e => onChange('feature.target_users', e.target.value)}
+            rows={2}
+            className={textareaCls}
+          />
+        </div>
+      )}
+
+      {/* User stories */}
+      <StringListEditor
+        label='User stories'
+        path='feature.user_stories'
+        items={userStories}
+        onAdd={onAddItem}
+        onRemove={onRemoveItem}
+        onChange={onChange}
+        placeholder='As a [user], I want [goal] so that [benefit]'
+      />
+
+      {/* Acceptance criteria (feature-level) */}
+      <StringListEditor
+        label='Acceptance criteria'
+        path='feature.acceptance_criteria'
+        items={featAC}
+        onAdd={onAddItem}
+        onRemove={onRemoveItem}
+        onChange={onChange}
+        placeholder='Testable criterion...'
+      />
+
+      {/* Scope */}
+      <div className='grid grid-cols-2 gap-4'>
+        <StringListEditor
+          label='Scope — In'
+          path='feature.scope_in'
+          items={scopeIn}
+          onAdd={onAddItem}
+          onRemove={onRemoveItem}
+          onChange={onChange}
+          placeholder='In scope item...'
+        />
+        <StringListEditor
+          label='Scope — Out'
+          path='feature.scope_out'
+          items={scopeOut}
+          onAdd={onAddItem}
+          onRemove={onRemoveItem}
+          onChange={onChange}
+          placeholder='Out of scope item...'
+        />
+      </div>
+
+      {/* Engineering tasks */}
+      <div>
+        <label className={sectionLabelCls}>Engineering tasks</label>
+        <div className='space-y-3'>
+          {tasks.map((task, ti) => (
+            <div key={ti} className='bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.07] rounded-xl p-4 space-y-3'>
+              <div className='flex items-center gap-2'>
+                <span className='w-5 h-5 rounded-full bg-sky-500/10 text-sky-400 text-[10px] font-bold flex items-center justify-center shrink-0'>{ti + 1}</span>
+                <input
+                  type='text'
+                  value={String(task['title'] ?? '')}
+                  onChange={e => onChange(`engineering_tasks[${ti}].title`, e.target.value)}
+                  className={inputCls + ' flex-1'}
+                  placeholder='Task title'
+                />
+                <button
+                  type='button'
+                  onClick={() => onRemoveItem('engineering_tasks', ti)}
+                  className={removeBtnCls}
+                  title='Remove task'
+                >
+                  <Trash2 className='w-3.5 h-3.5' />
+                </button>
+              </div>
+
+              {task['description'] !== undefined && (
+                <textarea
+                  value={String(task['description'] ?? '')}
+                  onChange={e => onChange(`engineering_tasks[${ti}].description`, e.target.value)}
+                  rows={2}
+                  placeholder='Task description...'
+                  className={textareaCls}
+                />
+              )}
+
+              {/* Per-task acceptance criteria */}
+              <div>
+                <p className='text-[10px] text-gray-400 dark:text-white/30 font-medium uppercase tracking-wide mb-1.5'>Acceptance criteria</p>
+                <div className='space-y-1.5'>
+                  {(Array.isArray(task['acceptance_criteria']) ? task['acceptance_criteria'] as string[] : []).map((ac, ai) => (
+                    <div key={ai} className='flex items-start gap-1.5'>
+                      <textarea
+                        value={ac}
+                        onChange={e => onChange(`engineering_tasks[${ti}].acceptance_criteria[${ai}]`, e.target.value)}
+                        rows={2}
+                        className={textareaCls + ' flex-1 text-xs'}
+                      />
+                      <button
+                        type='button'
+                        onClick={() => onRemoveItem(`engineering_tasks[${ti}].acceptance_criteria`, ai)}
+                        className={removeBtnCls}
+                        title='Remove'
+                      >
+                        <Trash2 className='w-3 h-3' />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type='button'
+                  onClick={() => onAddItem(`engineering_tasks[${ti}].acceptance_criteria`, '')}
+                  className={addBtnCls}
+                >
+                  <Plus className='w-3.5 h-3.5' /> Add criterion
+                </button>
+              </div>
+
+              {task['estimated_days'] !== undefined && (
+                <div className='flex items-center gap-2'>
+                  <label className='text-[10px] text-gray-400 dark:text-white/30 font-medium uppercase tracking-wide whitespace-nowrap'>Est. days</label>
+                  <input
+                    type='number'
+                    min={0}
+                    step={0.5}
+                    value={Number(task['estimated_days'] ?? 1)}
+                    onChange={e => onChange(`engineering_tasks[${ti}].estimated_days`, parseFloat(e.target.value) || 0)}
+                    className={inputCls + ' w-20'}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          type='button'
+          onClick={() => onAddItem('engineering_tasks', { title: '', description: '', acceptance_criteria: [], estimated_days: 2 })}
+          className={addBtnCls + ' mt-3'}
+        >
+          <Plus className='w-3.5 h-3.5' /> Add task
+        </button>
+      </div>
+
+      {/* UI changes */}
+      {(uiChanges.length > 0 || spec['ui_changes'] !== undefined) && (
+        <StringListEditor
+          label='UI changes'
+          path='ui_changes'
+          items={uiChanges}
+          onAdd={onAddItem}
+          onRemove={onRemoveItem}
+          onChange={onChange}
+          placeholder='UI change description...'
+        />
+      )}
+
+      {/* Test plan */}
+      {(testPlan.length > 0 || spec['test_plan'] !== undefined) && (
+        <StringListEditor
+          label='Test plan'
+          path='test_plan'
+          items={testPlan}
+          onAdd={onAddItem}
+          onRemove={onRemoveItem}
+          onChange={onChange}
+          placeholder='Test scenario...'
+        />
+      )}
+    </div>
+  )
+}
 
 export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspaceId, onRefresh }: OpportunityDetailProps) {
   const toast = useToast()
@@ -456,6 +737,28 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
     setDraftSpec(prev => deepSet(prev ?? {} as Record<string, unknown>, path, value))
   }
 
+  function getSpecValue(path: string): unknown {
+    const parts = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean)
+    let cur: unknown = draftSpec
+    for (const part of parts) {
+      if (cur === null || cur === undefined) return undefined
+      cur = (cur as Record<string, unknown>)[part]
+    }
+    return cur
+  }
+
+  function addSpecItem(arrayPath: string, defaultValue: unknown = '') {
+    const current = getSpecValue(arrayPath)
+    const arr = Array.isArray(current) ? [...current, defaultValue] : [defaultValue]
+    handleSpecFieldChange(arrayPath, arr)
+  }
+
+  function removeSpecItem(arrayPath: string, index: number) {
+    const current = getSpecValue(arrayPath)
+    if (!Array.isArray(current)) return
+    handleSpecFieldChange(arrayPath, current.filter((_, i) => i !== index))
+  }
+
   async function saveSpecDraft(spec: Record<string, unknown> | null) {
     try {
       await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/save-draft`, {
@@ -818,58 +1121,12 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               </div>
 
               {editingSpec ? (
-                <div className='space-y-5'>
-                  {/* Problem statement */}
-                  <div>
-                    <label className='block text-xs font-medium text-gray-500 dark:text-white/40 mb-1.5'>
-                      Problem statement
-                    </label>
-                    <textarea
-                      value={String((draftSpec as Record<string, unknown> | null)?.['feature'] && typeof (draftSpec as Record<string, unknown>)['feature'] === 'object'
-                        ? ((draftSpec as Record<string, unknown>)['feature'] as Record<string, unknown>)['problem_statement'] ?? ''
-                        : '')}
-                      onChange={e => handleSpecFieldChange('feature.problem_statement', e.target.value)}
-                      rows={4}
-                      className='w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/25 outline-none focus:border-sky-500/40 resize-none transition-all'
-                    />
-                  </div>
-
-                  {/* Engineering tasks */}
-                  {Array.isArray((draftSpec as Record<string, unknown> | null)?.['engineering_tasks']) && (
-                    <div>
-                      <label className='block text-xs font-medium text-gray-500 dark:text-white/40 mb-2'>
-                        Engineering tasks
-                      </label>
-                      <div className='space-y-3'>
-                        {((draftSpec as Record<string, unknown>)['engineering_tasks'] as Record<string, unknown>[]).map((task, ti) => (
-                          <div key={ti} className='bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.07] rounded-xl p-3 space-y-2'>
-                            <input
-                              type='text'
-                              value={String(task['title'] ?? '')}
-                              onChange={e => handleSpecFieldChange(`engineering_tasks[${ti}].title`, e.target.value)}
-                              className='w-full bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-sky-500/40 transition-all'
-                              placeholder='Task title'
-                            />
-                            {Array.isArray(task['acceptance_criteria']) && (
-                              <div className='space-y-1.5 pl-1'>
-                                <p className='text-[10px] text-gray-400 dark:text-white/30 font-medium uppercase tracking-wide'>Acceptance criteria</p>
-                                {(task['acceptance_criteria'] as string[]).map((ac, ai) => (
-                                  <textarea
-                                    key={ai}
-                                    value={ac}
-                                    onChange={e => handleSpecFieldChange(`engineering_tasks[${ti}].acceptance_criteria[${ai}]`, e.target.value)}
-                                    rows={2}
-                                    className='w-full bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.07] rounded-lg px-3 py-2 text-xs text-gray-700 dark:text-white/70 outline-none focus:border-sky-500/40 resize-none transition-all'
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <SpecEditor
+                  draftSpec={draftSpec}
+                  onChange={handleSpecFieldChange}
+                  onAddItem={addSpecItem}
+                  onRemoveItem={removeSpecItem}
+                />
               ) : (
                 <div className='space-y-2'>
                   {typeof (cluster.agent_spec as Record<string, unknown> | null)?.['feature'] === 'object' &&
