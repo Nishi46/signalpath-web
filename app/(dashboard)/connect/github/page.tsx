@@ -33,6 +33,10 @@ function GitHubConnectContent() {
   const [indexError, setIndexError] = useState<string | null>(null)
   const [indexStats, setIndexStats] = useState<Record<string, unknown> | null>(null)
   const [readyToLoadRepos, setReadyToLoadRepos] = useState(!!installationId)
+  const [showClaim, setShowClaim] = useState(false)
+  const [claimId, setClaimId] = useState('')
+  const [claiming, setClaiming] = useState(false)
+  const [claimError, setClaimError] = useState<string | null>(null)
 
   // On mount, check if GitHub is already connected (app installed in a prior session).
   // When already connected, GitHub redirects back to its own settings page instead of
@@ -112,6 +116,37 @@ function GitHubConnectContent() {
     }
   }
 
+  async function handleClaim() {
+    // Accept either the full URL (https://github.com/settings/installations/12345)
+    // or just the numeric ID.
+    const match = claimId.trim().match(/(\d+)\s*$/)
+    const id = match ? parseInt(match[1], 10) : NaN
+    if (!id || isNaN(id)) {
+      setClaimError('Enter a valid installation ID or paste the full GitHub settings URL.')
+      return
+    }
+    setClaiming(true)
+    setClaimError(null)
+    try {
+      const res = await fetch('/api/github-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ installation_id: id }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setClaimError(data.error ?? 'Failed to connect installation')
+        setClaiming(false)
+        return
+      }
+      setStep('pick')
+      setReadyToLoadRepos(true)
+    } catch {
+      setClaimError('Network error — please try again')
+      setClaiming(false)
+    }
+  }
+
   async function handleStartIndexing() {
     if (!selectedRepo) return
     setStartingIndex(true)
@@ -177,6 +212,47 @@ function GitHubConnectContent() {
                 <><Github className='w-4 h-4' /> Install GitHub App</>
               )}
             </button>
+
+            {/* Recovery path for users whose app is already installed */}
+            <div className='mt-6 pt-5 border-t border-gray-100 dark:border-white/[0.06]'>
+              {!showClaim ? (
+                <button
+                  onClick={() => setShowClaim(true)}
+                  className='w-full text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50 transition-colors cursor-pointer'
+                >
+                  Already installed the app? Connect it manually →
+                </button>
+              ) : (
+                <div className='space-y-3'>
+                  <p className='text-xs text-gray-500 dark:text-white/40 text-center'>
+                    Paste the URL GitHub sent you to, or just the numeric installation ID.
+                    <br />
+                    <span className='text-gray-400 dark:text-white/25'>e.g. github.com/settings/installations/133704229</span>
+                  </p>
+                  <input
+                    type='text'
+                    value={claimId}
+                    onChange={e => { setClaimId(e.target.value); setClaimError(null) }}
+                    placeholder='https://github.com/settings/installations/...'
+                    className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.03] text-sm text-gray-800 dark:text-white/80 placeholder-gray-300 dark:placeholder-white/20 outline-none focus:border-blue-400 dark:focus:border-blue-500/50'
+                  />
+                  {claimError && (
+                    <p className='text-xs text-red-500 dark:text-red-400'>{claimError}</p>
+                  )}
+                  <button
+                    onClick={handleClaim}
+                    disabled={claiming || !claimId.trim()}
+                    className='w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed'
+                  >
+                    {claiming ? (
+                      <><Loader2 className='w-4 h-4 animate-spin' /> Connecting…</>
+                    ) : (
+                      <>Connect existing installation</>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
