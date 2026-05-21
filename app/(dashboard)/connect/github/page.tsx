@@ -87,6 +87,24 @@ function GitHubConnectContent() {
     return () => clearInterval(interval)
   }, [step, pollIndexStatus])
 
+  // While on the install step, poll workspace-status so this tab auto-advances
+  // when the user completes the GitHub App install in the new tab.
+  useEffect(() => {
+    if (step !== 'install') return
+    const interval = setInterval(() => {
+      fetch('/api/workspace-status')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.github_connected) {
+            setStep('pick')
+            setReadyToLoadRepos(true)
+          }
+        })
+        .catch(() => { /* ignore */ })
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [step])
+
   async function handleInstall() {
     setInstalling(true)
     try {
