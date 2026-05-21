@@ -26,6 +26,13 @@ import {
   Map,
   Plus,
   Trash2,
+  Github,
+  Zap,
+  Loader2,
+  GitBranch,
+  CheckCircle2,
+  XCircle,
+  Circle,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -64,6 +71,19 @@ export interface ClusterDetail {
   pm_rating?: string | null
   selected_plan_id?: string | null
   plans_generated_at?: string | null
+  pr_url?: string | null
+  pr_number?: number | null
+  pr_branch?: string | null
+  github_issue_url?: string | null
+  agent_spec_validation?: {
+    total_references?: number
+    verified?: number
+    auto_corrected?: number
+    unverified?: number
+    unverified_paths?: string[]
+    skipped?: boolean
+    reason?: string
+  } | null
 }
 
 interface Signal {
@@ -71,6 +91,83 @@ interface Signal {
   text: string
   churn_flag: boolean
   created_at: string
+}
+
+// ---------------------------------------------------------------------------
+// Feature 4: Agent progress board sub-component
+// ---------------------------------------------------------------------------
+
+type AgentTaskStatus = { index: number; title: string; target_files: string[]; status: string; commit_sha?: string | null; error?: string | null }
+type AgentRunStatus = { agent_run_id?: string; status: string; total_tasks: number; completed_tasks: number; failed_tasks: number; branch_name?: string; pr_url?: string | null; pr_number?: number | null; tasks: AgentTaskStatus[]; error?: string | null }
+
+function TaskIcon({ status }: { status: string }) {
+  if (status === 'complete') return <CheckCircle2 className='w-4 h-4 text-emerald-400 shrink-0' />
+  if (status === 'failed') return <XCircle className='w-4 h-4 text-red-400 shrink-0' />
+  if (status === 'running') return <Loader2 className='w-4 h-4 text-blue-400 animate-spin shrink-0' />
+  return <Circle className='w-4 h-4 text-gray-300 dark:text-white/20 shrink-0' />
+}
+
+function AgentProgressBoard({ run }: { run: AgentRunStatus }) {
+  const isRunning = run.status === 'running' || run.status === 'pending'
+  const isComplete = run.status === 'complete'
+  const isFailed = run.status === 'failed'
+
+  return (
+    <div className='bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-xl p-5'>
+      <div className='flex items-center justify-between mb-4'>
+        <div className='flex items-center gap-2'>
+          {isRunning && <Loader2 className='w-4 h-4 text-violet-400 animate-spin' />}
+          {isComplete && <CheckCircle2 className='w-4 h-4 text-emerald-400' />}
+          {isFailed && <XCircle className='w-4 h-4 text-red-400' />}
+          <span className='text-sm font-semibold text-gray-900 dark:text-white'>
+            {isRunning ? 'Building…' : isComplete ? 'Build Complete' : 'Build Failed'}
+          </span>
+        </div>
+        <span className='text-xs text-gray-400 dark:text-white/30'>
+          {run.completed_tasks}/{run.total_tasks} tasks
+        </span>
+      </div>
+
+      {run.branch_name && (
+        <div className='flex items-center gap-1.5 mb-4 text-xs text-gray-400 dark:text-white/30'>
+          <GitBranch className='w-3.5 h-3.5' />
+          <code className='font-mono'>{run.branch_name}</code>
+        </div>
+      )}
+
+      <div className='space-y-2 mb-4'>
+        {(run.tasks ?? []).map(task => (
+          <div key={task.index} className='flex items-start gap-2.5 p-2.5 rounded-lg bg-white dark:bg-white/[0.04]'>
+            <TaskIcon status={task.status} />
+            <div className='min-w-0'>
+              <p className='text-xs font-medium text-gray-800 dark:text-white/80 truncate'>{task.title}</p>
+              {task.target_files.length > 0 && (
+                <p className='text-xs text-gray-400 dark:text-white/30 truncate'>
+                  {task.target_files.slice(0, 2).join(', ')}
+                </p>
+              )}
+              {task.error && <p className='text-xs text-red-400 mt-0.5'>{task.error}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {isComplete && run.pr_url && (
+        <a
+          href={run.pr_url}
+          target='_blank'
+          rel='noopener noreferrer'
+          className='w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors'
+        >
+          <Github className='w-4 h-4' /> View Pull Request #{run.pr_number} <ExternalLink className='w-3.5 h-3.5' />
+        </a>
+      )}
+
+      {isFailed && run.error && (
+        <p className='text-xs text-red-400 mt-1'>{run.error}</p>
+      )}
+    </div>
+  )
 }
 
 interface OpportunityDetailProps {
@@ -389,6 +486,17 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   const [accountsOpen, setAccountsOpen] = useState(false)
   const [accountsLoading, setAccountsLoading] = useState(false)
 
+  // Feature 4: Agent execution (Build This)
+  const [showBuildModal, setShowBuildModal] = useState(false)
+  const [buildBusy, setBuildBusy] = useState(false)
+  const [agentRun, setAgentRun] = useState<AgentRunStatus | null>(null)
+  const [buildError, setBuildError] = useState<string | null>(null)
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Feature 5: Push to GitHub Issue
+  const [pushingGithubIssue, setPushingGithubIssue] = useState(false)
+  const [pushedGithubIssue, setPushedGithubIssue] = useState<string | null>(cluster.github_issue_url ?? null)
+
   // Inline brief editing + auto-save
   const [editingBrief, setEditingBrief] = useState(false)
   const [draftBrief, setDraftBrief] = useState('')
@@ -458,6 +566,83 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
       }
     } catch { /* fall through */ }
     return false
+  }
+
+  // Poll agent run status until terminal state
+  const pollAgentStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/execute`)
+      if (!res.ok) return
+      const data: AgentRunStatus = await res.json()
+      setAgentRun(data)
+      if (data.status === 'complete' || data.status === 'failed') {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+          pollIntervalRef.current = null
+        }
+        if (data.status === 'complete') void refresh()
+      }
+    } catch { /* ignore network blips */ }
+  }, [cluster.id, refresh])
+
+  async function handleStartBuild() {
+    setBuildBusy(true)
+    setBuildError(null)
+    try {
+      const res = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/execute`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setBuildError(data.error ?? 'Failed to start build')
+        setBuildBusy(false)
+        return
+      }
+      setShowBuildModal(false)
+      // Start polling
+      pollIntervalRef.current = setInterval(() => void pollAgentStatus(), 4000)
+      void pollAgentStatus()
+    } catch {
+      setBuildError('Network error — please try again')
+    }
+    setBuildBusy(false)
+  }
+
+  // On mount, resume polling if a run is already in progress
+  useEffect(() => {
+    void (async () => {
+      const res = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/execute`).catch(() => null)
+      if (!res?.ok) return
+      const data: AgentRunStatus = await res.json()
+      if (data.status === 'none') return
+      setAgentRun(data)
+      if (data.status === 'running' || data.status === 'pending') {
+        pollIntervalRef.current = setInterval(() => void pollAgentStatus(), 4000)
+      }
+    })()
+    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cluster.id])
+
+  async function handlePushToGithubIssue() {
+    setPushingGithubIssue(true)
+    setPushError(null)
+    try {
+      const res = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/push-github-issue`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setPushError(data.error ?? 'Failed to create GitHub issue')
+        return
+      }
+      setPushedGithubIssue(data.issue_url)
+      toast('GitHub issue created successfully')
+    } catch {
+      setPushError('Network error — please try again')
+    } finally {
+      setPushingGithubIssue(false)
+    }
   }
 
   async function handlePushToLinear() {
@@ -1233,7 +1418,8 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           )}
         </div>
 
-        <div className='flex gap-3 mb-6'>
+        {/* Push row — Linear, Jira, GitHub Issue */}
+        <div className='flex gap-3 mb-3 flex-wrap'>
           {pushedLinear ? (
             <a
               href={pushedLinear}
@@ -1273,11 +1459,120 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               {pushingJira ? 'Creating ticket...' : jiraConnected === false ? 'Connect Jira' : 'Push to Jira'}
             </button>
           )}
+
+          {/* Feature 5 outbound: Push to GitHub Issue */}
+          {pushedGithubIssue ? (
+            <a
+              href={pushedGithubIssue}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 text-gray-900 dark:text-white font-medium py-3 rounded-xl text-sm hover:bg-emerald-500 transition-colors'
+            >
+              <Github className='w-4 h-4' /> View GitHub Issue <ExternalLink className='w-3.5 h-3.5' />
+            </a>
+          ) : (
+            <button
+              type='button'
+              onClick={() => void handlePushToGithubIssue()}
+              disabled={pushingGithubIssue || !hasSpec}
+              className='flex-1 inline-flex items-center justify-center gap-2 bg-gray-800 dark:bg-white/10 text-white font-medium py-3 rounded-xl text-sm hover:bg-gray-700 dark:hover:bg-white/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer'
+              title={!hasSpec ? 'Generate a spec first' : 'Create a GitHub Issue with the embedded agent_spec.json'}
+            >
+              {pushingGithubIssue
+                ? <><Loader2 className='w-4 h-4 animate-spin' /> Creating…</>
+                : <><Github className='w-4 h-4' /> Push to GitHub Issue</>}
+            </button>
+          )}
         </div>
+
+        {/* Feature 4: Build This button */}
+        {hasSpec && (
+          <div className='mb-6'>
+            {agentRun && agentRun.status !== 'none' ? (
+              <AgentProgressBoard run={agentRun} />
+            ) : (
+              <button
+                type='button'
+                onClick={() => setShowBuildModal(true)}
+                className='w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold py-3.5 rounded-xl text-sm transition-all shadow-sm cursor-pointer'
+              >
+                <Zap className='w-4 h-4' /> Build This Feature
+              </button>
+            )}
+            {buildError && (
+              <p className='mt-2 text-xs text-red-400'>{buildError}</p>
+            )}
+          </div>
+        )}
 
         {pushError && (
           <div className='mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl'>
             <p className='text-sm text-red-400'>{pushError}</p>
+          </div>
+        )}
+
+        {/* Feature 3: Validation badges */}
+        {cluster.agent_spec_validation && !cluster.agent_spec_validation.skipped && (
+          <div className='mb-6 flex flex-wrap gap-2 items-center'>
+            <span className='text-xs text-gray-400 dark:text-white/30'>File paths:</span>
+            {(cluster.agent_spec_validation.verified ?? 0) > 0 && (
+              <span className='inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full'>
+                <CheckCircle2 className='w-3 h-3' /> {cluster.agent_spec_validation.verified} verified
+              </span>
+            )}
+            {(cluster.agent_spec_validation.auto_corrected ?? 0) > 0 && (
+              <span className='inline-flex items-center gap-1 text-xs text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full'>
+                <RefreshCw className='w-3 h-3' /> {cluster.agent_spec_validation.auto_corrected} auto-corrected
+              </span>
+            )}
+            {(cluster.agent_spec_validation.unverified ?? 0) > 0 && (
+              <span className='inline-flex items-center gap-1 text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full'
+                title={(cluster.agent_spec_validation.unverified_paths ?? []).join(', ')}>
+                <AlertTriangle className='w-3 h-3' /> {cluster.agent_spec_validation.unverified} unverified
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Build This confirmation modal */}
+        {showBuildModal && (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm' onClick={() => setShowBuildModal(false)}>
+            <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-8 max-w-md w-full mx-4 shadow-2xl' onClick={e => e.stopPropagation()}>
+              <div className='w-12 h-12 bg-violet-500/10 rounded-2xl mx-auto mb-5 flex items-center justify-center'>
+                <Zap className='w-6 h-6 text-violet-400' />
+              </div>
+              <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-1 text-center'>Build This Feature</h2>
+              <p className='text-gray-500 dark:text-white/40 text-sm mb-6 text-center leading-relaxed'>
+                SignalPath will create a branch, generate code for each engineering task, and open an evidence-rich pull request.
+              </p>
+              <ul className='space-y-2 mb-6'>
+                {(['Create feature branch', 'Generate code for each task', 'Open pull request with evidence chain'] as const).map(step => (
+                  <li key={step} className='flex items-center gap-2 text-sm text-gray-600 dark:text-white/60'>
+                    <CheckCircle2 className='w-4 h-4 text-emerald-400 shrink-0' /> {step}
+                  </li>
+                ))}
+              </ul>
+              <p className='text-xs text-amber-400 bg-amber-500/10 px-3 py-2 rounded-lg mb-5 text-center'>
+                ⚠ Code changes require engineer review before merge.
+              </p>
+              <div className='flex gap-3'>
+                <button
+                  type='button'
+                  onClick={() => setShowBuildModal(false)}
+                  className='flex-1 py-3 rounded-xl border border-gray-200 dark:border-white/[0.08] text-sm text-gray-600 dark:text-white/50 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer'
+                >
+                  Cancel
+                </button>
+                <button
+                  type='button'
+                  onClick={() => void handleStartBuild()}
+                  disabled={buildBusy}
+                  className='flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed'
+                >
+                  {buildBusy ? <><Loader2 className='w-4 h-4 animate-spin' /> Starting…</> : <><Zap className='w-4 h-4' /> Start Build</>}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

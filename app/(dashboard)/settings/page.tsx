@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { SignOutButton } from '@/components/SignOutButton'
 import { DashboardNav } from '@/components/DashboardNav'
+import { GitHubIssuesToggle } from '@/components/GitHubIssuesToggle'
 
 const ML_THRESHOLD = 50
 
@@ -27,6 +28,11 @@ interface WorkspaceSettings {
   salesforce_connected: boolean
   intercom_connected: boolean
   slack_connected: boolean
+  github_connected: boolean
+  github_issues_enabled: boolean
+  github_issues_include_labels: string[]
+  github_issues_exclude_labels: string[]
+  github_issues_last_synced_at: string | null
   ml_stats: {
     labeled_cluster_count: number
     ml_ready: boolean
@@ -50,6 +56,11 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     salesforce_token: string | null
     intercom_token: string | null
     slack_webhook_url: string | null
+    github_installation_id: number | null
+    github_issues_enabled: boolean | null
+    github_issues_include_labels: string[] | null
+    github_issues_exclude_labels: string[] | null
+    github_issues_last_synced_at: string | null
     ml_ready: boolean | null
     ml_model_version: number | null
   }
@@ -60,7 +71,9 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
       .select(
         'zendesk_domain, zendesk_token, linear_token, jira_token, ' +
         'hubspot_token, salesforce_token, intercom_token, slack_webhook_url, ' +
-        'ml_ready, ml_model_version'
+        'github_installation_id, github_issues_enabled, ' +
+        'github_issues_include_labels, github_issues_exclude_labels, ' +
+        'github_issues_last_synced_at, ml_ready, ml_model_version'
       )
       .eq('id', workspaceId)
       .single(),
@@ -82,6 +95,11 @@ async function getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSetti
     salesforce_connected: !!data?.salesforce_token,
     intercom_connected: !!data?.intercom_token,
     slack_connected: !!data?.slack_webhook_url,
+    github_connected: !!data?.github_installation_id,
+    github_issues_enabled: data?.github_issues_enabled ?? false,
+    github_issues_include_labels: data?.github_issues_include_labels ?? ['bug', 'enhancement', 'feature-request'],
+    github_issues_exclude_labels: data?.github_issues_exclude_labels ?? ['wontfix', 'duplicate', 'invalid'],
+    github_issues_last_synced_at: data?.github_issues_last_synced_at ?? null,
     ml_stats: {
       labeled_cluster_count: labeledCount ?? 0,
       ml_ready: data?.ml_ready ?? false,
@@ -266,6 +284,26 @@ export default async function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* ── GitHub Integration ────────────────────────────────────────── */}
+          {settings.github_connected && (
+            <div className='bg-white dark:bg-[#1A1D24] border border-gray-100 dark:border-white/[0.07] rounded-2xl overflow-hidden'>
+              <div className='px-6 pt-5 pb-4 border-b border-gray-100 dark:border-white/[0.05]'>
+                <h2 className='text-sm font-semibold text-gray-900 dark:text-white'>GitHub Signal Sources</h2>
+                <p className='text-xs text-gray-500 dark:text-white/35 mt-0.5'>
+                  Ingest open GitHub Issues as product signals alongside Zendesk tickets.
+                </p>
+              </div>
+              <div className='px-6 py-5'>
+                <GitHubIssuesToggle
+                  initialEnabled={settings.github_issues_enabled}
+                  initialIncludeLabels={settings.github_issues_include_labels}
+                  initialExcludeLabels={settings.github_issues_exclude_labels}
+                  initialLastSyncedAt={settings.github_issues_last_synced_at}
+                />
+              </div>
+            </div>
+          )}
 
           {/* ── Personalized Scoring Model ────────────────────────────────── */}
           <div className='bg-white dark:bg-[#1A1D24] border border-gray-100 dark:border-white/[0.07] rounded-2xl overflow-hidden'>
