@@ -32,17 +32,41 @@ function GitHubConnectContent() {
   const [indexStatus, setIndexStatus] = useState<IndexStatus>('none')
   const [indexError, setIndexError] = useState<string | null>(null)
   const [indexStats, setIndexStats] = useState<Record<string, unknown> | null>(null)
-  const [readyToLoadRepos, setReadyToLoadRepos] = useState(!!installationId)
+  // Start false always; set true after we confirm connection (claim or workspace-status check)
+  const [readyToLoadRepos, setReadyToLoadRepos] = useState(false)
   const [showClaim, setShowClaim] = useState(false)
   const [claimId, setClaimId] = useState('')
   const [claiming, setClaiming] = useState(false)
   const [claimError, setClaimError] = useState<string | null>(null)
 
-  // On mount, check if GitHub is already connected (app installed in a prior session).
-  // When already connected, GitHub redirects back to its own settings page instead of
-  // calling our callback, so installation_id never lands in the URL.
+  // When GitHub redirects back with installation_id in URL, auto-save it to the workspace
+  // then load repos. This runs instead of the workspace-status check below.
   useEffect(() => {
-    if (installationId) return // URL param already handled above
+    if (!installationId) return
+    const id = Number(installationId)
+    if (!id || !Number.isInteger(id)) return
+    fetch('/api/github-claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ installation_id: id }),
+    })
+      .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error ?? 'Failed')))
+      .then(() => {
+        setStep('pick')
+        setReadyToLoadRepos(true)
+      })
+      .catch((err) => {
+        // If claim fails (e.g. already saved), still try loading repos
+        console.error('github-claim error:', err)
+        setStep('pick')
+        setReadyToLoadRepos(true)
+      })
+  }, [installationId])
+
+  // On mount (no installation_id in URL), check if GitHub was already connected
+  // in a prior session so returning users land straight on the picker.
+  useEffect(() => {
+    if (installationId) return
     fetch('/api/workspace-status')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
@@ -54,7 +78,7 @@ function GitHubConnectContent() {
       .catch(() => { /* ignore — stay on install step */ })
   }, [installationId])
 
-  // Load repos once we have an installation (via URL param or existing connection)
+  // Load repos once we have a confirmed installation
   useEffect(() => {
     if (!readyToLoadRepos) return
     setLoadingRepos(true)
