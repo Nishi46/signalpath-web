@@ -1,11 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/get-workspace-id'
-import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 export async function POST(
   req: NextRequest,
@@ -24,7 +20,7 @@ export async function POST(
   }
 
   // Verify workspace ownership before writing
-  const { data: existing } = await supabaseAdmin
+  const { data: existing } = await getSupabaseAdmin()
     .from('freeform_specs')
     .select('workspace_id')
     .eq('id', id)
@@ -33,7 +29,7 @@ export async function POST(
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (existing.workspace_id !== workspaceId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  await supabaseAdmin
+  await getSupabaseAdmin()
     .from('freeform_specs')
     .update({
       human_brief: body.human_brief.slice(0, 100_000),

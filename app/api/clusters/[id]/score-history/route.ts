@@ -1,11 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 export async function GET(
   req: NextRequest,
@@ -21,7 +17,7 @@ export async function GET(
   const limit = Math.min(Math.max(parseInt(limitParam ?? '30', 10), 1), 100)
 
   // Verify the cluster belongs to this workspace before returning history
-  const { data: clusterCheck } = await supabaseAdmin
+  const { data: clusterCheck } = await getSupabaseAdmin()
     .from('clusters')
     .select('id')
     .eq('id', clusterId)
@@ -32,7 +28,7 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('cluster_score_history')
     .select(
       'id, score, scoring_model, revenue_source, dimension_b, dimension_s, dimension_c, ' +

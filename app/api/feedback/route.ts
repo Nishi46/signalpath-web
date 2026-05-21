@@ -1,12 +1,8 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getAuthContext } from '@/lib/get-workspace-id'
 import { API_URL, internalHeaders } from '@/lib/internal-api'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 export async function POST(req: NextRequest) {
   const { workspaceId, userId } = await getAuthContext()
@@ -48,7 +44,7 @@ export async function POST(req: NextRequest) {
       if (notes && typeof notes === 'string') row.notes = notes.slice(0, 2000)
       return row
     })
-    const { error } = await supabaseAdmin.from('feedback').insert(rows)
+    const { error } = await getSupabaseAdmin().from('feedback').insert(rows)
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
@@ -67,7 +63,7 @@ export async function POST(req: NextRequest) {
       return row
     })
 
-    const { error } = await supabaseAdmin.from('feedback').insert(rows)
+    const { error } = await getSupabaseAdmin().from('feedback').insert(rows)
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
@@ -79,7 +75,7 @@ export async function POST(req: NextRequest) {
       ? { shipped_at: new Date().toISOString() }
       : { pm_rating: action }
 
-  await supabaseAdmin
+  await getSupabaseAdmin()
     .from('clusters')
     .update(clusterUpdate)
     .in('id', clusterIds)
@@ -101,10 +97,10 @@ export async function POST(req: NextRequest) {
     // 1. Refresh the denormalised labeled_cluster_count and ml_ready flag.
     //    cluster_id is NOT passed to this RPC — it only receives workspace_id,
     //    so a spoofed cluster_id in the request body cannot inflate the count.
-    await supabaseAdmin.rpc('refresh_ml_stats', { p_workspace_id: workspaceId })
+    await getSupabaseAdmin().rpc('refresh_ml_stats', { p_workspace_id: workspaceId })
 
     // 2. Re-fetch workspace ML state to decide whether to trigger training.
-    const { data: ws } = await supabaseAdmin
+    const { data: ws } = await getSupabaseAdmin()
       .from('workspaces')
       .select('ml_ready, ml_model_version, labeled_cluster_count, labels_at_last_train')
       .eq('id', workspaceId)

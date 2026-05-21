@@ -1,11 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 export async function GET() {
   const workspaceId = await getWorkspaceId()
@@ -13,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { count } = await supabaseAdmin
+  const { count } = await getSupabaseAdmin()
     .from('signals')
     .select('*', { count: 'exact', head: true })
     .eq('workspace_id', workspaceId)

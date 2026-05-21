@@ -1,11 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 export async function GET(
   _req: NextRequest,
@@ -19,7 +15,7 @@ export async function GET(
   const { id: clusterId } = await params
 
   // Verify cluster belongs to this workspace
-  const { data: clusterCheck } = await supabaseAdmin
+  const { data: clusterCheck } = await getSupabaseAdmin()
     .from('clusters')
     .select('id')
     .eq('id', clusterId)
@@ -31,7 +27,7 @@ export async function GET(
   }
 
   // Get all signals for this cluster, join org_enrichments for org info
-  const { data: signals } = await supabaseAdmin
+  const { data: signals } = await getSupabaseAdmin()
     .from('signals')
     .select('organization_id')
     .eq('cluster_id', clusterId)
@@ -43,7 +39,7 @@ export async function GET(
 
   const orgIds = [...new Set(signals.map(s => s.organization_id).filter(Boolean))]
 
-  const { data: enrichments } = await supabaseAdmin
+  const { data: enrichments } = await getSupabaseAdmin()
     .from('org_enrichments')
     .select('zendesk_org_id, org_name, domain, estimated_revenue_usd')
     .in('zendesk_org_id', orgIds)
@@ -56,7 +52,7 @@ export async function GET(
 
   const crmMap: Record<string, number> = {}
   if (domains.length > 0) {
-    const { data: crmAccounts } = await supabaseAdmin
+    const { data: crmAccounts } = await getSupabaseAdmin()
       .from('crm_accounts')
       .select('domain, arr_usd')
       .eq('workspace_id', workspaceId)

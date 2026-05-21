@@ -1,11 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 /**
  * GET /api/specs
@@ -19,7 +15,7 @@ export async function GET() {
   }
 
   const [clusterRes, freeformRes] = await Promise.all([
-    supabaseAdmin
+    getSupabaseAdmin()
       .from('clusters')
       .select('id, label, spec_generated_at, created_at, human_brief, agent_spec')
       .eq('workspace_id', workspaceId)
@@ -27,7 +23,7 @@ export async function GET() {
       .order('spec_generated_at', { ascending: false })
       .limit(100),
 
-    supabaseAdmin
+    getSupabaseAdmin()
       .from('freeform_specs')
       .select('id, description, agent_spec, source, generation_status, pushed_to, pushed_at, external_id, created_at')
       .eq('workspace_id', workspaceId)

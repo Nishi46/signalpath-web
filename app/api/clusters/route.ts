@@ -1,11 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 export async function GET() {
   const workspaceId = await getWorkspaceId()
@@ -13,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data: clusters, error: clustersError } = await supabaseAdmin
+  const { data: clusters, error: clustersError } = await getSupabaseAdmin()
     .from('clusters')
     .select(
       'id, label, opportunity_score, signal_count, churn_signal_count, confidence, dimension_f, dimension_r, dimension_c, dimension_b, dimension_s, dimension_v, unique_orgs, revenue_at_risk_usd, spec_generated_at, human_brief, shipped_at, pm_rating, signal_sources',
@@ -28,7 +24,7 @@ export async function GET() {
   }
   console.log('[/api/clusters] workspace:', workspaceId, 'clusters returned:', clusters?.length ?? 0)
 
-  const { data: feedback } = await supabaseAdmin
+  const { data: feedback } = await getSupabaseAdmin()
     .from('feedback')
     .select('cluster_id, action')
     .eq('workspace_id', workspaceId)

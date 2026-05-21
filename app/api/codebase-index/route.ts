@@ -1,12 +1,8 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
 import { API_URL, internalHeaders } from '@/lib/internal-api'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 /**
  * POST /api/codebase-index
@@ -54,7 +50,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const repoFilter = searchParams.get('repo')
 
-  let query = supabaseAdmin
+  let query = getSupabaseAdmin()
     .from('workspace_codebase_index')
     .select('repo_full_name, indexing_status, indexing_error, last_indexed_at, index_stats')
     .eq('workspace_id', workspaceId)

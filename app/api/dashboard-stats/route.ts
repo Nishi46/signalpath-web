@@ -1,11 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 export async function GET() {
   const workspaceId = await getWorkspaceId()
@@ -18,16 +14,16 @@ export async function GET() {
   const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()
 
   const [clustersRes, workspaceRes, topRes] = await Promise.all([
-    supabaseAdmin
+    getSupabaseAdmin()
       .from('clusters')
       .select('id, opportunity_score, signal_count, churn_signal_count, revenue_at_risk_usd, label, confidence, scored_at, pm_rating')
       .eq('workspace_id', workspaceId),
-    supabaseAdmin
+    getSupabaseAdmin()
       .from('workspaces')
       .select('labeled_cluster_count, ml_ready, ml_model_version, labels_at_last_train')
       .eq('id', workspaceId)
       .single(),
-    supabaseAdmin
+    getSupabaseAdmin()
       .from('clusters')
       .select('id, label, opportunity_score, churn_signal_count, revenue_at_risk_usd, confidence')
       .eq('workspace_id', workspaceId)

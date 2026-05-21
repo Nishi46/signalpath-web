@@ -1,11 +1,7 @@
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getWorkspaceId } from '@/lib/get-workspace-id'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 const VALID_FRONTENDS = ['React', 'Next.js', 'Vue', 'SvelteKit', 'Angular', 'Other']
 const VALID_BACKENDS = [
@@ -40,7 +36,7 @@ export async function POST(req: NextRequest) {
   const tech_stack: Record<string, string> = { frontend, backend, database }
   if (hosting && VALID_HOSTING.includes(hosting)) tech_stack.hosting = hosting
 
-  const { error } = await supabaseAdmin
+  const { error } = await getSupabaseAdmin()
     .from('workspaces')
     .update({ tech_stack })
     .eq('id', workspaceId)
