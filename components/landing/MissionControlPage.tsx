@@ -15,6 +15,7 @@ import {
   Moon,
   ChevronDown,
   ListChecks,
+  Bot,
 } from 'lucide-react'
 import { BentoSection } from './BentoSection'
 import { SignalPathLogo } from './SignalPathLogo'
@@ -247,6 +248,14 @@ Score 9.1  ·  47 accounts  ·  $284K at risk
 ──────────────────────────────────────────
 Assignee: platform-team  ·  Effort: 3–5d`
 
+const BUILD_STEPS = [
+  { label: 'Reading spec context',    display: '0.6s' },
+  { label: 'Indexing affected files', display: '1.2s' },
+  { label: 'Writing patch',           display: '8.2s' },
+  { label: 'Running tests',           display: '3.1s' },
+  { label: 'Opening PR',              display: '0.8s' },
+]
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function scoreColor(score: number) {
@@ -332,7 +341,7 @@ function FeedCard({
 
 // ─── WorkflowPanel ────────────────────────────────────────────────────────────
 
-type WorkflowTab = 'signals' | 'plan' | 'spec'
+type WorkflowTab = 'signals' | 'plan' | 'spec' | 'build'
 
 function WorkflowPanel({
   opp,
@@ -341,10 +350,12 @@ function WorkflowPanel({
   onClose,
   planText,
   specText,
+  buildStepIdx,
   onGeneratePlan,
   onSkipPlan,
   onGenerateSpec,
   onSkipSpec,
+  onStartBuild,
 }: {
   opp: Opportunity
   activeTab: WorkflowTab
@@ -352,10 +363,12 @@ function WorkflowPanel({
   onClose: () => void
   planText: string
   specText: string
+  buildStepIdx: number
   onGeneratePlan: () => void
   onSkipPlan: () => void
   onGenerateSpec: () => void
   onSkipSpec: () => void
+  onStartBuild: () => void
 }) {
   const [animated, setAnimated] = useState(false)
   const { bar, text } = scoreColor(opp.score)
@@ -365,6 +378,7 @@ function WorkflowPanel({
   const planDone    = planText.length >= PLAN_TEXT.length
   const specStarted = specText.length > 0
   const specDone    = specText.length >= SPEC_JSON.length
+  const buildDone   = buildStepIdx >= 5
 
   useEffect(() => {
     setAnimated(false)
@@ -380,6 +394,7 @@ function WorkflowPanel({
     { id: 'signals', label: 'Signals', num: '1' },
     { id: 'plan',    label: 'Plan',    num: '2' },
     { id: 'spec',    label: 'Spec',    num: '3' },
+    { id: 'build',   label: 'Build',   num: '4' },
   ]
 
   return (
@@ -402,7 +417,8 @@ function WorkflowPanel({
           const isActive    = activeTab === tab.id
           const isCompleted = (tab.id === 'signals') ||
                               (tab.id === 'plan' && planDone) ||
-                              (tab.id === 'spec' && specDone)
+                              (tab.id === 'spec' && specDone) ||
+                              (tab.id === 'build' && buildDone)
           return (
             <div key={tab.id} className='flex items-center gap-1'>
               <button
@@ -608,6 +624,100 @@ function WorkflowPanel({
               <div ref={bottomRef} />
             </div>
           </div>
+
+          {specDone && (
+            <div className='mt-3 flex-shrink-0'>
+              <button
+                onClick={() => { onTabChange('build'); onStartBuild() }}
+                className='flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors'
+              >
+                <Bot className='w-3.5 h-3.5' />
+                Build This
+                <ChevronRight className='w-3.5 h-3.5' />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {/* ── Tab: Build ── */}
+      {activeTab === 'build' && (
+        <div className='flex-1 flex flex-col overflow-hidden'>
+          <div className='flex-1 bg-[#0D1117] rounded-2xl border border-white/[0.07] overflow-hidden flex flex-col'>
+            <div className='flex items-center gap-2.5 px-4 py-2.5 border-b border-white/[0.06] flex-shrink-0'>
+              <div className='flex gap-1.5'>
+                <span className='w-2.5 h-2.5 rounded-full bg-red-500/50' />
+                <span className='w-2.5 h-2.5 rounded-full bg-yellow-500/50' />
+                <span className='w-2.5 h-2.5 rounded-full bg-green-500/50' />
+              </div>
+              <span className='font-mono text-[10px] text-emerald-400/70'>agent-run #a7f2c</span>
+              <span className='font-mono text-[10px] text-white/20 truncate flex-1'>· {opp.title.slice(0, 32)}…</span>
+              {buildStepIdx >= 0 && !buildDone && (
+                <span className='flex items-center gap-1 text-[10px] text-blue-400'>
+                  <span className='w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse' />
+                  running
+                </span>
+              )}
+              {buildDone && (
+                <span className='flex items-center gap-1 text-[10px] text-emerald-400'>
+                  <span className='w-1.5 h-1.5 rounded-full bg-emerald-400' />
+                  done
+                </span>
+              )}
+            </div>
+            <div className='flex-1 p-4 space-y-2.5 overflow-y-auto'>
+              {buildStepIdx < 0 ? (
+                <div className='h-full flex items-center justify-center'>
+                  <div className='text-center'>
+                    <p className='font-mono text-[10px] text-white/25 mb-4'>Generate the spec first</p>
+                    <button
+                      onClick={() => onTabChange('spec')}
+                      className='font-mono text-[10px] text-white/40 hover:text-white/60 underline transition-colors'
+                    >
+                      ← Back to Spec
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {BUILD_STEPS.map((step, i) => {
+                    const isDone    = buildStepIdx > i
+                    const isRunning = buildStepIdx === i
+                    return (
+                      <div key={step.label} className='flex items-start gap-3'>
+                        <span className='w-4 text-center flex-shrink-0 mt-0.5 font-mono text-[11px]'>
+                          {isDone    ? <span className='text-emerald-400'>✓</span>
+                           : isRunning ? <span className='text-blue-400 animate-spin inline-block'>↻</span>
+                           : <span className='text-white/15'>○</span>}
+                        </span>
+                        <div className='flex-1 min-w-0'>
+                          <span className={`font-mono text-[11px] ${
+                            isDone    ? 'text-white/40'
+                            : isRunning ? 'text-white/85'
+                            : 'text-white/15'
+                          }`}>
+                            {step.label}{isRunning ? '…' : ''}
+                          </span>
+                          {isDone && (
+                            <span className='ml-2 font-mono text-[10px] text-white/20'>{step.display}</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {buildDone && (
+                    <div className='mt-4 pt-4 border-t border-white/[0.07]'>
+                      <div className='flex items-center gap-2 mb-1.5'>
+                        <CheckCircle2 className='w-3.5 h-3.5 text-emerald-400 flex-shrink-0' />
+                        <span className='font-mono text-[11px] text-emerald-400'>PR #247 opened</span>
+                      </div>
+                      <p className='font-mono text-[10px] text-white/40 pl-5'>feat/fix-oauth-token-expiry</p>
+                      <p className='font-mono text-[10px] text-white/25 pl-5 mt-0.5'>3 files changed · ready for review</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -725,7 +835,7 @@ const FAQS: { q: string; a: string | React.ReactNode }[] = [
         <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Signal ingestion:</span> Zendesk, Intercom, Freshdesk</span>
         <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Revenue context:</span> HubSpot and Salesforce — syncs real ARR to replace AI-estimated values</span>
         <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Codebase:</span> GitHub (App installation, works across orgs)</span>
-        <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Output:</span> Linear, Jira — push specs as tickets directly</span>
+        <span className='block'><span className='text-gray-700 dark:text-white/65 font-medium'>Output:</span> GitHub Issues, Linear, Jira — push specs as tickets directly</span>
         <span className='block text-gray-400 dark:text-white/30'>Cursor and Claude Code integration coming in V2.</span>
       </span>
     ),
@@ -840,6 +950,8 @@ export function MissionControlPage() {
   const specIndexRef = useRef(0)
   const planIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const planIndexRef = useRef(0)
+  const [buildStepIdx, setBuildStepIdx] = useState(-1)
+  const buildTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const [hasScrolled, setHasScrolled] = useState(false)
   const [hintSeen, setHintSeen] = useState(false)
 
@@ -873,10 +985,24 @@ export function MissionControlPage() {
     }, 12)
   }, [])
 
+  const BUILD_DELAYS = [600, 1200, 2500, 1800, 500]
+  const startBuild = useCallback(() => {
+    buildTimersRef.current.forEach(t => clearTimeout(t))
+    buildTimersRef.current = []
+    setBuildStepIdx(0)
+    let accumulated = 0
+    BUILD_DELAYS.forEach((delay, i) => {
+      accumulated += delay
+      const t = setTimeout(() => setBuildStepIdx(i + 1), accumulated)
+      buildTimersRef.current.push(t)
+    })
+  }, [])
+
   useEffect(() => {
     return () => {
       if (specIntervalRef.current) clearInterval(specIntervalRef.current)
       if (planIntervalRef.current) clearInterval(planIntervalRef.current)
+      buildTimersRef.current.forEach(t => clearTimeout(t))
     }
   }, [])
 
@@ -898,16 +1024,20 @@ export function MissionControlPage() {
 
   function handleCardClick(id: string) {
     setHintSeen(true)
+    buildTimersRef.current.forEach(t => clearTimeout(t))
+    buildTimersRef.current = []
     if (selectedId === id) {
       setSelectedId(null)
       setActiveTab('signals')
       setSpecText('')
       setPlanText('')
+      setBuildStepIdx(-1)
     } else {
       setSelectedId(id)
       setActiveTab('signals')
       setSpecText('')
       setPlanText('')
+      setBuildStepIdx(-1)
     }
   }
 
@@ -986,7 +1116,8 @@ export function MissionControlPage() {
           <div className='flex flex-wrap items-center justify-center gap-2 mb-8'>
             {[
               { label: 'Zendesk · Intercom · Salesforce', status: 'live' },
-              { label: 'GitHub codebase indexing', status: 'live' },
+              { label: 'GitHub codebase index + Issues', status: 'live' },
+              { label: 'Agent execution (Build This)', status: 'live' },
               { label: 'Cursor · Claude Code integration', status: 'soon' },
             ].map(({ label, status }) => (
               <span
@@ -1038,7 +1169,7 @@ export function MissionControlPage() {
               See what your support queue is really saying
             </h2>
             <p className='text-sm text-gray-500 dark:text-white/40'>
-              Click any opportunity to explore the scoring breakdown and generate a spec
+              Click any opportunity to explore scoring, generate a spec, and launch an agent to build it
             </p>
           </div>
 
@@ -1079,17 +1210,22 @@ export function MissionControlPage() {
                       activeTab={activeTab}
                       onTabChange={setActiveTab}
                       onClose={() => {
+                        buildTimersRef.current.forEach(t => clearTimeout(t))
+                        buildTimersRef.current = []
                         setSelectedId(null)
                         setActiveTab('signals')
                         setSpecText('')
                         setPlanText('')
+                        setBuildStepIdx(-1)
                       }}
                       planText={planText}
                       specText={specText}
+                      buildStepIdx={buildStepIdx}
                       onGeneratePlan={startPlan}
                       onSkipPlan={skipPlan}
                       onGenerateSpec={startSpec}
                       onSkipSpec={skipTypewriter}
+                      onStartBuild={startBuild}
                     />
                   </div>
                 </div>

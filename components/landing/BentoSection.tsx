@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Zap, GitMerge, Sliders, Send, CheckCircle2, Clock, FileCode, Github } from 'lucide-react'
+import { Zap, GitMerge, Sliders, Send, CheckCircle2, Clock, FileCode, Github, Bot } from 'lucide-react'
 import { useTheme } from '../ThemeProvider'
 
 // ─── Tile 1: Signal Counter ────────────────────────────────────────────────────
@@ -381,8 +381,8 @@ const DESTINATIONS = [
   {
     id: 'github',
     name: 'GitHub Issues',
-    description: 'Create an issue in any GitHub repository.',
-    status: 'coming-soon' as const,
+    description: 'Push the spec as a GitHub Issue — your repo is already indexed, so affected files are linked automatically.',
+    status: 'available' as const,
     accent: '#6B7280',
     logo: (
       <svg className='w-6 h-6 flex-shrink-0' viewBox='0 0 24 24' fill='currentColor'>
@@ -390,7 +390,86 @@ const DESTINATIONS = [
       </svg>
     ),
   },
+  {
+    id: 'agent',
+    name: 'Build with Agent',
+    description: 'Launch a background agent to implement the spec and open a PR. Your codebase index is live — the agent starts from your actual files.',
+    status: 'available' as const,
+    accent: '#10B981',
+    logo: (
+      <div className='w-6 h-6 bg-emerald-600 rounded-md flex items-center justify-center shadow-sm shadow-emerald-600/30 flex-shrink-0'>
+        <Bot className='w-3.5 h-3.5 text-white' />
+      </div>
+    ),
+  },
 ]
+
+const AGENT_STEPS = [
+  { label: 'Reading spec context',    ms: 600  },
+  { label: 'Indexing affected files', ms: 1200 },
+  { label: 'Writing patch',           ms: 2500 },
+  { label: 'Running tests',           ms: 1800 },
+  { label: 'Opening PR',              ms: 500  },
+]
+
+function AgentStepsMini({ running }: { running: boolean }) {
+  const [stepIdx, setStepIdx] = useState(-1)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!running) {
+      setStepIdx(-1)
+      if (timerRef.current) clearTimeout(timerRef.current)
+      return
+    }
+    setStepIdx(0)
+    let idx = 0
+    function advance() {
+      idx++
+      setStepIdx(idx)
+      if (idx < AGENT_STEPS.length) {
+        timerRef.current = setTimeout(advance, AGENT_STEPS[idx].ms)
+      }
+    }
+    timerRef.current = setTimeout(advance, AGENT_STEPS[0].ms)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [running])
+
+  const done = stepIdx >= AGENT_STEPS.length
+
+  return (
+    <div className='space-y-1'>
+      {AGENT_STEPS.map((step, i) => {
+        const isDone    = stepIdx > i
+        const isRunning = stepIdx === i
+        return (
+          <div key={step.label} className='flex items-center gap-2'>
+            <span className='w-3 text-center flex-shrink-0 text-[10px]'>
+              {isDone    ? <span className='text-emerald-400'>✓</span>
+               : isRunning ? <span className='text-blue-400 animate-pulse'>↻</span>
+               : <span className='text-gray-300 dark:text-white/15'>○</span>}
+            </span>
+            <span className={`text-[10px] truncate ${
+              isDone    ? 'text-emerald-400/70'
+              : isRunning ? 'text-gray-700 dark:text-white/70'
+              : 'text-gray-300 dark:text-white/20'
+            }`}>
+              {step.label}{isRunning ? '…' : ''}
+            </span>
+          </div>
+        )
+      })}
+      {done && (
+        <div className='mt-2 pt-2 border-t border-gray-100 dark:border-white/[0.06]'>
+          <p className='text-[10px] text-emerald-500 font-mono'>
+            ✓ PR #247 opened · feat/fix-oauth-token-expiry
+          </p>
+          <p className='text-[10px] text-gray-400 dark:text-white/30'>3 files changed · ready for review</p>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function HandoffTile() {
   const [active, setActive] = useState('signalpath')
@@ -401,7 +480,7 @@ function HandoffTile() {
     <div className='bento-tile flex flex-col h-full'>
       <TileLabel icon={<Send className='w-3.5 h-3.5' />} label='Signal → spec → ship' index='04' />
       <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1 mb-3'>
-        Stay in SignalPath, push to your PM tools, or send the spec straight into Cursor — the agent starts coding from your actual files.
+        Stay in SignalPath, push to Linear, Jira, or GitHub Issues, or launch a background agent to write the code and open a PR.
       </p>
 
       {/* Destination picker */}
@@ -443,9 +522,13 @@ function HandoffTile() {
 
       {/* Selected destination detail */}
       <div className='mt-auto pt-3 border-t border-gray-100 dark:border-white/[0.06]'>
-        <p className='text-[10px] text-gray-400 dark:text-white/30 leading-relaxed'>
-          {dest.description}
-        </p>
+        {active === 'agent' ? (
+          <AgentStepsMini running={active === 'agent'} />
+        ) : (
+          <p className='text-[10px] text-gray-400 dark:text-white/30 leading-relaxed'>
+            {dest.description}
+          </p>
+        )}
       </div>
     </div>
   )
