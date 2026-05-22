@@ -15,7 +15,10 @@ export async function middleware(req: NextRequest) {
         },
         setAll(cookies) {
           for (const { name, value, options } of cookies) {
-            res.cookies.set(name, value, options)
+            res.cookies.set(name, value, {
+              ...options,
+              maxAge: 60 * 60 * 24 * 30, // 30 days
+            })
           }
         },
       },
