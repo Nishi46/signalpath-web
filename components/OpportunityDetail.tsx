@@ -33,6 +33,10 @@ import {
   CheckCircle2,
   XCircle,
   Circle,
+  FileCode2,
+  MessageCircle,
+  ThumbsDown,
+  ShieldCheck,
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -202,6 +206,268 @@ function AgentProgressBoard({ run }: { run: AgentRunStatus }) {
       {isFailed && run.error && (
         <p className='text-xs text-red-400 mt-1'>{run.error}</p>
       )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Feature 9: Engineer Context Panel types and component
+// ---------------------------------------------------------------------------
+
+type PRFile = { filename: string; status: string | null; additions: number; deletions: number }
+type PRReview = { login: string | null; avatar_url: string | null; state: string; submitted_at: string | null; body: string }
+type PRReviewData = {
+  pr_number: number
+  pr_url: string | null
+  pr_repo: string | null
+  branch_name: string | null
+  run_status: string
+  ci_checks: CICheck[]
+  tasks: AgentTaskStatus[]
+  pr_files: PRFile[]
+  pr_reviews: PRReview[]
+  top_signals: Array<{ id: string; text: string; churn_flag: boolean; created_at: string }>
+}
+
+function reviewStateLabel(state: string) {
+  if (state === 'APPROVED') return { label: 'Approved', cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' }
+  if (state === 'CHANGES_REQUESTED') return { label: 'Changes requested', cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' }
+  return { label: 'Commented', cls: 'text-gray-400 bg-gray-500/10 border-gray-500/20' }
+}
+
+function ciOverallStatus(checks: CICheck[]): 'success' | 'failure' | 'pending' | null {
+  if (checks.length === 0) return null
+  if (checks.some(c => c.conclusion === 'failure' || c.conclusion === 'timed_out')) return 'failure'
+  if (checks.every(c => c.conclusion === 'success')) return 'success'
+  return 'pending'
+}
+
+function PRReviewPanel({
+  clusterId,
+  data,
+  onSubmitReview,
+  submitBusy,
+  submitError,
+}: {
+  clusterId: string
+  data: PRReviewData
+  onSubmitReview: (event: string, body: string) => Promise<void>
+  submitBusy: boolean
+  submitError: string | null
+}) {
+  const [reviewBody, setReviewBody] = useState('')
+  const [reviewExpanded, setReviewExpanded] = useState(false)
+
+  const ciStatus = ciOverallStatus(data.ci_checks)
+
+  // Map each PR file to its generating task (by target_files overlap)
+  const fileTaskMap: Record<string, string> = {}
+  for (const task of data.tasks) {
+    for (const tf of task.target_files) {
+      fileTaskMap[tf] = task.title
+    }
+  }
+  function taskForFile(filename: string): string | undefined {
+    // exact match first
+    if (fileTaskMap[filename]) return fileTaskMap[filename]
+    // suffix match (e.g. task has 'src/Foo.tsx', PR file has 'src/Foo.tsx')
+    for (const [tf, title] of Object.entries(fileTaskMap)) {
+      if (filename.endsWith(tf) || tf.endsWith(filename)) return title
+    }
+    return undefined
+  }
+
+  // Top churn signals for evidence sidebar
+  const churnSignals = data.top_signals.filter(s => s.churn_flag).slice(0, 3)
+  const otherSignals = data.top_signals.filter(s => !s.churn_flag).slice(0, 3 - churnSignals.length)
+  const evidenceSignals = [...churnSignals, ...otherSignals]
+
+  return (
+    <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-6 mb-6'>
+      {/* Header */}
+      <div className='flex items-center justify-between mb-5'>
+        <div className='flex items-center gap-2'>
+          <ShieldCheck className='w-4 h-4 text-violet-400' />
+          <span className='text-sm font-semibold text-gray-900 dark:text-white'>
+            Engineer Review — PR #{data.pr_number}
+          </span>
+        </div>
+        <div className='flex items-center gap-2'>
+          {ciStatus === 'success' && (
+            <span className='inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full'>
+              <CheckCircle2 className='w-3 h-3' /> CI passing
+            </span>
+          )}
+          {ciStatus === 'failure' && (
+            <span className='inline-flex items-center gap-1 text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full'>
+              <XCircle className='w-3 h-3' /> CI failing
+            </span>
+          )}
+          {ciStatus === 'pending' && (
+            <span className='inline-flex items-center gap-1 text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full'>
+              <Loader2 className='w-3 h-3 animate-spin' /> CI running
+            </span>
+          )}
+          {data.pr_reviews.length > 0 && (
+            <span className='inline-flex items-center gap-1 text-xs text-gray-500 dark:text-white/40 bg-gray-100 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08] px-2 py-0.5 rounded-full'>
+              <Users className='w-3 h-3' /> {data.pr_reviews.length} review{data.pr_reviews.length !== 1 ? 's' : ''}
+            </span>
+          )}
+          {data.pr_url && (
+            <a
+              href={data.pr_url}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-flex items-center gap-1 text-xs text-gray-500 dark:text-white/40 hover:text-violet-400 transition-colors'
+            >
+              <Github className='w-3.5 h-3.5' /> <ExternalLink className='w-3 h-3' />
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Existing reviews */}
+      {data.pr_reviews.length > 0 && (
+        <div className='flex flex-wrap gap-2 mb-5'>
+          {data.pr_reviews.map((r, i) => {
+            const { label, cls } = reviewStateLabel(r.state)
+            return (
+              <span key={i} className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${cls}`}>
+                {r.avatar_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={r.avatar_url} alt={r.login ?? ''} className='w-4 h-4 rounded-full' />
+                )}
+                @{r.login} · {label}
+              </span>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Two-column: files + evidence */}
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-5'>
+        {/* Files changed */}
+        <div>
+          <p className='text-[10px] font-semibold text-gray-400 dark:text-white/30 uppercase tracking-wider mb-2'>
+            Files Changed ({data.pr_files.length})
+          </p>
+          {data.pr_files.length === 0 ? (
+            <p className='text-xs text-gray-400 dark:text-white/30'>No file data yet.</p>
+          ) : (
+            <div className='space-y-1'>
+              {data.pr_files.map((f, i) => {
+                const task = taskForFile(f.filename)
+                const parts = f.filename.split('/')
+                const name = parts[parts.length - 1]
+                const dir = parts.slice(0, -1).join('/')
+                return (
+                  <div key={i} className='flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors'>
+                    <FileCode2 className='w-3.5 h-3.5 text-gray-400 dark:text-white/25 mt-0.5 shrink-0' />
+                    <div className='min-w-0 flex-1'>
+                      <p className='text-xs text-gray-800 dark:text-white/80 font-mono truncate'>
+                        {dir && <span className='text-gray-400 dark:text-white/30'>{dir}/</span>}{name}
+                        {f.status === 'added' && <span className='ml-1.5 text-[10px] text-emerald-400 font-sans font-medium'>new</span>}
+                      </p>
+                      {task && (
+                        <p className='text-[10px] text-violet-400 truncate mt-0.5'>{task}</p>
+                      )}
+                    </div>
+                    <span className='text-[10px] text-gray-400 dark:text-white/30 shrink-0 font-mono'>
+                      +{f.additions} -{f.deletions}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Customer evidence */}
+        <div>
+          <p className='text-[10px] font-semibold text-gray-400 dark:text-white/30 uppercase tracking-wider mb-2'>
+            Customer Evidence
+          </p>
+          {evidenceSignals.length === 0 ? (
+            <p className='text-xs text-gray-400 dark:text-white/30'>No signal data.</p>
+          ) : (
+            <div className='space-y-2'>
+              {evidenceSignals.map((s, i) => (
+                <div key={i} className='p-2.5 rounded-lg bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.04]'>
+                  {s.churn_flag && (
+                    <span className='inline-flex items-center gap-0.5 text-[10px] text-orange-400 font-medium mb-1'>
+                      <AlertTriangle className='w-2.5 h-2.5' /> Churn risk
+                    </span>
+                  )}
+                  <p className='text-xs text-gray-600 dark:text-white/60 leading-relaxed line-clamp-3'>
+                    &ldquo;{s.text.length > 140 ? s.text.slice(0, 140) + '…' : s.text}&rdquo;
+                  </p>
+                  <p className='text-[10px] text-gray-400 dark:text-white/25 mt-1'>
+                    Signal · {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Review submission */}
+      <div className='border-t border-gray-100 dark:border-white/[0.06] pt-4'>
+        <button
+          type='button'
+          onClick={() => setReviewExpanded(e => !e)}
+          className='flex items-center gap-1.5 text-xs text-gray-500 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 mb-3 transition-colors'
+        >
+          <MessageCircle className='w-3.5 h-3.5' />
+          {reviewExpanded ? 'Hide review form' : 'Submit a review'}
+          <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${reviewExpanded ? 'rotate-180' : ''}`} />
+        </button>
+
+        {reviewExpanded && (
+          <div className='space-y-3'>
+            <textarea
+              value={reviewBody}
+              onChange={e => setReviewBody(e.target.value)}
+              placeholder='Leave a review comment (optional)…'
+              rows={3}
+              className='w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/25 outline-none focus:border-violet-500/40 resize-none transition-all'
+            />
+            <div className='flex gap-2'>
+              <button
+                type='button'
+                disabled={submitBusy}
+                onClick={() => void onSubmitReview('APPROVE', reviewBody)}
+                className='flex-1 inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-xs transition-colors'
+              >
+                <ThumbsUp className='w-3.5 h-3.5' />
+                {submitBusy ? 'Submitting…' : 'Approve'}
+              </button>
+              <button
+                type='button'
+                disabled={submitBusy}
+                onClick={() => void onSubmitReview('REQUEST_CHANGES', reviewBody)}
+                className='flex-1 inline-flex items-center justify-center gap-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-xs transition-colors'
+              >
+                <ThumbsDown className='w-3.5 h-3.5' />
+                {submitBusy ? 'Submitting…' : 'Request changes'}
+              </button>
+              {data.pr_url && (
+                <a
+                  href={data.pr_url}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='inline-flex items-center justify-center gap-1.5 bg-gray-100 dark:bg-white/[0.06] hover:bg-gray-200 dark:hover:bg-white/[0.09] text-gray-600 dark:text-white/60 font-medium py-2.5 px-3 rounded-xl text-xs transition-colors border border-gray-200 dark:border-white/[0.08]'
+                >
+                  <Github className='w-3.5 h-3.5' /> GitHub
+                </a>
+              )}
+            </div>
+            {submitError && (
+              <p className='text-xs text-red-400'>{submitError}</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -533,6 +799,12 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   const [pushingGithubIssue, setPushingGithubIssue] = useState(false)
   const [pushedGithubIssue, setPushedGithubIssue] = useState<string | null>(cluster.github_issue_url ?? null)
 
+  // Feature 9: Engineer Context Panel (PR Review)
+  const [prReviewData, setPrReviewData] = useState<PRReviewData | null>(null)
+  const [prReviewLoading, setPrReviewLoading] = useState(false)
+  const [reviewSubmitBusy, setReviewSubmitBusy] = useState(false)
+  const [reviewSubmitError, setReviewSubmitError] = useState<string | null>(null)
+
   // Inline brief editing + auto-save
   const [editingBrief, setEditingBrief] = useState(false)
   const [draftBrief, setDraftBrief] = useState('')
@@ -602,6 +874,53 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
       }
     } catch { /* fall through */ }
     return false
+  }
+
+  // Feature 9: load PR review data when a completed PR exists
+  const fetchPrReview = useCallback(async () => {
+    setPrReviewLoading(true)
+    try {
+      const res = await fetch(`/api/clusters/${encodeURIComponent(cluster.id)}/pr-review`)
+      if (res.ok) {
+        const data: PRReviewData = await res.json()
+        setPrReviewData(data)
+      }
+    } catch { /* non-fatal */ }
+    setPrReviewLoading(false)
+  }, [cluster.id])
+
+  // Load review data whenever the agentRun has a completed PR
+  useEffect(() => {
+    if (agentRun?.status === 'complete' && agentRun.pr_number) {
+      void fetchPrReview()
+    }
+  }, [agentRun?.status, agentRun?.pr_number, fetchPrReview])
+
+  async function handleSubmitReview(event: string, body: string) {
+    setReviewSubmitBusy(true)
+    setReviewSubmitError(null)
+    try {
+      const res = await fetch(
+        `/api/clusters/${encodeURIComponent(cluster.id)}/pr-review/submit`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event, body }),
+        },
+      )
+      const data = await res.json()
+      if (!res.ok) {
+        setReviewSubmitError(data.error ?? 'Failed to submit review')
+        return
+      }
+      toast(`Review submitted: ${event === 'APPROVE' ? 'Approved' : 'Changes requested'}`, 'success')
+      // Refresh review data to show the new review
+      void fetchPrReview()
+    } catch {
+      setReviewSubmitError('Network error — please try again')
+    } finally {
+      setReviewSubmitBusy(false)
+    }
   }
 
   // Poll agent run status until terminal state
@@ -1550,6 +1869,23 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               <p className='mt-2 text-xs text-red-400'>{buildError}</p>
             )}
           </div>
+        )}
+
+        {/* Feature 9: Engineer Context Panel — shown when a PR exists */}
+        {agentRun?.status === 'complete' && agentRun.pr_number && (
+          prReviewLoading && !prReviewData ? (
+            <div className='mb-6 flex items-center gap-2 text-xs text-gray-400 dark:text-white/30'>
+              <Loader2 className='w-3.5 h-3.5 animate-spin' /> Loading PR review data…
+            </div>
+          ) : prReviewData ? (
+            <PRReviewPanel
+              clusterId={cluster.id}
+              data={prReviewData}
+              onSubmitReview={handleSubmitReview}
+              submitBusy={reviewSubmitBusy}
+              submitError={reviewSubmitError}
+            />
+          ) : null
         )}
 
         {pushError && (
