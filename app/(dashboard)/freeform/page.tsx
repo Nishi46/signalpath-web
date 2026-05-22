@@ -406,7 +406,7 @@ export default function FreeformPage() {
 
                 <button
                   onClick={handleContinue}
-                  disabled={!canContinue || step === 'preflight-loading'}
+                  disabled={description.trim().length < 10 || step === 'preflight-loading'}
                   className='w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-sm shadow-blue-600/20 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all'
                 >
                   {step === 'preflight-loading' ? (
