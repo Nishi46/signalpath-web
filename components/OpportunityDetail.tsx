@@ -74,6 +74,10 @@ export interface ClusterDetail {
   pr_url?: string | null
   pr_number?: number | null
   pr_branch?: string | null
+  pr_repo_full_name?: string | null
+  status?: string | null
+  merged_by?: string | null
+  pr_merge_sha?: string | null
   github_issue_url?: string | null
   agent_spec_validation?: {
     total_references?: number
@@ -98,13 +102,21 @@ interface Signal {
 // ---------------------------------------------------------------------------
 
 type AgentTaskStatus = { index: number; title: string; target_files: string[]; status: string; commit_sha?: string | null; error?: string | null }
-type AgentRunStatus = { agent_run_id?: string; status: string; total_tasks: number; completed_tasks: number; failed_tasks: number; branch_name?: string; pr_url?: string | null; pr_number?: number | null; tasks: AgentTaskStatus[]; error?: string | null }
+type CICheck = { name: string; status: string; conclusion: string | null; completed_at: string | null; details_url: string | null }
+type AgentRunStatus = { agent_run_id?: string; status: string; total_tasks: number; completed_tasks: number; failed_tasks: number; branch_name?: string; pr_url?: string | null; pr_number?: number | null; ci_checks?: CICheck[]; tasks: AgentTaskStatus[]; error?: string | null }
 
 function TaskIcon({ status }: { status: string }) {
   if (status === 'complete') return <CheckCircle2 className='w-4 h-4 text-emerald-400 shrink-0' />
   if (status === 'failed') return <XCircle className='w-4 h-4 text-red-400 shrink-0' />
   if (status === 'running') return <Loader2 className='w-4 h-4 text-blue-400 animate-spin shrink-0' />
   return <Circle className='w-4 h-4 text-gray-300 dark:text-white/20 shrink-0' />
+}
+
+function CICheckIcon({ conclusion }: { conclusion: string | null }) {
+  if (conclusion === 'success') return <CheckCircle2 className='w-3.5 h-3.5 text-emerald-400 shrink-0' />
+  if (conclusion === 'failure' || conclusion === 'timed_out') return <XCircle className='w-3.5 h-3.5 text-red-400 shrink-0' />
+  if (conclusion === 'cancelled' || conclusion === 'skipped') return <Circle className='w-3.5 h-3.5 text-gray-400 dark:text-white/30 shrink-0' />
+  return <Loader2 className='w-3.5 h-3.5 text-blue-400 animate-spin shrink-0' />
 }
 
 function AgentProgressBoard({ run }: { run: AgentRunStatus }) {
@@ -161,6 +173,30 @@ function AgentProgressBoard({ run }: { run: AgentRunStatus }) {
         >
           <Github className='w-4 h-4' /> View Pull Request #{run.pr_number} <ExternalLink className='w-3.5 h-3.5' />
         </a>
+      )}
+
+      {(run.ci_checks ?? []).length > 0 && (
+        <div className='mt-3 border-t border-gray-100 dark:border-white/[0.06] pt-3'>
+          <p className='text-xs text-gray-400 dark:text-white/40 mb-2'>CI Checks</p>
+          <div className='space-y-1.5'>
+            {(run.ci_checks ?? []).map(check => (
+              <div key={check.name} className='flex items-center gap-2 text-xs'>
+                <CICheckIcon conclusion={check.conclusion} />
+                <span className='flex-1 text-gray-700 dark:text-white/70 truncate'>{check.name}</span>
+                {check.details_url && (
+                  <a
+                    href={check.details_url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 shrink-0'
+                  >
+                    <ExternalLink className='w-3 h-3' />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {isFailed && run.error && (
@@ -481,7 +517,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   const [specRejecting, setSpecRejecting] = useState(false)
   const [specNotes, setSpecNotes] = useState('')
   const [specRejectBusy, setSpecRejectBusy] = useState(false)
-  const [shipped, setShipped] = useState(false)
+  const [shipped, setShipped] = useState(cluster.status === 'shipped')
   const [shippingBusy, setShippingBusy] = useState(false)
   const [accountsOpen, setAccountsOpen] = useState(false)
   const [accountsLoading, setAccountsLoading] = useState(false)
@@ -580,7 +616,11 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
           clearInterval(pollIntervalRef.current)
           pollIntervalRef.current = null
         }
-        if (data.status === 'complete') void refresh()
+        if (data.status === 'complete') {
+          void refresh()
+          // Re-derive shipped state from cluster after webhook may have fired
+          setShipped(cluster.status === 'shipped')
+        }
       }
     } catch { /* ignore network blips */ }
   }, [cluster.id, refresh])
@@ -1047,6 +1087,12 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             >
               <X className='w-3.5 h-3.5' /> Dismiss
             </button>
+            {cluster.status === 'shipped' && cluster.merged_by ? (
+              <span className='flex items-center gap-1.5 text-xs text-emerald-400 px-3 py-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5'>
+                <CheckCircle2 className='w-3.5 h-3.5' />
+                Shipped by @{cluster.merged_by}
+              </span>
+            ) : (
             <button
               type='button'
               disabled={shippingBusy || shipped}
@@ -1054,8 +1100,9 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
               className='flex items-center gap-1 text-xs text-violet-400 hover:bg-violet-500/10 px-3 py-2 rounded-lg font-medium border border-violet-500/20 disabled:opacity-50 transition-colors'
             >
               <Package className='w-3.5 h-3.5' />
-              {shippingBusy ? 'Marking…' : shipped ? 'Shipped' : 'Mark as shipped'}
+              {shippingBusy ? 'Marking…' : shipped ? 'Shipped ✓' : 'Mark as shipped'}
             </button>
+            )}
           </div>
 
 

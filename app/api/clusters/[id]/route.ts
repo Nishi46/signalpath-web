@@ -21,7 +21,9 @@ export async function GET(
       `id, label, opportunity_score, signal_count, churn_signal_count, recent_signal_count, centroid, scored_at,
        human_brief, agent_spec, spec_generated_at, confidence, dimension_f, dimension_r, dimension_c,
        dimension_b, dimension_s, dimension_v, unique_orgs, unique_requesters, revenue_at_risk_usd,
-       scoring_model, ml_review_needed, pm_rating, selected_plan_id, plans_generated_at`,
+       scoring_model, ml_review_needed, pm_rating, selected_plan_id, plans_generated_at,
+       pr_url, pr_number, pr_branch, pr_repo_full_name, shipped_at, status, merged_by, pr_merge_sha,
+       github_issue_url, agent_spec_validation`,
     )
     .eq('id', id)
     .eq('workspace_id', workspaceId)
