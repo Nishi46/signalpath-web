@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { DashboardNav } from '@/components/DashboardNav'
-import { Plus, Loader2, ExternalLink, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Plus, Loader2, ExternalLink, CheckCircle, AlertTriangle, Trash2 } from 'lucide-react'
 
 interface SpecRow {
   id: string
@@ -58,6 +58,8 @@ function fmtDate(iso: string): string {
 export default function SpecsPage() {
   const [specs, setSpecs] = useState<SpecRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/specs')
@@ -65,6 +67,21 @@ export default function SpecsPage() {
       .then(d => { setSpecs(d.specs ?? []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
+
+  async function handleDelete(spec: SpecRow) {
+    if (confirmDelete !== spec.id) {
+      setConfirmDelete(spec.id)
+      return
+    }
+    setDeleting(spec.id)
+    setConfirmDelete(null)
+    const url = spec.source === 'signal-driven'
+      ? `/api/clusters/${spec.id}/spec`
+      : `/api/freeform/${spec.id}`
+    await fetch(url, { method: 'DELETE' })
+    setSpecs(prev => prev.filter(s => s.id !== spec.id))
+    setDeleting(null)
+  }
 
   return (
     <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
@@ -116,13 +133,14 @@ export default function SpecsPage() {
                   <th className='text-left text-xs font-medium text-gray-400 dark:text-white/30 px-4 py-3'>Status</th>
                   <th className='text-left text-xs font-medium text-gray-400 dark:text-white/30 px-4 py-3'>Pushed</th>
                   <th className='text-left text-xs font-medium text-gray-400 dark:text-white/30 px-4 py-3'>Date</th>
+                  <th className='px-4 py-3' />
                 </tr>
               </thead>
               <tbody>
                 {specs.map((s, i) => (
                   <tr
                     key={s.id}
-                    className={`hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors ${
+                    className={`group hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors ${
                       i < specs.length - 1 ? 'border-b border-gray-50 dark:border-white/[0.04]' : ''
                     }`}
                   >
@@ -152,6 +170,34 @@ export default function SpecsPage() {
                     </td>
                     <td className='px-4 py-3.5 text-gray-400 dark:text-white/30 whitespace-nowrap'>
                       {fmtDate(s.created_at)}
+                    </td>
+                    <td className='px-4 py-3.5 text-right'>
+                      {deleting === s.id ? (
+                        <Loader2 className='w-3.5 h-3.5 animate-spin text-gray-400 dark:text-white/30 ml-auto' />
+                      ) : confirmDelete === s.id ? (
+                        <span className='flex items-center justify-end gap-2'>
+                          <button
+                            onClick={() => setConfirmDelete(null)}
+                            className='text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 transition-colors'
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDelete(s)}
+                            className='text-xs text-red-600 dark:text-red-400 font-medium hover:text-red-700 dark:hover:text-red-300 transition-colors'
+                          >
+                            Delete
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleDelete(s)}
+                          className='opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 dark:text-white/20 hover:text-red-500 dark:hover:text-red-400'
+                          title='Delete spec'
+                        >
+                          <Trash2 className='w-3.5 h-3.5' />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

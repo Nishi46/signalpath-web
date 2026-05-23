@@ -6,7 +6,7 @@ import { DashboardNav } from '@/components/DashboardNav'
 import { GitHubIssuesToggle } from '@/components/GitHubIssuesToggle'
 import {
   Github, CheckCircle2, Loader2, ChevronRight, GitBranch,
-  RefreshCw, AlertTriangle, ExternalLink, Clock,
+  RefreshCw, AlertTriangle, ExternalLink, Clock, X,
 } from 'lucide-react'
 
 interface Repo {
@@ -104,6 +104,7 @@ function GitHubConnectContent() {
   const [indexingRepo, setIndexingRepo] = useState<string | null>(null)
   const [indexStatus, setIndexStatus] = useState<IndexedRepo['status']>('none')
   const [indexError, setIndexError] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState(false)
 
   // Management view state
   const [accountLogin, setAccountLogin] = useState<string | null>(null)
@@ -338,6 +339,23 @@ function GitHubConnectContent() {
       alert('Network error — please try again')
       setStartingIndex(false)
     }
+  }
+
+  async function handleCancelIndexing() {
+    if (!indexingRepo) return
+    setCancelling(true)
+    try {
+      await fetch('/api/codebase-index', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo_full_name: indexingRepo }),
+      })
+    } catch { /* ignore — we navigate away regardless */ }
+    setCancelling(false)
+    setIndexingRepo(null)
+    setIndexStatus('none')
+    setIndexError(null)
+    setStep('pick')
   }
 
   async function handleReindex(repoName: string) {
@@ -717,6 +735,13 @@ function GitHubConnectContent() {
                 {indexError ?? 'Indexing failed. Please try again.'}
               </div>
             )}
+            <button
+              onClick={handleCancelIndexing}
+              disabled={cancelling}
+              className='mt-6 inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/25 hover:text-red-500 dark:hover:text-red-400 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed'
+            >
+              {cancelling ? <><Loader2 className='w-3.5 h-3.5 animate-spin' /> Cancelling…</> : <><X className='w-3.5 h-3.5' /> Cancel indexing</>}
+            </button>
           </div>
         )}
 

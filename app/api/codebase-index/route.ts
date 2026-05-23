@@ -37,6 +37,38 @@ export async function POST(req: Request) {
 }
 
 /**
+ * DELETE /api/codebase-index
+ * Cancels an in-progress index for the given repo.
+ */
+export async function DELETE(req: Request) {
+  const workspaceId = await getWorkspaceId()
+  if (!workspaceId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const body = await req.json().catch(() => null)
+  if (!body?.repo_full_name) {
+    return NextResponse.json({ error: 'repo_full_name is required' }, { status: 400 })
+  }
+
+  const res = await fetch(`${API_URL}/api/codebase/index`, {
+    method: 'DELETE',
+    headers: internalHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ workspace_id: workspaceId, repo_full_name: body.repo_full_name }),
+  })
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    return NextResponse.json(
+      { error: data.detail ?? 'Failed to cancel indexing' },
+      { status: res.status },
+    )
+  }
+
+  return NextResponse.json({ cancelled: true })
+}
+
+/**
  * GET /api/codebase-index
  * Without ?repo=: returns all indexed repos for the workspace (used by freeform indicator).
  * With ?repo=owner/name: returns status for that specific repo (used during indexing polling).

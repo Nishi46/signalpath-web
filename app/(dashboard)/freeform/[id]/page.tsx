@@ -8,7 +8,7 @@ import { useToast } from '@/lib/toast-context'
 import { exportPrdToDocx } from '@/lib/export-prd'
 import {
   ArrowLeft, Loader2, AlertTriangle, CheckCircle, ExternalLink,
-  Link2, TrendingUp, Download, ChevronDown, ChevronUp, RefreshCw,
+  Link2, TrendingUp, Download, ChevronDown, ChevronUp, RefreshCw, Trash2,
 } from 'lucide-react'
 
 interface RelatedCluster {
@@ -141,6 +141,15 @@ export default function FreeformSpecPage() {
   const [showRegenModal, setShowRegenModal] = useState(false)
   const [regenNotes, setRegenNotes] = useState('')
   const [regenerating, setRegenerating] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDelete() {
+    if (!confirmDelete) { setConfirmDelete(true); return }
+    setDeleting(true)
+    await fetch(`/api/freeform/${id}`, { method: 'DELETE' })
+    router.push('/specs')
+  }
 
   const [generatingMsg, setGeneratingMsg] = useState('Analyzing your codebase...')
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -371,12 +380,38 @@ export default function FreeformSpecPage() {
             All Specs
           </Link>
           <span className='text-gray-300 dark:text-white/20'>/</span>
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-2 flex-1'>
             <span className='text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 font-medium'>
               {spec.source === 'freeform_enriched' ? 'Freeform + Evidence' : spec.source === 'promoted' ? 'Promoted' : 'Freeform'}
             </span>
             <StatusBadge status={spec.generation_status} />
           </div>
+          {confirmDelete ? (
+            <span className='flex items-center gap-2 ml-auto'>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className='text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 transition-colors'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className='flex items-center gap-1 text-xs text-red-600 dark:text-red-400 font-medium hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50'
+              >
+                {deleting ? <Loader2 className='w-3 h-3 animate-spin' /> : null}
+                Delete
+              </button>
+            </span>
+          ) : (
+            <button
+              onClick={handleDelete}
+              className='ml-auto text-gray-300 dark:text-white/20 hover:text-red-500 dark:hover:text-red-400 transition-colors'
+              title='Delete spec'
+            >
+              <Trash2 className='w-4 h-4' />
+            </button>
+          )}
         </div>
 
         <h1 className='text-xl font-bold text-gray-900 dark:text-white mb-6 leading-snug'>{title}</h1>
