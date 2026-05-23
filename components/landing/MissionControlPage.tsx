@@ -846,7 +846,7 @@ const FAQS: { q: string; a: string | React.ReactNode }[] = [
   },
   {
     q: 'What does early access cost?',
-    a: "We're working with a small number of design partners right now — the focus is on fit over revenue. If SignalPath is useful for your team, we'll figure out pricing together. Reach out at nishigoldy@gmail.com.",
+    a: "We're working with a small number of design partners right now — the focus is on fit over revenue. If SignalPath is useful for your team, we'll figure out pricing together. Reach out at signalpath@gmail.com.",
   },
 ]
 
@@ -1280,7 +1280,7 @@ export function MissionControlPage() {
             <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
             <a href='/privacy' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>Privacy Policy</a>
             <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
-            <a href='mailto:nishigoldy@gmail.com' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>nishigoldy@gmail.com</a>
+            <a href='mailto:signalpath@gmail.com' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>signalpath@gmail.com</a>
           </div>
           <div className='flex items-center gap-4'>
             <a
@@ -1295,7 +1295,7 @@ export function MissionControlPage() {
               Blog
             </a>
             <a
-              href='mailto:nishigoldy@gmail.com'
+              href='mailto:signalpath@gmail.com'
               className='text-xs bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors'
             >
               Get early access →

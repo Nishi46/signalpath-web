@@ -304,7 +304,7 @@ export function AboutPage() {
                 </p>
               </div>
               <a
-                href='mailto:nishigoldy@gmail.com?subject=Founding Engineer'
+                href='mailto:signalpath@gmail.com?subject=Founding Engineer'
                 className='flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 whitespace-nowrap transition-colors'
               >
                 Get in touch
@@ -338,10 +338,10 @@ export function AboutPage() {
             <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
             <a href='/privacy' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>Privacy Policy</a>
             <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
-            <a href='mailto:nishigoldy@gmail.com' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>nishigoldy@gmail.com</a>
+            <a href='mailto:signalpath@gmail.com' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>signalpath@gmail.com</a>
           </div>
           <a
-            href='mailto:nishigoldy@gmail.com'
+            href='mailto:signalpath@gmail.com'
             className='text-xs bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors'
           >
             Get early access →

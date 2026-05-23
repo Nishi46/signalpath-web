@@ -83,8 +83,8 @@ export function PrivacyPage() {
                 SignalPath (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) operates as an early-access product that connects to your support tooling,
                 analyzes customer feedback, and surfaces product opportunities. This Privacy Policy explains what data we
                 collect, how we use it, and the choices you have. If you have questions, reach out at{' '}
-                <a href='mailto:nishigoldy@gmail.com' className='text-blue-500 hover:text-blue-400 transition-colors'>
-                  nishigoldy@gmail.com
+                <a href='mailto:signalpath@gmail.com' className='text-blue-500 hover:text-blue-400 transition-colors'>
+                  signalpath@gmail.com
                 </a>.
               </p>
             </div>
@@ -145,8 +145,8 @@ export function PrivacyPage() {
                 We retain your account data for as long as your account is active. Helpdesk-derived analysis and
                 embeddings are retained to power the product and deleted within 30 days of account closure on request.
                 You can request deletion at any time by emailing{' '}
-                <a href='mailto:nishigoldy@gmail.com' className='text-blue-500 hover:text-blue-400 transition-colors'>
-                  nishigoldy@gmail.com
+                <a href='mailto:signalpath@gmail.com' className='text-blue-500 hover:text-blue-400 transition-colors'>
+                  signalpath@gmail.com
                 </a>.
               </p>
             </div>
@@ -164,8 +164,8 @@ export function PrivacyPage() {
               <p>
                 Depending on your jurisdiction you may have the right to access, correct, port, or delete your
                 personal data. To exercise any of these rights, email{' '}
-                <a href='mailto:nishigoldy@gmail.com' className='text-blue-500 hover:text-blue-400 transition-colors'>
-                  nishigoldy@gmail.com
+                <a href='mailto:signalpath@gmail.com' className='text-blue-500 hover:text-blue-400 transition-colors'>
+                  signalpath@gmail.com
                 </a>{' '}
                 and we will respond within 30 days.
               </p>
@@ -183,8 +183,8 @@ export function PrivacyPage() {
               <h2 className='font-display text-lg font-bold text-gray-900 dark:text-white mb-3'>Contact</h2>
               <p>
                 Questions or concerns? Email us at{' '}
-                <a href='mailto:nishigoldy@gmail.com' className='text-blue-500 hover:text-blue-400 transition-colors'>
-                  nishigoldy@gmail.com
+                <a href='mailto:signalpath@gmail.com' className='text-blue-500 hover:text-blue-400 transition-colors'>
+                  signalpath@gmail.com
                 </a>.
               </p>
             </div>
@@ -201,10 +201,10 @@ export function PrivacyPage() {
             <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
             <a href='/privacy' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>Privacy Policy</a>
             <span className='w-px h-3 bg-gray-300 dark:bg-white/10' />
-            <a href='mailto:nishigoldy@gmail.com' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>nishigoldy@gmail.com</a>
+            <a href='mailto:signalpath@gmail.com' className='hover:text-gray-600 dark:hover:text-white/50 transition-colors'>signalpath@gmail.com</a>
           </div>
           <a
-            href='mailto:nishigoldy@gmail.com'
+            href='mailto:signalpath@gmail.com'
             className='text-xs bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors'
           >
             Get early access →
