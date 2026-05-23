@@ -123,7 +123,7 @@ function CICheckIcon({ conclusion }: { conclusion: string | null }) {
   return <Loader2 className='w-3.5 h-3.5 text-blue-400 animate-spin shrink-0' />
 }
 
-function AgentProgressBoard({ run }: { run: AgentRunStatus }) {
+function AgentProgressBoard({ run, onRebuild }: { run: AgentRunStatus; onRebuild?: () => void }) {
   const isRunning = run.status === 'running' || run.status === 'pending'
   const isComplete = run.status === 'complete'
   const isFailed = run.status === 'failed'
@@ -203,8 +203,18 @@ function AgentProgressBoard({ run }: { run: AgentRunStatus }) {
         </div>
       )}
 
-      {isFailed && run.error && (
-        <p className='text-xs text-red-400 mt-1'>{run.error}</p>
+      {isFailed && (
+        <div className='mt-3 space-y-2'>
+          {run.error && <p className='text-xs text-red-400'>{run.error}</p>}
+          {onRebuild && (
+            <button
+              onClick={onRebuild}
+              className='w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+            >
+              <RefreshCw className='w-4 h-4' /> Build Again
+            </button>
+          )}
+        </div>
       )}
     </div>
   )
@@ -1855,7 +1865,7 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
         {hasSpec && (
           <div className='mb-6'>
             {agentRun && agentRun.status !== 'none' ? (
-              <AgentProgressBoard run={agentRun} />
+              <AgentProgressBoard run={agentRun} onRebuild={handleStartBuild} />
             ) : (
               <button
                 type='button'
