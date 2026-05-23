@@ -262,6 +262,19 @@ export default function FreeformSpecPage() {
     if (!confirm('Promote this freeform spec to an Opportunity on the feed?')) return
     setPromoting(true)
     try {
+      // Flush any pending draft before promoting so the cluster gets the latest brief
+      if (draftTimer.current) {
+        clearTimeout(draftTimer.current)
+        draftTimer.current = null
+      }
+      if (brief) {
+        await fetch(`/api/freeform/${encodeURIComponent(id)}/save-draft`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ human_brief: brief }),
+        })
+      }
+
       const res = await fetch(`/api/freeform/${encodeURIComponent(id)}/promote`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) {
