@@ -48,6 +48,7 @@ import { deepSet } from '@/lib/utils/deepSet'
 import { ScoreBreakdownPanel, type ScoreHistoryEntry } from './ScoreBreakdownPanel'
 import { ScoreSparkline } from './ScoreSparkline'
 import { useToast } from '@/lib/toast-context'
+import { PRFeedPanel } from './PRFeedPanel'
 
 export interface ClusterDetail {
   id: string
@@ -1344,7 +1345,9 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
   return (
     <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318]'>
       <DashboardNav />
-      <div className='max-w-3xl mx-auto px-6 py-10'>
+      <div className='max-w-5xl mx-auto px-6 py-10 flex gap-6 items-start'>
+        {/* Main content column */}
+        <div className='flex-1 min-w-0'>
         <Link href='/opportunities' className='inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-white/40 hover:text-gray-600 dark:text-white/70 mb-6 transition-colors'>
           <ArrowLeft className='w-4 h-4' /> Back to Opportunities
         </Link>
@@ -1999,6 +2002,11 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
             </div>
           )}
         </div>
+        {/* End main content column */}
+        </div>
+
+        {/* PR Activity Feed sidebar */}
+        <PRFeedPanel clusterId={cluster.id} />
       </div>
     </div>
   )
