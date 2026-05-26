@@ -38,24 +38,33 @@ export async function GET(
     return NextResponse.json({ error: 'not found' }, { status: 404 })
   }
 
-  const { data: signals } = await getSupabaseAdmin()
-    .from('signals')
-    .select('id, text, churn_flag, created_at')
-    .eq('cluster_id', id)
-    .order('created_at', { ascending: false })
-    .limit(10)
+  const [{ data: signals }, { data: scoreHistory }, { data: freeformRows }] = await Promise.all([
+    getSupabaseAdmin()
+      .from('signals')
+      .select('id, text, churn_flag, created_at')
+      .eq('cluster_id', id)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    getSupabaseAdmin()
+      .from('cluster_score_history')
+      .select(
+        'id, score, scoring_model, revenue_source, dimension_b, dimension_s, dimension_c, ' +
+        'dimension_r, dimension_f, dimension_v, scored_at',
+      )
+      .eq('cluster_id', id)
+      .eq('workspace_id', workspaceId)
+      .order('scored_at', { ascending: true })
+      .limit(12),
+    getSupabaseAdmin()
+      .from('freeform_specs')
+      .select('id')
+      .eq('workspace_id', workspaceId)
+      .eq('source', 'promoted')
+      .eq('linked_cluster_id', id)
+      .limit(1),
+  ])
 
-  // 5.3: Include last 12 score history rows (ascending = oldest first for sparkline)
-  const { data: scoreHistory } = await getSupabaseAdmin()
-    .from('cluster_score_history')
-    .select(
-      'id, score, scoring_model, revenue_source, dimension_b, dimension_s, dimension_c, ' +
-      'dimension_r, dimension_f, dimension_v, scored_at',
-    )
-    .eq('cluster_id', id)
-    .eq('workspace_id', workspaceId)
-    .order('scored_at', { ascending: true })
-    .limit(12)
+  const is_freeform = (freeformRows ?? []).length > 0
 
-  return NextResponse.json({ cluster, signals: signals ?? [], score_history: scoreHistory ?? [] })
+  return NextResponse.json({ cluster: { ...cluster, is_freeform }, signals: signals ?? [], score_history: scoreHistory ?? [] })
 }

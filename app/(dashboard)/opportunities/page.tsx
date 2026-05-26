@@ -44,6 +44,7 @@ interface Cluster {
   shipped_at?: string | null
   pm_rating?: string | null
   signal_sources?: string[] | null
+  is_freeform?: boolean
 }
 
 type ViewMode = 'grid' | 'list' | 'graph'

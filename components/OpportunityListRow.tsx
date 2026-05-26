@@ -25,6 +25,7 @@ interface Cluster {
   revenue_at_risk_usd?: number | null
   spec_generated_at?: string | null
   shipped_at?: string | null
+  is_freeform?: boolean
 }
 
 type FeedbackAction = 'approve' | 'skip' | 'dismiss'
@@ -112,6 +113,11 @@ export function OpportunityListRow({ cluster, status, onFeedback, selected, onSe
             <span className='flex items-center gap-1 text-blue-400/80'>
               <Sparkles className='w-3 h-3' />
               PRD
+            </span>
+          )}
+          {cluster.is_freeform && (
+            <span className='text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 font-medium'>
+              Freeform
             </span>
           )}
         </div>

@@ -14,6 +14,7 @@ interface Cluster {
   churn_signal_count: number
   confidence?: string | null
   revenue_at_risk_usd?: number | null
+  is_freeform?: boolean
 }
 
 interface OpportunityCardProps {
@@ -75,6 +76,11 @@ export function OpportunityCard({ cluster, status, onFeedback }: OpportunityCard
           </h3>
           <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
         </div>
+        {cluster.is_freeform && (
+          <span className='inline-block text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 font-medium mb-2'>
+            Freeform
+          </span>
+        )}
         <div className='flex items-center gap-4 text-xs text-gray-500 dark:text-white/35'>
           <span className='flex items-center gap-1.5'>
             <MessageSquare className='w-3.5 h-3.5' />

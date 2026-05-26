@@ -93,6 +93,7 @@ export interface ClusterDetail {
     skipped?: boolean
     reason?: string
   } | null
+  is_freeform?: boolean
 }
 
 interface Signal {
@@ -1354,7 +1355,14 @@ export function OpportunityDetail({ cluster, signals, scoreHistory = [], workspa
 
         <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-8 mb-6'>
           <div className='flex items-start justify-between gap-4 mb-6'>
-            <h1 className='text-xl font-bold text-gray-900 dark:text-white'>{cluster.label}</h1>
+            <div className='flex flex-col gap-2 min-w-0'>
+              <h1 className='text-xl font-bold text-gray-900 dark:text-white'>{cluster.label}</h1>
+              {cluster.is_freeform && (
+                <span className='inline-block self-start text-[11px] px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 font-medium'>
+                  Freeform
+                </span>
+              )}
+            </div>
             <ScoreBadge score={cluster.opportunity_score} confidence={cluster.confidence} />
           </div>
 
