@@ -29,12 +29,8 @@ export default function SignInPage() {
   }
 
   return (
-    <div className='min-h-screen bg-[#F4F5F8] dark:bg-[#111318] flex items-center justify-center p-4'
-      style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)',
-        backgroundSize: '48px 48px',
-      }}
-    >
+    <div className='auth-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden'>
+      <div className='absolute inset-0 pointer-events-none' style={{ background: 'radial-gradient(ellipse 100% 100% at 50% 0%, rgba(255,255,255,0.5) 0%, transparent 70%)' }} />
       <div className='w-full max-w-sm'>
         {/* Logo */}
         <div className='flex items-center justify-center gap-2 mb-10'>
@@ -44,7 +40,7 @@ export default function SignInPage() {
           <span className='font-bold text-xl text-gray-900 dark:text-white'>SignalPath</span>
         </div>
 
-        <div className='bg-white dark:bg-[#1A1D24] rounded-2xl border border-gray-100 dark:border-white/[0.07] p-8'>
+        <div className='bg-white/80 dark:bg-[#1A1D24]/80 backdrop-blur-xl rounded-2xl border border-white/60 dark:border-white/[0.07] p-8 shadow-xl shadow-black/[0.06] dark:shadow-black/30'>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-white mb-1'>Welcome back</h1>
           <p className='text-gray-500 dark:text-white/40 text-sm mb-8'>Sign in to your SignalPath account.</p>
 
